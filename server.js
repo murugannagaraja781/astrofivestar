@@ -8,7 +8,12 @@ const multer = require('multer');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
 
 // ===== File upload setup =====
 const uploadDir = path.join(__dirname, 'uploads');
