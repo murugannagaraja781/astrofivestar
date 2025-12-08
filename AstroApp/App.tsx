@@ -12,9 +12,9 @@ const App = () => {
   };
 
   const connectionData = {
-    appId: 'c30a45471ca0b5021c65a4358e95e329',
+    appId: 'a3c27ce672804538b4e78baeaf0687b2',
     channel: 'test',
-    token: null,
+    token: '007eJxTYLj2uvAu3yr228Xqcl8KVLsn2HpFXedQ+zPL+PWyYkXfDRwKDInGyUbmyalm5kYWBiamxhZJJqnmFkmJqYlpBmYW5klGURZmmQ2BjAzP2EKZGRkgEMRnZEhkYAAApzgcYw==',
   };
 
   return (

@@ -5,10 +5,13 @@ const App = () => {
     const [videoCall, setVideoCall] = useState(true);
 
     const rtcProps = {
-        appId: 'c30a45471ca0b5021c65a4358e95e329',
+        appId: 'a3c27ce672804538b4e78baeaf0687b2',
         channel: 'test',
-        token: null, // If your project is in Secure Mode, you need to generate a token using your App Certificate
+        token: '007eJxTYLj2uvAu3yr228Xqcl8KVLsn2HpFXedQ+zPL+PWyYkXfDRwKDInGyUbmyalm5kYWBiamxhZJJqnmFkmJqYlpBmYW5klGURZmmQ2BjAzP2EKZGRkgEMRnZEhkYAAApzgcYw==',
     };
+
+    console.log("DEBUG: Using App ID:", rtcProps.appId);
+    console.log("DEBUG: Using Token:", rtcProps.token);
 
     const callbacks = {
         EndCall: () => setVideoCall(false),
