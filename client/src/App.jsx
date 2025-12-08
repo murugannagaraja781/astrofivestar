@@ -3,9 +3,8 @@ import Peer from "simple-peer";
 import io from "socket.io-client";
 
 // Connect to local signaling server
-// Connect to Railway production server
-const socket = io.connect("https://astrofivestar-production.up.railway.app");
-// const socket = io.connect("http://localhost:8000");
+const socket = io.connect("http://localhost:8000");
+// const socket = io.connect("https://astrofivestar-production.up.railway.app");
 
 function App() {
 	const [me, setMe] = useState("");
@@ -20,12 +19,23 @@ function App() {
 	const [idToCall, setIdToCall] = useState("");
 	const [callEnded, setCallEnded] = useState(false);
 	const [name, setName] = useState("");
+    const [socketConnected, setSocketConnected] = useState(false);
 
 	const myVideo = useRef();
 	const userVideo = useRef();
 	const connectionRef = useRef();
 
 	useEffect(() => {
+        // Socket connection listeners
+        socket.on("connect", () => {
+            console.log("Connected to server");
+            setSocketConnected(true);
+        });
+        socket.on("disconnect", () => {
+             console.log("Disconnected from server");
+             setSocketConnected(false);
+        });
+
         // Get media stream
 		navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
 			setStream(stream);
@@ -57,7 +67,13 @@ function App() {
 		const peer = new Peer({
 			initiator: true,
 			trickle: false,
-			stream: stream
+			stream: stream,
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:global.stun.twilio.com:3478' }
+                ]
+            }
 		});
 
 		peer.on("signal", (data) => {
@@ -89,7 +105,13 @@ function App() {
 		const peer = new Peer({
 			initiator: false,
 			trickle: false,
-			stream: stream
+			stream: stream,
+            config: {
+                iceServers: [
+                     { urls: 'stun:stun.l.google.com:19302' },
+                     { urls: 'stun:global.stun.twilio.com:3478' }
+                ]
+            }
 		});
 
 		peer.on("signal", (data) => {
@@ -115,6 +137,12 @@ function App() {
 		<div className="container">
 			<header className="header">
 				<h1 className="title">AstroFiveStar Video</h1>
+                <div style={{marginTop: '10px'}}>
+                     {socketConnected ?
+                        <span style={{color: '#4CAF50', background: 'rgba(76, 175, 80, 0.1)', padding: '5px 10px', borderRadius: '15px', fontSize: '12px'}}>● Server Connected</span> :
+                        <span style={{color: '#FF5252', background: 'rgba(255, 82, 82, 0.1)', padding: '5px 10px', borderRadius: '15px', fontSize: '12px'}}>● Server Disconnected (Localhost)</span>
+                     }
+                </div>
 			</header>
 
 			<div className="card">
@@ -139,14 +167,22 @@ function App() {
                     </div>
                 )}
 
-				{/* Video Area - "Only One Video On" Implementation */}
-				<div className="video-container">
-                    {/* CASE 1: Call Active -> Show Remote Video ONLY */}
-					{callAccepted && !callEnded ? (
-						<video playsInline ref={userVideo} autoPlay />
-					) : (
-                        /* CASE 2: No Call -> Show My Video (Preview) */
-						stream && <video playsInline muted ref={myVideo} autoPlay />
+				{/* Video Area - Side by Side View */}
+				<div className="video-grid">
+                    {/* My Video (Always visible for preview) */}
+                    {stream && (
+                        <div className="video-wrapper">
+                            <div className="video-label">Me ({me || 'Connecting...'})</div>
+                            <video playsInline muted ref={myVideo} autoPlay />
+                        </div>
+                    )}
+
+                    {/* Remote Video (Visible when call active) */}
+					{callAccepted && !callEnded && (
+                        <div className="video-wrapper">
+                             <div className="video-label">{name || 'Remote User'}</div>
+						     <video playsInline ref={userVideo} autoPlay />
+                        </div>
 					)}
 				</div>
 

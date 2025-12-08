@@ -3,11 +3,8 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 
-// Polyfill for process/buffer in browser for simple-peer
-import * as process from "process";
-window.global = window;
-window.process = process;
-window.Buffer = [];
+// Polyfills are handled by vite-plugin-node-polyfills in vite.config.js
+// Do not manually override Buffer with empty array as it breaks simple-peer
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
