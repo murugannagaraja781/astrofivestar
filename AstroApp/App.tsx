@@ -12,9 +12,9 @@ const App = () => {
   };
 
   const connectionData = {
-    appId: 'e7f6e9aeecf14b2ba10e3f40be9f56e7',
+    appId: 'c30a45471ca0b5021c65a4358e95e329',
     channel: 'test',
-    token: null, // enter your channel token as a string
+    token: null,
   };
 
   return (
