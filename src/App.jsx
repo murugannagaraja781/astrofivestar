@@ -3,7 +3,8 @@ import Peer from "simple-peer";
 import io from "socket.io-client";
 
 // Connect to local signaling server
-const socket = io.connect("http://localhost:5000");
+// Connect to Railway production server
+const socket = io.connect("https://astrofivestar-production.up.railway.app");
 
 function App() {
 	const [me, setMe] = useState("");
