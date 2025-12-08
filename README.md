@@ -1,69 +1,44 @@
-# WebRTC + Socket.IO Video Call App
+# WebRTC + Socket.IO App (Separated)
 
-This project contains both the **React Frontend** (Client) and the **Node.js/Express Backend** (Server).
+This project is split into two independent parts to make deployment easier.
 
-## 🛠️ Setup (First Time Only)
-Before running anything, make sure to install all dependencies (including dev tools like Vite):
-
-```bash
-npm install
-```
+## � Structure
+*   **`client/`**: The React Frontend (Vite)
+*   **`server/`**: The Node.js Backend (Socket.IO)
 
 ---
 
 ## 🚀 How to Run Locally
 
-You need to run **two separate terminals**: one for the Server, one for the Client.
+You must run **two separate terminals**.
 
-### Terminal 1: Start the Backend Server
-This runs the Socket.IO signaling server.
+### Terminal 1: Backend
 ```bash
-npm run server
+cd server
+npm install
+npm start
 ```
-*   Runs on: `http://localhost:8000` (or 5000 if not set)
-*   *Note: If you see "Address already in use", see Troubleshooting below.*
+*   Running on: `http://localhost:8000`
 
-### Terminal 2: Start the React Client
-This runs the frontend website.
+### Terminal 2: Frontend
 ```bash
+cd client
+npm install
 npm run dev
 ```
-*   Runs on: `http://localhost:5173`
-*   Open this link in your browser to test.
+*   Running on: `http://localhost:5173`
 
 ---
 
-## 📱 Testing the Call
-1.  Open `http://localhost:5173` in **Browser Tab A**.
-2.  Open `http://localhost:5173` in **Browser Tab B** (Incognito).
-3.  **Tab A**: Enter ID `user1` -> Click Login.
-4.  **Tab B**: Enter ID `user2` -> Click Login.
-5.  **Tab A**: Paste `user2` in the "ID to Call" box -> Click Call.
-6.  **Tab B**: Click Answer.
+## 🌍 Deployment
 
----
+### Deploying Client (Frontend)
+*   **Platform**: Vercel / Netlify
+*   **Root Directory**: `client`
+*   **Build Command**: `npm run build`
+*   **Output Directory**: `dist`
 
-## ⚠️ Troubleshooting
-
-### "sh: vite: command not found"
-This happens if you installed only production dependencies. Run:
-```bash
-npm install
-```
-
-### "Error: listen EADDRINUSE: address already in use :::8000"
-This means the server is **already running** in the background. You need to stop it.
-
-**Mac/Linux:**
-Find the process ID (PID):
-```bash
-lsof -i :8000
-```
-Kill the process:
-```bash
-kill -9 <PID>
-```
-*Or just kill all node processes:*
-```bash
-pkill -f node
-```
+### Deploying Server (Backend)
+*   **Platform**: Railway / Heroku / Render
+*   **Root Directory**: `server`
+*   **Start Command**: `npm start`
