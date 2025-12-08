@@ -53,6 +53,7 @@ function App() {
     }
 
 	const callUser = (id) => {
+        setCallEnded(false);
 		const peer = new Peer({
 			initiator: true,
 			trickle: false,
@@ -84,6 +85,7 @@ function App() {
 
 	const answerCall = () => {
 		setCallAccepted(true);
+        setCallEnded(false);
 		const peer = new Peer({
 			initiator: false,
 			trickle: false,
@@ -110,60 +112,75 @@ function App() {
 	};
 
 	return (
-		<div style={{ padding: '20px', fontFamily: 'Arial' }}>
-			<h1 style={{ textAlign: "center", color: '#fff' }}>WebRTC Video Call</h1>
+		<div className="container">
+			<header className="header">
+				<h1 className="title">AstroFiveStar Video</h1>
+			</header>
 
-            {/* Registration */}
-            {!me && (
-                <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                    <input
-                        placeholder="Enter YOUR ID (e.g. client1)"
-                        value={myIdInput}
-                        onChange={(e) => setMyIdInput(e.target.value)}
-                    />
-                    <button onClick={registerUser}>Login</button>
-                </div>
-            )}
-
-            {me && <h3 style={{ textAlign: 'center', color: 'green' }}>Logged in as: {me}</h3>}
-
-			<div style={{ display: "flex", justifyContent: "center", gap: "20px" }}>
-				{/* My Video */}
-                <div style={{ width: '400px', height: '300px', background: 'black' }}>
-                    {stream &&  <video playsInline muted ref={myVideo} autoPlay style={{ width: "100%", height: '100%' }} />}
-                </div>
-
-				{/* Remote Video */}
-                <div style={{ width: '400px', height: '300px', background: 'black' }}>
-                    {callAccepted && !callEnded ?
-					<video playsInline ref={userVideo} autoPlay style={{ width: "100%", height: '100%' }} /> :
-                    <div style={{color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%'}}>Waiting for video...</div>}
-                </div>
-			</div>
-
-            {/* Controls */}
-			<div style={{ textAlign: "center", marginTop: "20px" }}>
-                {me && (
-                    <div>
-                        <input
-                            placeholder="ID to Call (e.g. admin1)"
-                            value={targetIdInput}
-                            onChange={(e) => setTargetIdInput(e.target.value)}
-                        />
-                        <button onClick={() => callUser(targetIdInput)}>Call</button>
+			<div className="card">
+				{/* Login Section */}
+				{!me ? (
+					<div className="input-group">
+						<input
+							placeholder="Your ID (e.g. client1)"
+							value={myIdInput}
+							onChange={(e) => setMyIdInput(e.target.value)}
+						/>
+						<button onClick={registerUser}>Connect</button>
+                        {/* Quick Login Helpers */}
+                        <div style={{display: 'flex', gap: '5px', justifyContent: 'center', marginTop: '5px'}}>
+                             <button className="secondary" style={{fontSize: '12px', padding: '5px 10px'}} onClick={() => {setMyIdInput("client1");}}>Use client1</button>
+                             <button className="secondary" style={{fontSize: '12px', padding: '5px 10px'}} onClick={() => {setMyIdInput("admin1");}}>Use admin1</button>
+                        </div>
+					</div>
+				) : (
+                    <div style={{width: '100%', textAlign: 'center'}}>
+                        <span className="status-badge">Online as: {me}</span>
                     </div>
                 )}
 
-                {/* Incoming Call Notification */}
-				{receivingCall && !callAccepted ? (
-					<div style={{ marginTop: 20, background: '#f0f0f0', padding: 10, display: 'inline-block' }}>
-						<h1>{caller} is calling...</h1>
-						<button onClick={answerCall} style={{ background: 'green', color: 'white', padding: '10px 20px' }}>
-							Answer
-						</button>
-					</div>
-				) : null}
+				{/* Video Area - "Only One Video On" Implementation */}
+				<div className="video-container">
+                    {/* CASE 1: Call Active -> Show Remote Video ONLY */}
+					{callAccepted && !callEnded ? (
+						<video playsInline ref={userVideo} autoPlay />
+					) : (
+                        /* CASE 2: No Call -> Show My Video (Preview) */
+						stream && <video playsInline muted ref={myVideo} autoPlay />
+					)}
+				</div>
+
+                {/* Call Controls */}
+                {me && (
+                    <div className="controls">
+                        {callAccepted && !callEnded ? (
+                            <button onClick={leaveCall} style={{ background: '#ff4b4b', color: 'white' }}>
+                                End Call
+                            </button>
+                        ) : (
+                            <div className="input-group">
+                                <input
+                                    placeholder="ID to Call (e.g. admin1)"
+                                    value={targetIdInput}
+                                    onChange={(e) => setTargetIdInput(e.target.value)}
+                                />
+                                <button onClick={() => callUser(targetIdInput)}>Call</button>
+                            </div>
+                        )}
+                    </div>
+                )}
 			</div>
+
+			{/* Incoming Call Notification - Always visible if receiving */}
+			{receivingCall && !callAccepted && (
+				<div className="incoming-call">
+					<h3 style={{margin: 0, color: '#4facfe'}}>{caller} is calling...</h3>
+					<div style={{display: 'flex', gap: '10px'}}>
+						<button onClick={answerCall}>Answer Video</button>
+                        <button className="secondary" onClick={() => setReceivingCall(false)}>Decline</button>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }
