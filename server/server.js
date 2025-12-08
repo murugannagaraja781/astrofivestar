@@ -37,10 +37,10 @@ app.post('/upload', upload.single('file'), (req, res) => {
 });
 
 // ===== Static + basic route =====
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, '../client')));
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, '../client', 'index.html'));
 });
 
 // ===== In-memory data =====
