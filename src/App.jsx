@@ -5,6 +5,7 @@ import io from "socket.io-client";
 // Connect to local signaling server
 // Connect to Railway production server
 const socket = io.connect("https://astrofivestar-production.up.railway.app");
+// const socket = io.connect("http://localhost:8000");
 
 function App() {
 	const [me, setMe] = useState("");
