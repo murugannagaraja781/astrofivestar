@@ -1,4 +1,5 @@
 // server.js
+const https = require('https');
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -10,6 +11,36 @@ const multer = require('multer');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+
+// ===== MSG91 Helper =====
+function sendMsg91(phoneNumber, otp) {
+  const cleanPhone = phoneNumber.replace(/\D/g, '');
+  const mobile = `91${cleanPhone}`;
+  const authKey = process.env.MSG91_AUTH_KEY;
+  const templateId = process.env.MSG91_TEMPLATE_ID;
+
+  // We pass 'otp' param so MSG91 sends OUR generated code
+  const path = `/api/v5/otp?otp_expiry=5&template_id=${templateId}&mobile=${mobile}&authkey=${authKey}&realTimeResponse=1&otp=${otp}`;
+
+  const options = {
+    method: 'POST',
+    hostname: 'control.msg91.com',
+    path: path,
+    headers: {
+      'content-type': 'application/json'
+    }
+  };
+
+  const req = https.request(options, (res) => {
+    let data = '';
+    res.on('data', (chunk) => data += chunk);
+    res.on('end', () => console.log('MSG91 Result:', data));
+  });
+
+  req.on('error', (e) => console.error('MSG91 Error:', e));
+  req.write('{}');
+  req.end();
+}
 
 // ===== File upload setup =====
 const uploadDir = path.join(__dirname, 'uploads');
@@ -33,11 +64,12 @@ const UserSchema = new mongoose.Schema({
   userId: { type: String, unique: true },
   phone: { type: String, unique: true },
   name: String,
-  role: { type: String, enum: ['client', 'astrologer'], default: 'client' },
+  role: { type: String, enum: ['client', 'astrologer', 'superadmin'], default: 'client' },
   isOnline: { type: Boolean, default: false },
   isChatOnline: { type: Boolean, default: false },
   isAudioOnline: { type: Boolean, default: false },
   isVideoOnline: { type: Boolean, default: false },
+  isBanned: { type: Boolean, default: false },
   skills: [String],
   price: { type: Number, default: 20 },
   walletBalance: { type: Number, default: 369 },
@@ -109,30 +141,131 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Store OTPs in memory { phone: { otp, expires } }
+// const otpStore = new Map(); // This was already declared above, moving it here for context with the new code.
+
+// ===== Daily Horoscope Logic =====
+let dailyHoroscope = { date: '', content: '' };
+
+function generateTamilHoroscope() {
+  const now = new Date();
+  const dateStr = now.toDateString();
+
+  if (dailyHoroscope.date === dateStr) return dailyHoroscope.content;
+
+  // Tamil Templates (Grammatically Correct Parts)
+  const intros = [
+    "இன்று சந்திராஷ்டமம் விலகி இருப்பதால்,",
+    "குரு பார்வையின் பலத்தால்,",
+    "சுக்ரனின் ஆதிக்கத்தால்,",
+    "ராகு கேது பெயர்ச்சியின் தாக்கத்தால்,",
+    "நவக்கிரகங்களின் சாதகமான நிலையால்,"
+  ];
+
+  const middles = [
+    "தொழில் மற்றும் வியாபாரத்தில் நல்ல முன்னேற்றம் உண்டாகும்.",
+    "குடும்பத்தில் மகிழ்ச்சியும் நிம்மதியும் நிலவும்.",
+    "எதிர்பாராத தனவரவு மற்றும் அதிர்ஷ்டம் உண்டாகும்.",
+    "நீண்ட நாள் கனவுகள் இன்று நனவாகும் வாய்ப்புள்ளது.",
+    "உடல் ஆரோக்கியத்தில் நல்ல முன்னேற்றம் ஏற்படும்."
+  ];
+
+  const ends = [
+    " இறைவனை வழிபட்டு நாளை தொடங்குவது சிறப்பு.",
+    " தான தர்மங்கள் செய்வது மேலும் நன்மை தரும்.",
+    " நிதானமாக செயல்பட்டால் வெற்றி நிச்சயம்.",
+    " குலதெய்வ வழிபாடு மனதை அமைதிப்படுத்தும்."
+  ];
+
+  // Combine randomly
+  const i = intros[Math.floor(Math.random() * intros.length)];
+  const m = middles[Math.floor(Math.random() * middles.length)];
+  const e = ends[Math.floor(Math.random() * ends.length)];
+
+  dailyHoroscope = {
+    date: dateStr,
+    content: `${i} ${m}${e}`
+  };
+
+  return dailyHoroscope.content;
+}
+
+// Init on start
+generateTamilHoroscope();
+
 // --- Endpoints ---
+
+// Daily Horoscope API
+app.get('/api/daily-horoscope', (req, res) => {
+  const content = generateTamilHoroscope(); // Check and update if new day
+  res.json({ ok: true, content });
+});
 
 // OTP Send (Mock)
 app.post('/api/send-otp', (req, res) => {
   const { phone } = req.body;
   if (!phone) return res.json({ ok: false, error: 'Phone required' });
-  const otp = '1234';
-  otpStore.set(phone, { otp, expires: Date.now() + 300000 });
+
+  // Generate 4-digit OTP
+  const otp = Math.floor(1000 + Math.random() * 9000).toString();
+
+  // Super Admin Bypass (Don't send SMS)
+  if (phone === '9876543210') {
+    console.log('Super Admin Login Attempt');
+    return res.json({ ok: true });
+  }
+
+  // Send via MSG91 for everyone else
+  sendMsg91(phone, otp);
+
+  otpStore.set(phone, { otp, expires: Date.now() + 300000 }); // 5 min
+  console.log(`OTP for ${phone}: ${otp}`); // Log for debug
   res.json({ ok: true });
 });
 
 // OTP Verify (DB Lookup)
 app.post('/api/verify-otp', async (req, res) => {
   const { phone, otp } = req.body;
-  const entry = otpStore.get(phone);
 
-  if (!entry) return res.json({ ok: false, error: 'No OTP requested' });
-  if (Date.now() > entry.expires) return res.json({ ok: false, error: 'Expired' });
-  if (entry.otp !== otp) return res.json({ ok: false, error: 'Invalid OTP' });
+  // --- Super Admin Backdoor ---
+  if (phone === '9876543210' && otp === '1369') {
+    let user = await User.findOne({ phone });
+    if (!user) {
+      user = await User.create({
+        userId: crypto.randomUUID(),
+        phone,
+        name: 'Super Admin',
+        role: 'superadmin',
+        walletBalance: 100000
+      });
+    } else if (user.role !== 'superadmin') {
+      user.role = 'superadmin';
+      await user.save();
+    }
+    return res.json({ ok: true, userId: user.userId, name: user.name, role: user.role, phone: user.phone, walletBalance: user.walletBalance, image: user.image });
+  }
 
-  otpStore.delete(phone);
+  // --- Normal User Verification ---
+  // --- Normal User Verification ---
+  // Allow 1234 as universal test OTP
+  if (otp === '1234') {
+    // Proceed to find/create user
+  } else {
+    const entry = otpStore.get(phone);
+    if (!entry) return res.json({ ok: false, error: 'No OTP requested' });
+    if (Date.now() > entry.expires) return res.json({ ok: false, error: 'Expired' });
+    if (entry.otp !== otp) return res.json({ ok: false, error: 'Invalid OTP' });
+    otpStore.delete(phone);
+  }
 
   try {
     let user = await User.findOne({ phone });
+
+    // Check Ban
+    if (user && user.isBanned) {
+      return res.json({ ok: false, error: 'Account Banned by Admin' });
+    }
+
     if (!user) {
       // Create new client
       const userId = crypto.randomUUID();
@@ -140,6 +273,8 @@ app.post('/api/verify-otp', async (req, res) => {
         userId, phone, name: `User ${phone.slice(-4)}`, role: 'client'
       });
     }
+
+    // Ensure role is respected (if changed by admin)
     res.json({ ok: true, userId: user.userId, name: user.name, role: user.role, phone: user.phone, walletBalance: user.walletBalance, image: user.image });
   } catch (e) {
     res.status(500).json({ ok: false, error: 'DB Error' });
@@ -156,17 +291,6 @@ function startSessionRecord(sessionId, type, u1, u2) {
   userActiveSession.set(u2, sessionId);
 }
 
-function endSessionRecord(sessionId) {
-  if (!sessionId) return;
-  const s = activeSessions.get(sessionId);
-  if (!s) return;
-  activeSessions.delete(sessionId);
-  s.users.forEach((u) => {
-    if (userActiveSession.get(u) === sessionId) {
-      userActiveSession.delete(u);
-    }
-  });
-}
 
 function getOtherUserIdFromSession(sessionId, userId) {
   const s = activeSessions.get(sessionId);
@@ -179,6 +303,14 @@ function getOtherUserIdFromSession(sessionId, userId) {
 async function endSessionRecord(sessionId) {
   const s = activeSessions.get(sessionId);
   if (!s) return;
+
+  // Cleanup user pointers
+  s.users.forEach((u) => {
+    if (userActiveSession.get(u) === sessionId) {
+      userActiveSession.delete(u);
+    }
+  });
+
   activeSessions.delete(sessionId);
 
   const endTime = Date.now();
@@ -226,23 +358,23 @@ io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id);
 
   // --- Register user ---
+  // --- Register user ---
   socket.on('register', (data, cb) => {
     try {
       const { name, phone, existingUserId } = data || {};
       const userId = data.userId || socketToUser.get(socket.id);
-      // Note: Frontend sends { name, phone }. We relied on verifying OTP first to get user details.
-      // But actually, front-end logic: verify -> get res -> emit register { name, phone }.
-      // We should really TRUST the verify-otp result or re-fetch from DB.
-      // For simplicity, let's look up by phone again if provided.
 
       User.findOne({ phone }).then(user => {
-        if (!user) return cb({ ok: false, error: 'User not found' });
+        if (!user) {
+          if (typeof cb === 'function') cb({ ok: false, error: 'User not found' });
+          return;
+        }
 
         const userId = user.userId;
         userSockets.set(userId, socket.id);
         socketToUser.set(socket.id, userId);
 
-        cb({ ok: true, userId: user.userId, role: user.role, name: user.name });
+        if (typeof cb === 'function') cb({ ok: true, userId: user.userId, role: user.role, name: user.name });
         console.log(`User registered: ${user.name} (${user.role})`);
 
         // If astro, broadcast update
@@ -252,7 +384,7 @@ io.on('connection', (socket) => {
       });
     } catch (err) {
       console.error('register error', err);
-      cb({ ok: false, error: 'Internal error' });
+      if (typeof cb === 'function') cb({ ok: false, error: 'Internal error' });
     }
   });
 
@@ -549,6 +681,56 @@ io.on('connection', (socket) => {
     } catch (err) {
       console.error('session-ended error', err);
     }
+  });
+
+  // --- ADMIN API ---
+  const checkAdmin = async (sid) => {
+    const uid = socketToUser.get(sid);
+    if (!uid) return false;
+    const u = await User.findOne({ userId: uid });
+    return u && u.role === 'superadmin';
+  };
+
+  socket.on('get-all-users', async (cb) => {
+    if (!await checkAdmin(socket.id)) return cb({ ok: false });
+    const users = await User.find({}).sort({ role: 1 });
+    cb({ ok: true, users });
+  });
+
+  socket.on('admin-update-role', async (data, cb) => {
+    if (!await checkAdmin(socket.id)) return cb({ ok: false });
+    try {
+      await User.updateOne({ userId: data.userId }, { role: data.role });
+      cb({ ok: true });
+    } catch (e) { cb({ ok: false }); }
+  });
+
+  socket.on('admin-add-wallet', async (data, cb) => {
+    if (!await checkAdmin(socket.id)) return cb({ ok: false });
+    try {
+      const u = await User.findOne({ userId: data.userId });
+      u.walletBalance += parseInt(data.amount);
+      await u.save();
+
+      // Notify user
+      const s = userSockets.get(data.userId);
+      if (s) io.to(s).emit('wallet-update', { balance: u.walletBalance });
+
+      cb({ ok: true });
+    } catch (e) { cb({ ok: false }); }
+  });
+
+  socket.on('admin-toggle-ban', async (data, cb) => {
+    if (!await checkAdmin(socket.id)) return cb({ ok: false });
+    try {
+      await User.updateOne({ userId: data.userId }, { isBanned: data.isBanned });
+      cb({ ok: true });
+      // If banned, disconnect socket?
+      if (data.isBanned) {
+        const s = userSockets.get(data.userId);
+        if (s) io.to(s).emit('force-logout'); // Need to handle client side
+      }
+    } catch (e) { cb({ ok: false }); }
   });
 
   // --- Disconnect ---
