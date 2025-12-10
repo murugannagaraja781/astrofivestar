@@ -19,6 +19,9 @@ NC='\033[0m'
 
 echo -e "${GREEN}Starting Full Auto-Deployment for $DOMAIN...${NC}"
 
+# Ensure we are NOT in the directory we are about to delete
+cd /root || cd ~ || cd /
+
 # 1. STOP & CLEAN OLD PROCESSES
 echo -e "${GREEN}[1/8] Cleaning up old processes...${NC}"
 pm2 stop $PM2_NAME 2>/dev/null
