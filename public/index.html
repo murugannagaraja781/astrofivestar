@@ -424,7 +424,7 @@
     <div class="app-header">
       <div style="font-weight: bold; font-size: 1.2rem;">Rise Astro</div>
       <div>
-        <i class="fas fa-wallet"></i> ₹300
+        <i class="fas fa-wallet"></i> ₹<span id="clientWallet">369</span>
         <i class="fas fa-sign-out-alt" style="margin-left: 10px; cursor: pointer;" onclick="clearSession()"></i>
       </div>
     </div>
@@ -502,10 +502,10 @@
         <div class="grid-item">
           <div class="grid-icon"><i class="fas fa-star"></i></div> Reviews
         </div>
-        <div class="grid-item">
+        <div class="grid-item" onclick="showHistory()" style="cursor: pointer;">
           <div class="grid-icon"><i class="fas fa-clock"></i></div> History
         </div>
-        <div class="grid-item">
+        <div class="grid-item" onclick="showProfile()" style="cursor: pointer;">
           <div class="grid-icon"><i class="fas fa-user"></i></div> Profile
         </div>
       </div>
@@ -538,6 +538,38 @@
       <div id="historyList" style="flex: 1; overflow-y: auto; padding: 15px;">
         <!-- History Items -->
       </div>
+    </div>
+  </div>
+
+  <!-- Screen: Profile -->
+  <div id="screen-profile" class="modal-overlay hidden">
+    <div style="background: white; width: 90%; max-width: 400px; border-radius: 20px; padding: 20px;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+        <h3 style="margin:0;">Edit Profile</h3>
+        <i class="fas fa-times" onclick="document.getElementById('screen-profile').classList.add('hidden')"
+          style="cursor:pointer; font-size:1.2rem;"></i>
+      </div>
+
+      <div style="text-align:center; margin-bottom:20px;">
+        <img id="editAvatar" src=""
+          style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:2px solid #ddd; margin-bottom:10px;">
+        <br>
+        <input type="file" id="fileAvatar" style="display:none" onchange="uploadAvatar(this)">
+        <button onclick="document.getElementById('fileAvatar').click()"
+          style="padding:5px 10px; font-size:0.8rem; border-radius:5px; border:1px solid #ddd; background:white;">Change
+          Photo</button>
+      </div>
+
+      <label style="display:block; margin-bottom:5px; font-size:0.9rem; color:#666;">Call Price (₹/min)</label>
+      <input id="editPrice" type="number" class="cosmic-input"
+        style="background:#f9f9f9; color:black; border:1px solid #ddd;">
+
+      <label style="display:block; margin-bottom:5px; margin-top:15px; font-size:0.9rem; color:#666;">Experience
+        (Years)</label>
+      <input id="editExp" type="number" class="cosmic-input"
+        style="background:#f9f9f9; color:black; border:1px solid #ddd;">
+
+      <button class="cosmic-btn" onclick="saveProfile()">Save Changes</button>
     </div>
   </div>
 
@@ -697,13 +729,65 @@
       setupToggle('toggleCall', 'audio');
       setupToggle('toggleVideo', 'video');
 
-      // Setup History Button (assuming it is the 3rd item in grid-menu)
-      // Best to add IDs to grid items in HTML, but for now:
-      const items = document.querySelectorAll('.grid-icon');
-      // 0=Wallet, 1=Reviews, 2=History, 3=Profile
-      if (items[2]) {
-        items[2].parentElement.onclick = showHistory;
+      if (user.image) document.getElementById('astroAvatar').src = user.image;
+    }
+
+    // --- Profile Logic ---
+    let tempAvatarUrl = '';
+
+    function showProfile() {
+      const u = state.me;
+      document.getElementById('editAvatar').src = u.image || `https://ui-avatars.com/api/?name=${u.name}&background=random`;
+      document.getElementById('editPrice').value = u.price || 20;
+      document.getElementById('editExp').value = u.experience || 0;
+      document.getElementById('screen-profile').classList.remove('hidden');
+    }
+
+    async function uploadAvatar(input) {
+      if (!input.files[0]) return;
+      const formData = new FormData();
+      formData.append('file', input.files[0]);
+
+      const btn = input.nextElementSibling; // The button
+      const oldText = btn.textContent;
+      btn.textContent = 'Uploading...';
+
+      try {
+        const res = await fetch('/upload', { method: 'POST', body: formData }).then(r => r.json());
+        if (res.ok) {
+          tempAvatarUrl = res.url;
+          document.getElementById('editAvatar').src = res.url;
+          btn.textContent = 'Uploaded';
+          setTimeout(() => btn.textContent = 'Change Photo', 2000);
+        } else {
+          alert('Upload Failed');
+          btn.textContent = oldText;
+        }
+      } catch (e) {
+        alert('Error uploading');
+        btn.textContent = oldText;
       }
+    }
+
+    function saveProfile() {
+      const price = document.getElementById('editPrice').value;
+      const exp = document.getElementById('editExp').value;
+
+      const update = { price, experience: exp };
+      if (tempAvatarUrl) update.image = tempAvatarUrl;
+
+      socket.emit('update-profile', update, (res) => {
+        if (res.ok) {
+          state.me = res.user;
+          saveSession(res.user); // Update local storage
+          alert('Saved!');
+          document.getElementById('screen-profile').classList.add('hidden');
+          // Update Dash
+          if (state.me.image) document.getElementById('astroAvatar').src = state.me.image;
+        } else {
+          alert(res.error || 'Failed');
+        }
+      });
     }
 
     // --- History Logic ---
@@ -759,9 +843,18 @@
     // --- Client Dash Logic ---
     function loadClientDash(user) {
       sClient.classList.remove('hidden');
+      document.getElementById('clientWallet').innerText = user.walletBalance || 0;
+
       fetchAstrologers();
+
       socket.on('astrologer-update', (list) => {
         renderAstroList(list);
+      });
+
+      socket.on('wallet-update', (data) => {
+        document.getElementById('clientWallet').innerText = data.balance;
+        state.me.walletBalance = data.balance;
+        saveSession(state.me); // Update persistent session
       });
     }
 
@@ -790,7 +883,7 @@
 
         div.innerHTML = `
              <div style="position: relative;">
-               <img src="https://ui-avatars.com/api/?name=${a.name}&background=random" class="astro-img">
+               <img src="${a.image || 'https://ui-avatars.com/api/?name=' + a.name + '&background=random'}" class="astro-img" style="object-fit:cover;">
                <div class="status-dot ${a.isOnline ? 'online' : ''}"></div>
              </div>
              <div style="flex: 1;">
@@ -798,7 +891,10 @@
                  <div style="font-weight: bold;">${a.name}</div>
                  <div style="font-size:0.8rem; font-weight:bold;">₹${a.price}/min</div>
                </div>
-               <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">${a.skills.join(', ')}</div>
+               <div style="font-size: 0.8rem; color: #666; margin-bottom: 2px;">${a.skills.join(', ')}</div>
+               <div style="font-size: 0.75rem; color: #888; margin-bottom: 8px;">
+                 ${a.experience ? `Exp: ${a.experience} Yrs` : 'New Astrologer'}
+               </div>
 
                <div style="display:flex; gap: 10px;">
                   <button onclick="requestSession('${a.userId}', 'chat')" style="${btnStyle(a.isChatOnline, '#3B82F6')}">

@@ -40,7 +40,9 @@ const UserSchema = new mongoose.Schema({
   isVideoOnline: { type: Boolean, default: false },
   skills: [String],
   price: { type: Number, default: 20 },
-  walletBalance: { type: Number, default: 0 }
+  walletBalance: { type: Number, default: 369 },
+  experience: { type: Number, default: 0 },
+  image: { type: String, default: '' }
 });
 const User = mongoose.model('User', UserSchema);
 
@@ -77,7 +79,8 @@ async function seedDatabase() {
     await User.create({
       userId, name, phone, role,
       skills: role === 'astrologer' ? ['Vedic', 'Prashana'] : [],
-      price: 20
+      price: 20,
+      walletBalance: 369
     });
   };
 
@@ -137,7 +140,7 @@ app.post('/api/verify-otp', async (req, res) => {
         userId, phone, name: `User ${phone.slice(-4)}`, role: 'client'
       });
     }
-    res.json({ ok: true, userId: user.userId, name: user.name, role: user.role, phone: user.phone });
+    res.json({ ok: true, userId: user.userId, name: user.name, role: user.role, phone: user.phone, walletBalance: user.walletBalance, image: user.image });
   } catch (e) {
     res.status(500).json({ ok: false, error: 'DB Error' });
   }
@@ -170,6 +173,52 @@ function getOtherUserIdFromSession(sessionId, userId) {
   if (!s) return null;
   const [u1, u2] = s.users;
   return u1 === userId ? u2 : u2 === userId ? u1 : null;
+}
+
+// Helper: End Session & Calculate Wallet
+async function endSessionRecord(sessionId) {
+  const s = activeSessions.get(sessionId);
+  if (!s) return;
+  activeSessions.delete(sessionId);
+
+  const endTime = Date.now();
+  const durationMs = endTime - s.startedAt;
+  const durationMin = Math.ceil(durationMs / 60000); // Charged per minute
+
+  // Update Session in DB
+  await Session.updateOne({ sessionId }, { endTime, duration: durationMs });
+
+  // Wallet Logic
+  try {
+    const [u1, u2] = s.users;
+    // Identify Client/Astro. usually we assume one is client one is astro?
+    // Or we fetch roles.
+    const user1 = await User.findOne({ userId: u1 });
+    const user2 = await User.findOne({ userId: u2 });
+
+    if (!user1 || !user2) return;
+
+    const client = user1.role === 'client' ? user1 : user2;
+    const astro = user1.role === 'astrologer' ? user1 : user2;
+
+    if (client.role === 'client' && astro.role === 'astrologer') {
+      const cost = durationMin * astro.price;
+      if (client.walletBalance >= cost) {
+        client.walletBalance -= cost;
+        astro.walletBalance += cost;
+        await client.save();
+        await astro.save();
+        console.log(`Wallet: Deducted ₹${cost} from ${client.name} for ${durationMin} mins.`);
+
+        // Notify Clients of new balance
+        const s1 = userSockets.get(client.userId);
+        if (s1) io.to(s1).emit('wallet-update', { balance: client.walletBalance });
+
+        const s2 = userSockets.get(astro.userId);
+        if (s2) io.to(s2).emit('wallet-update', { balance: astro.walletBalance });
+      }
+    }
+  } catch (e) { console.error('Wallet Error', e); }
 }
 
 // ===== Socket.IO =====
@@ -242,6 +291,31 @@ io.on('connection', (socket) => {
         broadcastAstroUpdate();
       }
     } catch (e) { console.error(e); }
+  });
+
+  // --- Update Profile ---
+  socket.on('update-profile', async (data, cb) => {
+    const userId = socketToUser.get(socket.id);
+    if (!userId) return cb({ ok: false, error: 'Not logged in' });
+
+    try {
+      const user = await User.findOne({ userId });
+      if (user) {
+        if (data.price) user.price = parseInt(data.price);
+        if (data.experience) user.experience = parseInt(data.experience);
+        if (data.image) user.image = data.image; // URL
+
+        await user.save();
+
+        if (user.role === 'astrologer') broadcastAstroUpdate();
+        cb({ ok: true, user });
+      } else {
+        cb({ ok: false, error: 'User not found' });
+      }
+    } catch (e) {
+      console.error('Update Profile Error', e);
+      cb({ ok: false, error: 'Internal Error' });
+    }
   });
 
   // --- Session request (chat / audio / video) ---
