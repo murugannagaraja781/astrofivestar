@@ -36,10 +36,8 @@ fi
 
 # 2. PREPARE DIRECTORY (FRESH CLONE)
 echo -e "${GREEN}[2/8] Fetching fresh code from GitHub...${NC}"
-if [ -d "$APP_DIR" ]; then
-    echo "Removing old directory..."
-    rm -rf $APP_DIR
-fi
+echo "Forcing removal of $APP_DIR..."
+rm -rf $APP_DIR
 
 # Clone Repo
 git clone $REPO_URL $APP_DIR
