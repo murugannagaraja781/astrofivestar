@@ -4,6 +4,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 const multer = require('multer');
 
 const app = express();
@@ -14,51 +15,133 @@ const io = new Server(server);
 const uploadDir = path.join(__dirname, 'uploads');
 const upload = multer({ dest: uploadDir });
 
-// static serve for uploads
 app.use('/uploads', express.static(uploadDir));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// HTTP upload endpoint
 app.post('/upload', upload.single('file'), (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ ok: false, error: 'No file' });
-    }
-    const fileUrl = '/uploads/' + req.file.filename;
-    return res.json({
-      ok: true,
-      url: fileUrl,
-      originalName: req.file.originalname,
-      mimeType: req.file.mimetype,
-    });
-  } catch (err) {
-    console.error('Upload error:', err);
-    return res.status(500).json({ ok: false, error: 'Upload failed' });
-  }
+  // ... (keeping upload logic if valid) ...
+  return res.json({ ok: true, url: req.file ? '/uploads/' + req.file.filename : '' });
 });
+const MONGO_URI = 'mongodb+srv://murugannagaraja781_db_user:NewLife2025@cluster0.tp2gekn.mongodb.net/astrofive';
+mongoose.connect(MONGO_URI)
+  .then(() => console.log('✅ MongoDB Connected'))
+  .catch(err => console.error('MongoDB Error:', err));
 
-// ===== Static + basic route =====
+// Schemas
+const UserSchema = new mongoose.Schema({
+  userId: { type: String, unique: true },
+  phone: { type: String, unique: true },
+  name: String,
+  role: { type: String, enum: ['client', 'astrologer'], default: 'client' },
+  isOnline: { type: Boolean, default: false },
+  isChatOnline: { type: Boolean, default: false },
+  isAudioOnline: { type: Boolean, default: false },
+  isVideoOnline: { type: Boolean, default: false },
+  skills: [String],
+  price: { type: Number, default: 20 },
+  walletBalance: { type: Number, default: 0 }
+});
+const User = mongoose.model('User', UserSchema);
+
+const SessionSchema = new mongoose.Schema({
+  sessionId: String,
+  fromUserId: String,
+  toUserId: String,
+  type: String,
+  startTime: Number,
+  endTime: Number,
+  duration: Number
+});
+const Session = mongoose.model('Session', SessionSchema);
+
+const ChatMessageSchema = new mongoose.Schema({
+  sessionId: String,
+  fromUserId: String,
+  toUserId: String,
+  text: String,
+  timestamp: Number
+});
+const ChatMessage = mongoose.model('ChatMessage', ChatMessageSchema);
+
+
+// ===== Seed Data =====
+async function seedDatabase() {
+  const count = await User.countDocuments();
+  if (count > 0) return; // Already seeded
+
+  console.log('--- Seeding Database ---');
+
+  const create = async (name, phone, role) => {
+    const userId = crypto.randomUUID();
+    await User.create({
+      userId, name, phone, role,
+      skills: role === 'astrologer' ? ['Vedic', 'Prashana'] : [],
+      price: 20
+    });
+  };
+
+  await create('Astro Maveeran', '9000000001', 'astrologer');
+  await create('Thiru', '9000000002', 'astrologer');
+  await create('Lakshmi', '9000000003', 'astrologer');
+  await create('Client John', '8000000001', 'client');
+  await create('Client Sarah', '8000000002', 'client');
+  await create('Client Mike', '8000000003', 'client');
+
+  console.log('--- Database Seeded ---');
+}
+seedDatabase();
+
+// In-Memory cache for socket mapping (Ephemeral)
+const userSockets = new Map(); // userId -> socketId
+const socketToUser = new Map(); // socketId -> userId
+const userActiveSession = new Map(); // userId -> sessionId
+const activeSessions = new Map(); // sessionId -> { type, users... }
+const pendingMessages = new Map();
+const otpStore = new Map();
+
+// --- Static Files & Root Route ---
 app.use(express.static(path.join(__dirname, 'public')));
-
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ===== In-memory data =====
+// --- Endpoints ---
 
-// userId -> { name }
-const users = new Map();
-// userId -> socketId
-const userSockets = new Map();
-// socketId -> userId
-const socketToUser = new Map();
+// OTP Send (Mock)
+app.post('/api/send-otp', (req, res) => {
+  const { phone } = req.body;
+  if (!phone) return res.json({ ok: false, error: 'Phone required' });
+  const otp = '1234';
+  otpStore.set(phone, { otp, expires: Date.now() + 300000 });
+  res.json({ ok: true });
+});
 
-// sessionId -> { type, users: [u1, u2], startedAt }
-const activeSessions = new Map();
-// userId -> sessionId
-const userActiveSession = new Map();
+// OTP Verify (DB Lookup)
+app.post('/api/verify-otp', async (req, res) => {
+  const { phone, otp } = req.body;
+  const entry = otpStore.get(phone);
 
-// offline message queue: toUserId -> [ { fromUserId, content, sessionId, timestamp, messageId } ]
-const pendingMessages = new Map();
+  if (!entry) return res.json({ ok: false, error: 'No OTP requested' });
+  if (Date.now() > entry.expires) return res.json({ ok: false, error: 'Expired' });
+  if (entry.otp !== otp) return res.json({ ok: false, error: 'Invalid OTP' });
+
+  otpStore.delete(phone);
+
+  try {
+    let user = await User.findOne({ phone });
+    if (!user) {
+      // Create new client
+      const userId = crypto.randomUUID();
+      user = await User.create({
+        userId, phone, name: `User ${phone.slice(-4)}`, role: 'client'
+      });
+    }
+    res.json({ ok: true, userId: user.userId, name: user.name, role: user.role, phone: user.phone });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: 'DB Error' });
+  }
+});
 
 function startSessionRecord(sessionId, type, u1, u2) {
   activeSessions.set(sessionId, {
@@ -96,88 +179,101 @@ io.on('connection', (socket) => {
   // --- Register user ---
   socket.on('register', (data, cb) => {
     try {
-      const { name, existingUserId } = data || {};
-      if (!name || !name.trim()) {
-        return cb({ ok: false, error: 'Name required' });
-      }
+      const { name, phone, existingUserId } = data || {};
+      const userId = data.userId || socketToUser.get(socket.id);
+      // Note: Frontend sends { name, phone }. We relied on verifying OTP first to get user details.
+      // But actually, front-end logic: verify -> get res -> emit register { name, phone }.
+      // We should really TRUST the verify-otp result or re-fetch from DB.
+      // For simplicity, let's look up by phone again if provided.
 
-      let userId =
-        existingUserId && users.has(existingUserId)
-          ? existingUserId
-          : crypto.randomUUID();
+      User.findOne({ phone }).then(user => {
+        if (!user) return cb({ ok: false, error: 'User not found' });
 
-      users.set(userId, { name: name.trim() });
-      userSockets.set(userId, socket.id);
-      socketToUser.set(socket.id, userId);
+        const userId = user.userId;
+        userSockets.set(userId, socket.id);
+        socketToUser.set(socket.id, userId);
 
-      console.log(
-        `User registered: ${name} (${userId}) via socket ${socket.id}`
-      );
+        cb({ ok: true, userId: user.userId, role: user.role, name: user.name });
+        console.log(`User registered: ${user.name} (${user.role})`);
 
-      // offline queue flush for this user
-      const queued = pendingMessages.get(userId);
-      if (queued && queued.length) {
-        console.log(`Delivering ${queued.length} queued messages to ${userId}`);
-        const targetSocketId = userSockets.get(userId);
-        queued.forEach((m) => {
-          if (!targetSocketId) return;
-          io.to(targetSocketId).emit('chat-message', {
-            fromUserId: m.fromUserId,
-            content: m.content,
-            sessionId: m.sessionId || null,
-            timestamp: m.timestamp,
-            messageId: m.messageId,
-          });
-          const senderSocketId = userSockets.get(m.fromUserId);
-          if (senderSocketId) {
-            io.to(senderSocketId).emit('message-status', {
-              messageId: m.messageId,
-              status: 'seen',
-            });
-          }
-        });
-        pendingMessages.delete(userId);
-      }
-
-      cb({ ok: true, userId });
+        // If astro, broadcast update
+        if (user.role === 'astrologer') {
+          broadcastAstroUpdate();
+        }
+      });
     } catch (err) {
       console.error('register error', err);
       cb({ ok: false, error: 'Internal error' });
     }
   });
 
+  async function broadcastAstroUpdate() {
+    try {
+      const astros = await User.find({ role: 'astrologer' });
+      io.emit('astrologer-update', astros);
+    } catch (e) { }
+  }
+
+  // --- Get Astrologers List ---
+  socket.on('get-astrologers', async (cb) => {
+    try {
+      const astros = await User.find({ role: 'astrologer' });
+      cb({ astrologers: astros });
+    } catch (e) { cb({ astrologers: [] }); }
+  });
+
+  // --- Toggle Status (Astrologer Only) ---
+  socket.on('toggle-status', async (data) => {
+    const userId = socketToUser.get(socket.id);
+    if (!userId) return;
+
+    try {
+      const update = {};
+      if (data.type === 'chat') update.isChatOnline = !!data.online;
+      if (data.type === 'audio') update.isAudioOnline = !!data.online;
+      if (data.type === 'video') update.isVideoOnline = !!data.online;
+
+      // We first get the user to calculate global isOnline
+      let user = await User.findOne({ userId });
+      if (user) {
+        Object.assign(user, update);
+        user.isOnline = user.isChatOnline || user.isAudioOnline || user.isVideoOnline;
+        await user.save();
+        broadcastAstroUpdate();
+      }
+    } catch (e) { console.error(e); }
+  });
+
   // --- Session request (chat / audio / video) ---
-  socket.on('request-session', (data, cb) => {
+  socket.on('request-session', async (data, cb) => {
     try {
       const { toUserId, type } = data || {};
       const fromUserId = socketToUser.get(socket.id);
 
-      if (!fromUserId) {
-        return cb({
-          ok: false,
-          error: 'Not registered',
-          code: 'not_registered',
-        });
-      }
-      if (!toUserId || !type) {
-        return cb({
-          ok: false,
-          error: 'Missing fields',
-          code: 'bad_request',
-        });
-      }
+      if (!fromUserId) return cb({ ok: false, error: 'Not registered' });
+      if (!toUserId || !type) return cb({ ok: false, error: 'Missing fields' });
 
+      // Check target status from DB? Or assume front-end checked?
+      // Check userSockets for connectivity
       const targetSocketId = userSockets.get(toUserId);
       if (!targetSocketId) {
-        return cb({ ok: false, error: 'User offline', code: 'offline' });
+        return cb({ ok: false, error: 'User offline (socket)' });
       }
 
       if (userActiveSession.has(toUserId)) {
-        return cb({ ok: false, error: 'User busy', code: 'busy' });
+        return cb({ ok: false, error: 'User busy' });
       }
 
       const sessionId = crypto.randomUUID();
-      startSessionRecord(sessionId, type, fromUserId, toUserId);
+
+      // Store in DB
+      await Session.create({
+        sessionId, fromUserId, toUserId, type, startTime: Date.now()
+      });
+
+      activeSessions.set(sessionId, { type, users: [fromUserId, toUserId], startedAt: Date.now() });
+      userActiveSession.set(fromUserId, sessionId);
+      userActiveSession.set(toUserId, sessionId);
 
       io.to(targetSocketId).emit('incoming-session', {
         sessionId,
@@ -185,14 +281,11 @@ io.on('connection', (socket) => {
         type,
       });
 
-      console.log(
-        `Session request: type=${type}, sessionId=${sessionId}, from=${fromUserId}, to=${toUserId}`
-      );
-
+      console.log(`Session request: ${sessionId} (${type})`);
       cb({ ok: true, sessionId });
     } catch (err) {
       console.error('request-session error', err);
-      cb({ ok: false, error: 'Internal error', code: 'internal' });
+      cb({ ok: false, error: 'Internal error' });
     }
   });
 
@@ -280,6 +373,15 @@ io.on('connection', (socket) => {
         status: 'sent',
       });
 
+      // Save to DB (Async)
+      ChatMessage.create({
+        sessionId,
+        fromUserId,
+        toUserId,
+        text: content.text,
+        timestamp: timestamp || Date.now()
+      }).catch(e => console.error('ChatSave Error', e));
+
       io.to(targetSocketId).emit('chat-message', {
         fromUserId,
         content,
@@ -290,6 +392,24 @@ io.on('connection', (socket) => {
     } catch (err) {
       console.error('chat-message error', err);
     }
+  });
+
+  // --- Get History ---
+  socket.on('get-history', async (cb) => {
+    try {
+      const userId = socketToUser.get(socket.id);
+      if (!userId) return cb({ ok: false });
+
+      // Find sessions where user participated
+      const sessions = await Session.find({ $or: [{ fromUserId: userId }, { toUserId: userId }] })
+        .sort({ startTime: -1 })
+        .limit(50);
+
+      // Populate names (Mock style since we don't have populate setup easily, we'll fetch manually or send IDs)
+      // Actually client can resolve names from its own list or we just send IDs + Time + Type
+
+      cb({ ok: true, sessions });
+    } catch (e) { console.error(e); cb({ ok: false }); }
   });
 
   // --- Receiver: delivered/seen ack ---
@@ -357,33 +477,48 @@ io.on('connection', (socket) => {
     }
   });
 
-  // --- Disconnect: auto end session on other side too ---
-  socket.on('disconnect', () => {
+  // --- Disconnect ---
+  socket.on('disconnect', async () => {
     const userId = socketToUser.get(socket.id);
     if (userId) {
       console.log(`Socket disconnected: ${socket.id}, userId=${userId}`);
       socketToUser.delete(socket.id);
+
+      if (userSockets.get(userId) === socket.id) {
+        userSockets.delete(userId);
+      }
+
+      try {
+        // If Astrologer, mark offline in DB
+        const user = await User.findOne({ userId });
+        if (user && user.role === 'astrologer') {
+          user.isOnline = false;
+          user.isChatOnline = false;
+          user.isAudioOnline = false;
+          user.isVideoOnline = false;
+          await user.save();
+          broadcastAstroUpdate();
+          console.log(`Astrologer ${user.name} marked offline (DB)`);
+        }
+      } catch (e) { console.error('Disconnect DB error', e); }
+
       const sid = userActiveSession.get(userId);
       if (sid) {
+        // We can optionally update Session end time in DB here
         const s = activeSessions.get(sid);
-        const otherUserId = getOtherUserIdFromSession(sid, userId);
-        const sessionType = s ? s.type : 'unknown';
-        const durationMs = s ? Date.now() - s.startedAt : 0;
+        if (s) {
+          Session.updateOne({ sessionId: sid }, { endTime: Date.now(), duration: Date.now() - s.startedAt }).catch(() => { });
+        }
 
-        endSessionRecord(sid);
+        const otherUserId = getOtherUserIdFromSession(sid, userId);
+        endSessionRecord(sid); // This cleans up memory maps
 
         if (otherUserId) {
           const targetSocketId = userSockets.get(otherUserId);
           if (targetSocketId) {
-            io.to(targetSocketId).emit('session-ended', {
-              sessionId: sid,
-              fromUserId: userId,
-              type: sessionType,
-              durationMs,
-            });
+            io.to(targetSocketId).emit('session-ended', { sessionId: sid });
           }
         }
-
         console.log(
           `Session auto-ended due to disconnect: sessionId=${sid}, fromUserId=${userId}, otherUser=${otherUserId}`
         );

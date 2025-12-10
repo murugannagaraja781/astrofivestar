@@ -1,904 +1,1118 @@
 <!DOCTYPE html>
-<html lang="ta">
+<html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <title>P2P Chat / Audio / Video</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Celestial Consultation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    :root {
+      /* Shared Colors */
+      --primary: #FFD700;
+      --bg-body: #F3F4F6;
+      --accent-green: #22C55E;
+      --accent-red: #EF4444;
+      --border: #E5E7EB;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: sans-serif;
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 16px;
+      margin: 0;
+      font-family: 'Outfit', sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--bg-body);
     }
-    .row { margin: 8px 0; }
-    input, button {
-      padding: 6px 10px;
-      margin: 3px;
+
+    input,
+    button {
+      font-family: inherit;
+      outline: none;
     }
-    button { cursor: pointer; }
-    #myUserId {
-      font-weight: bold;
-      color: #1b5e20;
-      word-break: break-all;
+
+    .hidden {
+      display: none !important;
     }
-    #status {
-      margin-top: 8px;
-      padding: 6px;
-      border: 1px solid #ccc;
-      min-height: 30px;
-      font-size: 14px;
-      white-space: pre-line;
+
+    .flex {
+      display: flex;
     }
-    #typingIndicator {
-      margin-top: 4px;
-      font-size: 13px;
-      color: #7b1fa2;
-      min-height: 18px;
+
+    .w-full {
+      width: 100%;
     }
-    #timer {
-      font-weight: bold;
-      color: #1565c0;
+
+    /* === LOGIN === */
+    #screen-login {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #4c1d95, #312e81, #1e3a8a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      color: white;
     }
-    video {
-      width: 45%;
-      border: 1px solid #ccc;
+
+    .form-box {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 30px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .cosmic-input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: white;
+    }
+
+    .cosmic-btn {
+      width: 100%;
+      padding: 12px;
       margin-top: 10px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(to right, #059669, #0d9488);
+      color: white;
+      cursor: pointer;
     }
-    #chatBox {
-      border: 1px solid #ccc;
-      padding: 8px;
-      height: 200px;
+
+    /* === DASHBOARD LAYOUT === */
+    .dashboard-container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      max-width: 480px;
+      margin: 0 auto;
+      background: #F3F4F6;
+      position: relative;
+    }
+
+    .app-header {
+      background: #FFFFFF;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .content-area {
+      flex: 1;
       overflow-y: auto;
-      font-size: 14px;
-      margin-top: 8px;
+      padding: 15px;
+      padding-bottom: 80px;
     }
-    .chat-me { color: #1b5e20; }
-    .chat-other { color: #b71c1c; }
-    .chat-meta { font-size: 11px; color: #555; }
-    .chat-block { margin-bottom: 6px; }
-    img.chat-image {
-      max-width: 150px;
-      max-height: 150px;
+
+    /* === CLIENT DASHBOARD (Rise Style) === */
+    .filter-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      overflow-x: auto;
+    }
+
+    .tab {
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: white;
+      border: 1px solid #ddd;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    .astro-card {
+      background: white;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      gap: 12px;
+      position: relative;
+    }
+
+    .astro-img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #ddd;
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 2px solid white;
+      position: absolute;
+      bottom: 12px;
+      left: 54px;
+      background: #9CA3AF;
+      /* gray default */
+    }
+
+    .status-dot.online {
+      background: #22C55E;
+    }
+
+    .status-dot.busy {
+      background: #EF4444;
+    }
+
+    /* === ASTROLOGER DASHBOARD (New UI) === */
+    .astro-dash-header {
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .toggle-row {
+      background: white;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .toggle-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .toggle-switch {
+      width: 40px;
+      height: 22px;
+      background: #E5E7EB;
+      border-radius: 20px;
+      position: relative;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    .toggle-switch.active {
+      background: #22C55E;
+    }
+
+    .toggle-switch.active::after {
+      left: 20px;
+    }
+
+    .emergency-banner {
+      background: #B91C1C;
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 0.9rem;
+    }
+
+    .progress-card {
+      background: white;
+      border-radius: 12px;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .grid-menu {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .grid-item {
+      background: white;
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #555;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .grid-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #F3F4F6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: #333;
+    }
+
+    /* === MODALS === */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .call-popup {
+      background: white;
+      width: 85%;
+      max-width: 320px;
+      border-radius: 20px;
+      padding: 20px;
+      text-align: center;
+      animation: popUp 0.3s ease-out;
+    }
+
+    @keyframes popUp {
+      from {
+        transform: scale(0.8);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .caller-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin: 0 auto 10px;
       display: block;
-      margin-top: 4px;
-      border: 1px solid #ccc;
     }
-    audio { display: block; margin-top: 4px; }
-    .msg-status {
-      font-size: 11px;
-      margin-left: 6px;
+
+    .btn-accept {
+      background: #22C55E;
+      padding: 10px 30px;
+      border-radius: 30px;
+      color: white;
+      font-size: 1.1rem;
+      margin: 10px;
+      border: none;
+    }
+
+    .btn-reject {
+      background: #EF4444;
+      padding: 10px 30px;
+      border-radius: 30px;
+      color: white;
+      font-size: 1.1rem;
+      margin: 10px;
+      border: none;
+    }
+
+    /* === SESSION === */
+    #screen-session {
+      position: fixed;
+      inset: 0;
+      background: black;
+      z-index: 3000;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .video-area {
+      flex: 1;
+      position: relative;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #localVideo {
+      position: absolute;
+      right: 20px;
+      bottom: 140px;
+      width: 90px;
+      height: 120px;
+      background: #333;
+      border-radius: 12px;
+      border: 2px solid white;
+    }
+
+    .controls {
+      position: absolute;
+      bottom: 50px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .circle-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: none;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .controls.hidden {
+      display: none !important;
     }
   </style>
 </head>
+
 <body>
-  <h2>P2P Chat / Audio / Video (Single Page)</h2>
 
-  <div class="row">
-    <label>உங்கள் பெயர்:
-      <input id="nameInput" placeholder="உங்கள் பெயர்" />
-    </label>
-    <button id="registerBtn">Register</button>
+  <!-- Screen: Login -->
+  <div id="screen-login">
+    <div class="form-box">
+      <h2>✨ Cosmic Login</h2>
+      <div id="step-phone">
+        <input id="inputPhone" class="cosmic-input" placeholder="Mobile Number" value="9000000001">
+        <button id="btnSendOtp" class="cosmic-btn">Get OTP</button>
+        <div style="margin-top: 10px; font-size: 0.8rem; color: #ddd;">
+          Use: 9000000001 (Astro) or 8000000001 (Client)
+        </div>
+      </div>
+      <div id="step-otp" class="hidden">
+        <input id="inputOtp" class="cosmic-input" placeholder="OTP" value="1234">
+        <button id="btnVerifyOtp" class="cosmic-btn">Verify</button>
+      </div>
+    </div>
   </div>
 
-  <div class="row">
-    உங்கள் User ID:
-    <span id="myUserId">(register ஆகவில்லை)</span>
+  <!-- Screen: Client Dashboard -->
+  <div id="screen-client" class="dashboard-container hidden">
+    <div class="app-header">
+      <div style="font-weight: bold; font-size: 1.2rem;">Rise Astro</div>
+      <div>
+        <i class="fas fa-wallet"></i> ₹300
+        <i class="fas fa-sign-out-alt" style="margin-left: 10px; cursor: pointer;" onclick="clearSession()"></i>
+      </div>
+    </div>
+    <div class="content-area">
+      <div class="filter-tabs">
+        <div class="tab">All</div>
+        <div class="tab">Love</div>
+        <div class="tab">Career</div>
+      </div>
+      <div id="astroList">
+        <!-- Dynamic Content -->
+      </div>
+    </div>
   </div>
 
-  <div class="row">
-    Target User ID:
-    <input id="targetUserId" placeholder="மற்றவரின் User ID" />
+  <!-- Screen: Astrologer Dashboard -->
+  <div id="screen-astro" class="dashboard-container hidden">
+    <div class="app-header">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <img src="" id="astroAvatar" style="width: 35px; height: 35px; border-radius: 50%;">
+        <div>
+          <div style="font-weight: bold;" id="astroName">Astrologer</div>
+          <div style="font-size: 0.7rem; color: #666;">ID: <span id="astroId">...</span></div>
+        </div>
+      </div>
+      <div>
+        <i class="fas fa-bell"></i>
+        <i class="fas fa-sign-out-alt" style="margin-left: 10px; cursor: pointer;" onclick="clearSession()"></i>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <div class="toggle-item">
+          <span>Chat <small class="text-muted">₹20/min</small></span>
+          <div class="toggle-switch" id="toggleChat"></div>
+        </div>
+        <div class="toggle-item">
+          <span>Call <small class="text-muted">₹20/min</small></span>
+          <div class="toggle-switch" id="toggleCall"></div>
+        </div>
+        <div class="toggle-item">
+          <span>Video Call <small class="text-muted">₹20/min</small></span>
+          <div class="toggle-switch" id="toggleVideo"></div>
+        </div>
+      </div>
+
+      <div class="emergency-banner">
+        <div style="font-weight: bold; margin-bottom: 5px;">Online for Emergency!</div>
+        <div style="font-size: 0.8rem; opacity: 0.9;">Boost your earnings with emergency sessions.</div>
+      </div>
+
+      <div class="progress-card">
+        <div>
+          <div style="font-weight: bold; font-size: 1.1rem;">Today's Progress</div>
+          <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">0 hours left to complete target</div>
+        </div>
+        <div
+          style="width: 60px; height: 60px; border-radius: 50%; border: 4px solid #eee; display: flex; align-items: center; justify-content: center;">
+          0m
+        </div>
+      </div>
+
+      <div class="grid-menu">
+        <div class="grid-item">
+          <div class="grid-icon"><i class="fas fa-phone"></i></div> Call
+        </div>
+        <div class="grid-item">
+          <div class="grid-icon"><i class="fas fa-comment"></i></div> Chat
+        </div>
+        <div class="grid-item">
+          <div class="grid-icon"><i class="fas fa-wallet"></i></div> Wallet
+        </div>
+        <div class="grid-item">
+          <div class="grid-icon"><i class="fas fa-star"></i></div> Reviews
+        </div>
+        <div class="grid-item">
+          <div class="grid-icon"><i class="fas fa-clock"></i></div> History
+        </div>
+        <div class="grid-item">
+          <div class="grid-icon"><i class="fas fa-user"></i></div> Profile
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="row">
-    <button id="btnChat">Start Chat</button>
-    <button id="btnAudio">Start Audio Call</button>
-    <button id="btnVideo">Start Video Call</button>
-    <button id="btnEnd">End Session</button>
+  <!-- Screen: Incoming Call Modal -->
+  <div id="screen-incoming" class="modal-overlay hidden">
+    <div class="call-popup">
+      <img src="https://ui-avatars.com/api/?name=User&background=random" class="caller-avatar">
+      <h3 style="margin: 0;">Incoming Call</h3>
+      <p style="color: #666; margin-bottom: 20px;" id="callerName">Client Name</p>
+      <div>
+        <button class="btn-reject" id="btnReject">Reject</button>
+        <button class="btn-accept" id="btnAccept">Accept</button>
+      </div>
+    </div>
   </div>
 
-  <div class="row">
-    Status:
-    <div id="status"></div>
-    <div id="typingIndicator"></div>
+  <!-- Screen: History -->
+  <div id="screen-history" class="modal-overlay hidden">
+    <div
+      style="background: white; width: 90%; max-width: 400px; height: 80%; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden;">
+      <div
+        style="padding: 15px; background: var(--bg-body); font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
+        <span>Chat History</span>
+        <button onclick="document.getElementById('screen-history').classList.add('hidden')"
+          style="background: none; border: none; font-size: 1.2rem;"><i class="fas fa-times"></i></button>
+      </div>
+      <div id="historyList" style="flex: 1; overflow-y: auto; padding: 15px;">
+        <!-- History Items -->
+      </div>
+    </div>
   </div>
 
-  <div class="row">
-    Session Timer:
-    <span id="timer">00:00</span>
-  </div>
+  <!-- Screen: Session -->
+  <div id="screen-session" class="hidden">
+    <div class="video-area">
+      <video id="remoteVideo" autoplay playsinline></video>
+      <video id="localVideo" autoplay muted playsinline></video>
+      <div id="sessionInfo" style="position: absolute; top: 20px; left: 20px; color: white;">
+        <span id="recIndicator" style="background: red; padding: 2px 8px; border-radius: 4px;">REC</span> <span
+          id="sessionTimer">00:00</span>
+      </div>
+      <div class="controls">
+        <button class="circle-btn" style="background: #333;"><i class="fas fa-video"></i></button>
+        <button class="circle-btn" style="background: #333;"><i class="fas fa-microphone"></i></button>
+        <button class="circle-btn" style="background: #EF4444;" id="btnEnd"><i class="fas fa-phone-slash"></i></button>
+      </div>
+    </div>
 
-  <div class="row">
-    <video id="localVideo" autoplay muted playsinline></video>
-    <video id="remoteVideo" autoplay playsinline></video>
-  </div>
-
-  <h3>Chat</h3>
-  <div id="chatBox"></div>
-  <div class="row">
-    <input id="chatInput" placeholder="Text message type செய்யுங்கள்" />
-    <button id="chatSendBtn">Send Text</button>
-  </div>
-  <div class="row">
-    <button id="recordAudioBtn">🎙 Audio Record</button>
-    <input id="fileInput" type="file" />
-    <span class="chat-meta">Image / PDF / document upload செய்யலாம்</span>
+    <!-- Chat Overlay (Visible in all modes, but dominant in Chat Mode) -->
+    <div class="chat-overlay"
+      style="flex: 1; display:flex; flex-direction:column; background: white; border-top:1px solid #eee;">
+      <div id="messagesList" style="flex:1; overflow-y:auto; padding:15px; background:#f9fafb;"></div>
+      <div class="chat-input" style="padding:10px; border-top:1px solid #eee; display:flex; gap:10px;">
+        <input id="msgInput" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:20px;"
+          placeholder="Type Message...">
+        <button id="btnSend" style="width:40px; height:40px; border-radius:50%; background:#FFD700; border:none;"><i
+            class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://unpkg.com/simple-peer/simplepeer.min.js"></script>
-
   <script>
+    // State
+    const state = { me: null, socket: null, session: null, peer: null };
     const socket = io();
-    const nameInput = document.getElementById('nameInput');
-    const registerBtn = document.getElementById('registerBtn');
-    const myUserIdSpan = document.getElementById('myUserId');
-    const targetUserIdInput = document.getElementById('targetUserId');
+    state.socket = socket;
 
-    const btnChat = document.getElementById('btnChat');
-    const btnAudio = document.getElementById('btnAudio');
-    const btnVideo = document.getElementById('btnVideo');
-    const btnEnd = document.getElementById('btnEnd');
+    // --- DOM ---
+    const sLogin = document.getElementById('screen-login');
+    const sClient = document.getElementById('screen-client');
+    const sAstro = document.getElementById('screen-astro');
+    const sInc = document.getElementById('screen-incoming');
+    const sSes = document.getElementById('screen-session');
 
-    const statusDiv = document.getElementById('status');
-    const typingIndicator = document.getElementById('typingIndicator');
-    const timerSpan = document.getElementById('timer');
+    // Login
+    document.getElementById('btnSendOtp').onclick = async () => {
+      const phone = document.getElementById('inputPhone').value;
+      if (!phone) { alert('Enter Phone'); return; }
 
-    const localVideo = document.getElementById('localVideo');
-    const remoteVideo = document.getElementById('remoteVideo');
+      const btn = document.getElementById('btnSendOtp');
+      const original = btn.textContent;
+      btn.textContent = 'Sending...';
+      btn.disabled = true;
 
-    const chatBox = document.getElementById('chatBox');
-    const chatInput = document.getElementById('chatInput');
-    const chatSendBtn = document.getElementById('chatSendBtn');
+      try {
+        const res = await fetch('/api/send-otp', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone })
+        }).then(r => r.json());
 
-    const recordAudioBtn = document.getElementById('recordAudioBtn');
-    const fileInput = document.getElementById('fileInput');
+        if (res.ok) {
+          document.getElementById('step-phone').classList.add('hidden');
+          document.getElementById('step-otp').classList.remove('hidden');
+        } else {
+          alert(res.error || 'Failed');
+        }
+      } catch (e) { alert('Network Error'); }
 
-    let myUserId = null;
-    let currentSession = null;
-    let peer = null;
-    let localStream = null;
+      btn.textContent = original;
+      btn.disabled = false;
+    };
+    // Persistent Session Helper
+    const SESSION_KEY = 'astro_session';
+    const TWO_MONTHS = 60 * 24 * 60 * 60 * 1000;
 
-    let mediaRecorder = null;
-    let audioChunks = [];
-    let isRecording = false;
-
-    const msgStatusSpans = {};
-    let typingTimeout = null;
-
-    // peer உருவாகும் முன் வரும் signaling messages queue
-    let pendingSignals = [];
-
-    // ExpressTurn STUN/TURN
-    const ICE_SERVERS = [
-  // Google STUN – சில browserக்கு safe fallback
-  { urls: 'stun:stun.l.google.com:19302' },
-
-  // ExpressTurn STUN
-  { urls: 'stun:relay1.expressturn.com:3478' },
-
-  // ExpressTurn TURN – UDP + TCP இரண்டையும் கொடுக்கிறோம்
-  {
-    urls: [
-      'turn:relay1.expressturn.com:3478?transport=udp',
-      'turn:relay1.expressturn.com:3478?transport=tcp'
-    ],
-    username: '000000002080531845',
-    credential: 'q4Z3wtKwfadKoxJ5dU7ghrlTmSc='
-  }
-];
-
-    function logDebug() {
-      console.log('[DEBUG]', ...arguments);
+    function saveSession(user) {
+      const session = { ...user, expiresAt: Date.now() + TWO_MONTHS };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     }
 
-    function setStatus(text) {
-      statusDiv.textContent = text;
-      console.log('[STATUS]', text);
+    function clearSession() {
+      localStorage.removeItem(SESSION_KEY);
+      window.location.reload();
     }
 
-    function appendStatus(text) {
-      statusDiv.textContent += '\n' + text;
-      console.log('[STATUS]', text);
+    function checkSession() {
+      try {
+        const saved = localStorage.getItem(SESSION_KEY);
+        if (!saved) return;
+
+        const session = JSON.parse(saved);
+        if (Date.now() > session.expiresAt) {
+          localStorage.removeItem(SESSION_KEY);
+          return;
+        }
+
+        // Auto Login
+        console.log('Restoring session for:', session.name);
+        state.me = session;
+        // We emit register again to ensure server knows we are online/connected socket-wise
+        socket.emit('register', { name: session.name, phone: session.phone, userId: session.userId }, (ack) => {
+          sLogin.classList.add('hidden');
+          if (session.role === 'astrologer') loadAstroDash(session);
+          else loadClientDash(session);
+        });
+
+      } catch (e) { console.error('Session Error', e); }
     }
 
-    function formatDuration(ms) {
-      const totalSeconds = Math.floor(ms / 1000);
-      const h = Math.floor(totalSeconds / 3600);
-      const m = Math.floor((totalSeconds % 3600) / 60);
-      const s = totalSeconds % 60;
-      if (h > 0) {
-        return (
-          String(h).padStart(2, '0') + ':' +
-          String(m).padStart(2, '0') + ':' +
-          String(s).padStart(2, '0')
-        );
+    // Auto-check on load (after socket connects usually, but here is fine immediately)
+    // We wait for socket connect actually? No, we can emit register, it buffers if not connected,
+    // BUT socket.id is needed in some server logic.
+    // Best to call checkSession inside socket.on('connect')?
+    // Let's call it immediately; socket.io client buffers packets.
+
+    // --- Login Handlers ---
+    document.getElementById('btnVerifyOtp').onclick = async () => {
+      const phone = document.getElementById('inputPhone').value;
+      const otp = document.getElementById('inputOtp').value;
+      const res = await fetch('/api/verify-otp', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, otp })
+      }).then(r => r.json());
+
+      if (res.ok) {
+        state.me = res;
+        saveSession(res); // Save to LocalStorage
+
+        socket.emit('register', { name: res.name, phone: phone }, (ack) => {
+          sLogin.classList.add('hidden');
+          if (res.role === 'astrologer') {
+            loadAstroDash(res);
+          } else {
+            loadClientDash(res);
+          }
+        });
+      } else {
+        alert('Invalid Login');
       }
-      return (
-        String(m).padStart(2, '0') + ':' +
-        String(s).padStart(2, '0')
-      );
+    };
+
+    // Call Check Session
+    checkSession();
+
+    // --- Astrologer Dash Logic ---
+    function loadAstroDash(user) {
+      sAstro.classList.remove('hidden');
+      document.getElementById('astroName').textContent = user.name;
+      document.getElementById('astroId').textContent = user.userId.slice(0, 6);
+      document.getElementById('astroAvatar').src = `https://ui-avatars.com/api/?name=${user.name}&background=random`;
+
+      // Setup Toggles
+      setupToggle('toggleChat', 'chat');
+      setupToggle('toggleCall', 'audio');
+      setupToggle('toggleVideo', 'video');
+
+      // Setup History Button (assuming it is the 3rd item in grid-menu)
+      // Best to add IDs to grid items in HTML, but for now:
+      const items = document.querySelectorAll('.grid-icon');
+      // 0=Wallet, 1=Reviews, 2=History, 3=Profile
+      if (items[2]) {
+        items[2].parentElement.onclick = showHistory;
+      }
     }
+
+    // --- History Logic ---
+    function showHistory() {
+      const modal = document.getElementById('screen-history');
+      const list = document.getElementById('historyList');
+      list.innerHTML = '<div style="text-align:center; margin-top:20px;">Loading...</div>';
+      modal.classList.remove('hidden');
+
+      socket.emit('get-history', (res) => {
+        if (!res.ok || !res.sessions) {
+          list.innerHTML = '<div style="text-align:center; color:red;">Failed to load.</div>';
+          return;
+        }
+
+        if (res.sessions.length === 0) {
+          list.innerHTML = '<div style="text-align:center; color:#999; margin-top:50px;">No History Found</div>';
+          return;
+        }
+
+        list.innerHTML = '';
+        res.sessions.forEach(s => {
+          const date = new Date(s.startTime).toLocaleString();
+          const dura = s.duration ? Math.round(s.duration / 1000) + 's' : 'Ongoing/Failed';
+          const isMe = s.fromUserId === state.me.userId;
+          const otherId = isMe ? s.toUserId : s.fromUserId;
+
+          const item = document.createElement('div');
+          item.style = 'background: #f9f9f9; padding: 10px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid #FFD700;';
+          item.innerHTML = `
+                <div style="font-weight:bold; font-size:0.9rem;">${s.type.toUpperCase()}</div>
+                <div style="font-size:0.8rem; color:#555;">ID: ${otherId ? otherId.slice(0, 6) : 'Unknown'}</div>
+                <div style="font-size:0.75rem; color:#999; display:flex; justify-content:space-between; margin-top:5px;">
+                   <span>${date}</span>
+                   <span>${dura}</span>
+                </div>
+             `;
+          list.appendChild(item);
+        });
+      });
+    }
+
+    function setupToggle(id, type) {
+      const el = document.getElementById(id);
+      el.onclick = () => {
+        el.classList.toggle('active');
+        const isOnline = el.classList.contains('active');
+        // Update Server
+        socket.emit('toggle-status', { online: isOnline, type: type });
+      };
+    }
+
+    // --- Client Dash Logic ---
+    function loadClientDash(user) {
+      sClient.classList.remove('hidden');
+      fetchAstrologers();
+      socket.on('astrologer-update', (list) => {
+        renderAstroList(list);
+      });
+    }
+
+    function fetchAstrologers() {
+      socket.emit('get-astrologers', (res) => {
+        renderAstroList(res.astrologers);
+      });
+    }
+
+    function renderAstroList(list) {
+      const container = document.getElementById('astroList');
+      container.innerHTML = '';
+      list.forEach(a => {
+        const div = document.createElement('div');
+        div.className = 'astro-card';
+        // Style for action buttons
+        const btnStyle = (active, color) => `
+             background: ${active ? 'white' : '#f3f4f6'};
+             border: 1px solid ${active ? color : '#ddd'};
+             color: ${active ? color : '#999'};
+             width: 35px; height: 35px; border-radius: 8px; cursor: pointer;
+             display: flex; align-items: center; justify-content: center;
+             pointer-events: ${active ? 'auto' : 'none'};
+             opacity: ${active ? '1' : '0.5'};
+          `;
+
+        div.innerHTML = `
+             <div style="position: relative;">
+               <img src="https://ui-avatars.com/api/?name=${a.name}&background=random" class="astro-img">
+               <div class="status-dot ${a.isOnline ? 'online' : ''}"></div>
+             </div>
+             <div style="flex: 1;">
+               <div style="display:flex; justify-content:space-between;">
+                 <div style="font-weight: bold;">${a.name}</div>
+                 <div style="font-size:0.8rem; font-weight:bold;">₹${a.price}/min</div>
+               </div>
+               <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">${a.skills.join(', ')}</div>
+
+               <div style="display:flex; gap: 10px;">
+                  <button onclick="requestSession('${a.userId}', 'chat')" style="${btnStyle(a.isChatOnline, '#3B82F6')}">
+                     <i class="fas fa-comment-alt"></i>
+                  </button>
+                  <button onclick="requestSession('${a.userId}', 'audio')" style="${btnStyle(a.isAudioOnline, '#22C55E')}">
+                     <i class="fas fa-phone-alt"></i>
+                  </button>
+                  <button onclick="requestSession('${a.userId}', 'video')" style="${btnStyle(a.isVideoOnline, '#F59E0B')}">
+                     <i class="fas fa-video"></i>
+                  </button>
+               </div>
+             </div>
+          `;
+        container.appendChild(div);
+      });
+    }
+
+    // --- P2P / Call Logic ---
+    window.requestSession = (targetId, type) => {
+      const titles = { chat: 'Chat', audio: 'Audio Call', video: 'Video Call' };
+      // Show Modal
+      const modal = document.createElement('div');
+      modal.id = 'calling-modal';
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+          <div class="call-popup" style="background:white; padding:20px; border-radius:15px;">
+             <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid ${type === 'chat' ? '#3B82F6' : type === 'audio' ? '#22C55E' : '#F59E0B'}; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 0 auto 15px;"></div>
+             <h3>Requesting ${titles[type]}...</h3>
+             <button onclick="document.getElementById('calling-modal').remove()" style="margin-top:10px; padding:8px 20px; border-radius:8px; border:none; background:#ccc;">Cancel</button>
+          </div>
+       `;
+      document.body.appendChild(modal);
+
+      socket.emit('request-session', { toUserId: targetId, type }, (res) => {
+        if (res.ok) {
+          initSession(res.sessionId, targetId, type, true);
+          document.getElementById('calling-modal').remove();
+        } else {
+          document.getElementById('calling-modal').remove();
+          alert('Request failed: ' + res.error);
+        }
+      });
+    };
+
+    socket.on('incoming-session', (data) => {
+      if (state.session) {
+        socket.emit('answer-session', { sessionId: data.sessionId, toUserId: data.fromUserId, accept: false });
+        return;
+      }
+      sInc.classList.remove('hidden');
+      const titles = { chat: 'Chat Request', audio: 'Incoming Call', video: 'Incoming Video Call' };
+      document.getElementById('callerName').innerHTML = `
+           <strong>${titles[data.type]}</strong><br>Client ${data.fromUserId.slice(0, 4)}
+       `;
+
+      // Play Sound
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, ctx.currentTime);
+        if (data.type !== 'chat') {
+          osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 1); // Siren for calls
+        } else {
+          osc.frequency.setValueAtTime(880, ctx.currentTime); // Ding for chat
+          osc.stop(ctx.currentTime + 0.3);
+        }
+        if (data.type !== 'chat') { osc.start(); osc.stop(ctx.currentTime + 2); }
+        else { osc.start(); }
+      } catch (e) { }
+
+      document.getElementById('btnAccept').onclick = () => {
+        sInc.classList.add('hidden');
+        socket.emit('answer-session', { sessionId: data.sessionId, toUserId: data.fromUserId, type: data.type, accept: true });
+        initSession(data.sessionId, data.fromUserId, data.type, false);
+      };
+      document.getElementById('btnReject').onclick = () => {
+        sInc.classList.add('hidden');
+        socket.emit('answer-session', { sessionId: data.sessionId, toUserId: data.fromUserId, accept: false });
+      };
+    });
+
+    socket.on('session-answered', (data) => {
+      if (data.accept) {
+        startTimer(); // Start timer for Caller (Client) when accepted
+        if (state.session.type !== 'chat') {
+          startWebRTC(true);
+        }
+      } else {
+        alert('Request Rejected');
+        sSes.classList.add('hidden');
+        state.session = null;
+      }
+    });
+
+    // --- Timer Logic ---
+    let timerInt = null;
+    let timerSec = 0;
 
     function startTimer() {
-      if (!currentSession) return;
-      currentSession.startTime = Date.now();
-      timerSpan.textContent = '00:00';
-      if (currentSession.timerInterval) {
-        clearInterval(currentSession.timerInterval);
-      }
-      currentSession.timerInterval = setInterval(() => {
-        const diff = Date.now() - currentSession.startTime;
-        timerSpan.textContent = formatDuration(diff);
+      clearInterval(timerInt);
+      timerSec = 0;
+      updateTimerDisplay();
+      timerInt = setInterval(() => {
+        timerSec++;
+        updateTimerDisplay();
       }, 1000);
     }
 
-    function stopTimerAndGetDuration() {
-      if (!currentSession) return 0;
-      if (currentSession.timerInterval) {
-        clearInterval(currentSession.timerInterval);
-        currentSession.timerInterval = null;
-      }
-      const end = Date.now();
-      const duration = end - (currentSession.startTime || end);
-      timerSpan.textContent = '00:00';
-      return duration;
+    function stopTimer() {
+      clearInterval(timerInt);
     }
 
-    function resetMedia() {
-      if (peer) {
-        logDebug('Peer destroy() called');
-        peer.destroy();
-        peer = null;
-      }
-      if (localStream) {
-        localStream.getTracks().forEach(t => t.stop());
-        localStream = null;
-      }
-      localVideo.srcObject = null;
-      remoteVideo.srcObject = null;
+    function updateTimerDisplay() {
+      const m = Math.floor(timerSec / 60).toString().padStart(2, '0');
+      const s = (timerSec % 60).toString().padStart(2, '0');
+      document.getElementById('sessionTimer').innerText = `${m}:${s}`;
     }
 
-    function resetSession(sendToRemote) {
-      if (!currentSession) return;
-      const duration = stopTimerAndGetDuration();
+    // --- Session / WebRTC ---
+    function initSession(sid, pid, type, isInit) {
+      // Clear previous chat
+      document.getElementById('messagesList').innerHTML = '';
 
-      if (sendToRemote) {
-        socket.emit('session-ended', {
-          sessionId: currentSession.id,
-          toUserId: currentSession.partnerUserId,
-          type: currentSession.type,
-          durationMs: duration
-        });
-      }
+      state.session = { id: sid, partnerId: pid, type };
+      sSes.classList.remove('hidden');
 
-      setStatus(
-        'Session ended. Type=' + currentSession.type +
-        ', Duration=' + formatDuration(duration)
-      );
-
-      typingIndicator.textContent = '';
-      resetMedia();
-      currentSession = null;
-      pendingSignals = [];
-    }
-
-    function makeMessageId() {
-      return 'm-' + Date.now() + '-' + Math.random().toString(36).slice(2);
-    }
-
-    // ===== Registration =====
-    socket.on('connect', () => {
-      setStatus('Socket connected: ' + socket.id);
-
-      const savedUserId = localStorage.getItem('p2pUserId');
-      const savedName = localStorage.getItem('p2pName');
-      if (savedName) {
-        nameInput.value = savedName;
-      }
-      if (savedName && savedUserId) {
-        logDebug('Auto-registering with saved ID', savedUserId);
-        socket.emit(
-          'register',
-          { name: savedName, existingUserId: savedUserId },
-          (res) => {
-            if (res.ok) {
-              myUserId = res.userId;
-              myUserIdSpan.textContent = myUserId;
-              setStatus('Re-registered with existing ID.');
-            } else {
-              setStatus('Auto register failed: ' + res.error);
-            }
-          }
-        );
-      }
-    });
-
-    registerBtn.onclick = () => {
-      const name = nameInput.value.trim();
-      if (!name) {
-        alert('உங்கள் பெயர் எழுதுங்கள்');
-        return;
-      }
-      const existingUserId = localStorage.getItem('p2pUserId') || null;
-      logDebug('Manual register clicked. existingUserId =', existingUserId);
-      socket.emit(
-        'register',
-        { name: name, existingUserId: existingUserId },
-        (res) => {
-          if (!res.ok) {
-            alert('Register error: ' + res.error);
-            return;
-          }
-          myUserId = res.userId;
-          myUserIdSpan.textContent = myUserId;
-          localStorage.setItem('p2pUserId', myUserId);
-          localStorage.setItem('p2pName', name);
-          setStatus('Registered as ' + name + ' (' + myUserId + ')');
-        }
-      );
-    };
-
-    // ===== Session start =====
-    function startSession(type) {
-      if (!myUserId) {
-        alert('முதலில் register செய்யுங்கள்.');
-        return;
-      }
-      if (currentSession) {
-        alert('Already in a session. முதலில் End Session அழுத்துங்கள்.');
-        return;
-      }
-      const targetId = targetUserIdInput.value.trim();
-      if (!targetId) {
-        alert('Target User ID தேவை.');
-        return;
-      }
-
-      logDebug('Requesting session', { type: type, to: targetId });
-      socket.emit('request-session', { toUserId: targetId, type: type }, (res) => {
-        if (!res.ok) {
-          logDebug('request-session failed', res);
-          if (res.code === 'offline') {
-            setStatus('User offline.');
-          } else if (res.code === 'busy') {
-            setStatus('User busy (already in another session).');
-          } else {
-            setStatus('Request failed: ' + res.error);
-          }
-          return;
-        }
-        const sessionId = res.sessionId;
-        currentSession = {
-          id: sessionId,
-          type: type,
-          partnerUserId: targetId,
-          startTime: null,
-          timerInterval: null
-        };
-        pendingSignals = [];
-        setStatus(
-          'Session request sent (' + type + ') to ' +
-          targetId + ' (sessionId=' + sessionId + ')'
-        );
-
-        if (type === 'audio' || type === 'video') {
-          createPeer(true, type);
-        }
-      });
-    }
-
-    btnChat.onclick = function () { startSession('chat'); };
-    btnAudio.onclick = function () { startSession('audio'); };
-    btnVideo.onclick = function () { startSession('video'); };
-    btnEnd.onclick = function () { resetSession(true); };
-
-    // ===== Incoming session =====
-    socket.on('incoming-session', function (data) {
-      const sessionId = data.sessionId;
-      const fromUserId = data.fromUserId;
-      const type = data.type;
-
-      logDebug('incoming-session', data);
-
-      if (currentSession) {
-        socket.emit('answer-session', {
-          sessionId: sessionId,
-          toUserId: fromUserId,
-          type: type,
-          accept: false
-        });
-        setStatus(
-          'Received ' + type + ' request from ' + fromUserId +
-          ', but I am busy; auto-rejected.'
-        );
-        return;
-      }
-
-      if (!myUserId) {
-        setStatus('You are not registered; rejecting session.');
-        socket.emit('answer-session', {
-          sessionId: sessionId,
-          toUserId: fromUserId,
-          type: type,
-          accept: false
-        });
-        return;
-      }
-
-      var ok = confirm(
-        'Incoming ' + type + ' request from ' + fromUserId + '. Accept?'
-      );
-
-      socket.emit('answer-session', {
-        sessionId: sessionId,
-        toUserId: fromUserId,
-        type: type,
-        accept: ok
-      });
-
-      if (!ok) {
-        setStatus('Rejected ' + type + ' session from ' + fromUserId);
-        return;
-      }
-
-      currentSession = {
-        id: sessionId,
-        type: type,
-        partnerUserId: fromUserId,
-        startTime: null,
-        timerInterval: null
-      };
-      pendingSignals = [];
-      setStatus(
-        'Accepted ' + type + ' session from ' + fromUserId +
-        ' (sessionId=' + sessionId + ')'
-      );
-
-      if (type === 'audio' || type === 'video') {
-        createPeer(false, type);
-      } else if (type === 'chat') {
+      // Only start timer immediately if we are the RECEIVER (Astrologer accepting)
+      // If we are initiator (Client), we wait for 'session-answered'
+      if (!isInit) {
         startTimer();
       }
-    });
 
-    // ===== Answer (caller side) =====
-    socket.on('session-answered', function (data) {
-      const sessionId = data.sessionId;
-      const fromUserId = data.fromUserId;
-      const type = data.type;
-      const accept = data.accept;
+      // UI Mode
+      const vArea = document.querySelector('.video-area');
+      const localV = document.getElementById('localVideo');
+      const remoteV = document.getElementById('remoteVideo');
+      const controls = document.querySelector('.controls');
 
-      logDebug('session-answered', data);
+      const sessionInfo = document.getElementById('sessionInfo');
+      const recInd = document.getElementById('recIndicator');
+      const timer = document.getElementById('sessionTimer');
 
-      if (!currentSession || currentSession.id !== sessionId) return;
+      // Reset Styles first
+      vArea.style = '';
+      localV.style.display = '';
+      remoteV.style.display = '';
+      controls.style.display = '';
 
-      if (!accept) {
-        setStatus(type + ' session rejected by ' + fromUserId);
-        resetSession(false);
-        return;
-      }
+      // Reset Info Bar
+      sessionInfo.style.position = 'absolute';
+      sessionInfo.style.top = '20px';
+      sessionInfo.style.left = '20px';
+      sessionInfo.style.display = 'block';
+      sessionInfo.style.color = 'white';
+      recInd.style.display = 'inline';
+      timer.style.color = 'white';
 
-      setStatus(type + ' session accepted by ' + fromUserId);
+
       if (type === 'chat') {
-        startTimer();
-      }
-    });
+        // === CHAT MODE ===
+        vArea.style.height = '60px';
+        vArea.style.flex = '0 0 60px';
+        vArea.style.background = '#FFFFFF';
+        vArea.style.borderBottom = '1px solid #ddd';
+        vArea.style.display = 'flex';
+        vArea.style.alignItems = 'center';
+        vArea.style.justifyContent = 'space-between';
+        vArea.style.padding = '0 15px';
 
-    // ===== WebRTC with ExpressTurn ICE =====
-    async function createPeer(initiator, type) {
-      try {
-        logDebug('createPeer called', {
-          initiator: initiator,
-          type: type,
-          ICE_SERVERS: ICE_SERVERS
-        });
+        localV.style.display = 'none';
+        remoteV.style.display = 'none';
+        controls.classList.add('hidden');
 
-        if (type === 'audio' || type === 'video') {
-          var constraints =
-            type === 'audio'
-              ? { audio: true, video: false }
-              : { audio: true, video: true };
+        // Hide REC
+        recInd.style.display = 'none';
 
-          logDebug('Requesting getUserMedia', constraints);
-          localStream = await navigator.mediaDevices.getUserMedia(constraints);
-          logDebug('getUserMedia success, stream tracks=', localStream.getTracks());
-          localVideo.srcObject = localStream;
-        }
+        // Style Info Bar for Header
+        sessionInfo.style.position = 'static';
+        sessionInfo.style.color = 'black';
+        timer.style.color = 'black';
+        timer.style.fontWeight = 'bold';
+        timer.style.fontSize = '1.1rem';
 
-        peer = new SimplePeer({
-  initiator: initiator,
-  trickle: false,
-  stream: localStream || undefined,
-  config: {
-    iceServers: ICE_SERVERS,
-    // எல்லா முடிச்சையும் browser decide பண்ணிடட்டும்
-    iceTransportPolicy: 'all'
-  }
-});
-
-        logDebug('SimplePeer created. Initiator =', initiator);
-
-        // pending signals flush
-        if (pendingSignals.length > 0) {
-          logDebug('Flushing pendingSignals', pendingSignals);
-          pendingSignals.forEach(function (sig) {
-            peer.signal(sig);
-          });
-          pendingSignals = [];
-        }
-
-        if (peer._pc) {
-          peer._pc.addEventListener('iceconnectionstatechange', function () {
-            var state = peer._pc.iceConnectionState;
-            logDebug('ICE state =', state);
-            appendStatus('ICE state: ' + state);
-          });
-
-          peer._pc.addEventListener('connectionstatechange', function () {
-            var state = peer._pc.connectionState;
-            logDebug('PC connectionState =', state);
-            appendStatus('PC connectionState: ' + state);
-          });
-        }
-
-        peer.on('signal', function (data) {
-          if (!currentSession) return;
-          logDebug('peer signal', { hasSdp: !!data.sdp, type: data.type });
-          socket.emit('signal', {
-            sessionId: currentSession.id,
-            toUserId: currentSession.partnerUserId,
-            signal: data
-          });
-        });
-
-        peer.on('stream', function (remoteStream) {
-          logDebug('peer remote stream event', remoteStream.getTracks());
-          remoteVideo.srcObject = remoteStream;
-        });
-
-        peer.on('connect', function () {
-          logDebug('peer CONNECT event fired');
-          setStatus('WebRTC connected (' + currentSession.type + ')');
-          startTimer();
-        });
-
-        peer.on('error', function (err) {
-          console.error('Peer error:', err);
-          appendStatus('Peer error: ' + err.message);
-        });
-
-        peer.on('close', function () {
-          logDebug('peer CLOSE event fired');
-        });
-      } catch (err) {
-        console.error('createPeer error', err);
-        appendStatus('Media error: ' + err.message);
-        alert('Media error: ' + err.message);
-      }
-    }
-
-    // ===== signaling from server → peer / queue =====
-    socket.on('signal', function (data) {
-      var sessionId = data.sessionId;
-      var fromUserId = data.fromUserId;
-      var signal = data.signal;
-
-      logDebug('signal from server', {
-        sessionId: sessionId,
-        fromUserId: fromUserId,
-        type: signal.type
-      });
-
-      if (!currentSession || currentSession.id !== sessionId) {
-        logDebug('signal dropped – no matching session');
-        return;
-      }
-
-      if (!peer) {
-        logDebug('peer is null – queuing signal');
-        pendingSignals.push(signal);
-        return;
-      }
-
-      logDebug('delivering signal to peer');
-      peer.signal(signal);
-    });
-
-    // ===== Chat display =====
-    function addChatMessage(fromLabel, isMe, content, timestamp, messageId, initialStatus) {
-      var wrapper = document.createElement('div');
-      wrapper.className = 'chat-block';
-
-      var meta = document.createElement('div');
-      meta.className = 'chat-meta';
-      meta.textContent =
-        '[' + new Date(timestamp).toLocaleTimeString() + '] ' +
-        (isMe ? 'நான்' : fromLabel);
-      wrapper.appendChild(meta);
-
-      if (content.type === 'text') {
-        var span = document.createElement('div');
-        span.className = isMe ? 'chat-me' : 'chat-other';
-        span.textContent = content.text;
-        wrapper.appendChild(span);
-      } else if (content.type === 'audio') {
-        var infoA = document.createElement('div');
-        infoA.textContent = 'Audio message:';
-        wrapper.appendChild(infoA);
-        var audio = document.createElement('audio');
-        audio.controls = true;
-        audio.src = content.url;
-        wrapper.appendChild(audio);
-      } else if (content.type === 'file') {
-        var infoF = document.createElement('div');
-        infoF.textContent = 'File:';
-        wrapper.appendChild(infoF);
-
-        if (content.mimeType && content.mimeType.indexOf('image/') === 0) {
-          var img = document.createElement('img');
-          img.src = content.url;
-          img.alt = content.name || 'image';
-          img.className = 'chat-image';
-          wrapper.appendChild(img);
+        // Ensure End Button Exists
+        let btnEndTitle = document.getElementById('btnEndChat');
+        if (!btnEndTitle) {
+          const btn = document.createElement('button');
+          btn.id = 'btnEndChat';
+          btn.innerHTML = 'End Chat';
+          btn.style = 'background:#EF4444; color:white; border:none; padding:8px 15px; border-radius:20px; font-weight:bold; cursor:pointer; font-size:0.9rem;';
+          btn.onclick = () => document.getElementById('btnEnd').click();
+          vArea.appendChild(btn);
         } else {
-          var link = document.createElement('a');
-          link.href = content.url;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          link.textContent = content.name || 'Download file';
-          wrapper.appendChild(link);
+          btnEndTitle.style.display = 'block';
         }
-      }
 
-      if (isMe && messageId) {
-        var statusSpan = document.createElement('span');
-        statusSpan.className = 'msg-status';
-        if (initialStatus === 'queued') statusSpan.textContent = '…';
-        else if (initialStatus === 'seen') statusSpan.textContent = '✓✓';
-        else statusSpan.textContent = '✓';
-        wrapper.appendChild(statusSpan);
-        msgStatusSpans[messageId] = statusSpan;
-      }
-
-      chatBox.appendChild(wrapper);
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    // ===== Text chat send =====
-    chatSendBtn.onclick = function () {
-      if (!currentSession || currentSession.type !== 'chat') {
-        alert('Chat session active இல்லை.');
-        return;
-      }
-      var text = chatInput.value.trim();
-      if (!text) return;
-
-      var toUserId = currentSession.partnerUserId;
-      var sessionId = currentSession.id;
-      var ts = Date.now();
-      var messageId = makeMessageId();
-      var content = { type: 'text', text: text };
-
-      socket.emit('chat-message', {
-        toUserId: toUserId,
-        sessionId: sessionId,
-        content: content,
-        timestamp: ts,
-        messageId: messageId
-      });
-
-      addChatMessage('நான்', true, content, ts, messageId, 'sent');
-      chatInput.value = '';
-      sendTyping(false);
-    };
-
-    socket.on('chat-message', function (data) {
-      var fromUserId = data.fromUserId;
-      var content = data.content;
-      var sessionId = data.sessionId;
-      var timestamp = data.timestamp;
-      var messageId = data.messageId;
-
-      logDebug('chat-message received', {
-        fromUserId: fromUserId,
-        sessionId: sessionId,
-        messageId: messageId
-      });
-
-      if (!currentSession || currentSession.id !== sessionId) return;
-      addChatMessage(fromUserId, false, content, timestamp, null, null);
-
-      socket.emit('message-delivered', {
-        toUserId: fromUserId,
-        messageId: messageId
-      });
-    });
-
-    // ===== Tick status =====
-    socket.on('message-status', function (data) {
-      var messageId = data.messageId;
-      var status = data.status;
-      var span = msgStatusSpans[messageId];
-      if (!span) return;
-      if (status === 'queued') {
-        span.textContent = '…';
-      } else if (status === 'sent') {
-        span.textContent = '✓';
-      } else if (status === 'seen') {
-        span.textContent = '✓✓';
-      }
-    });
-
-    // ===== Typing indicator =====
-    function sendTyping(isTyping) {
-      if (!currentSession || currentSession.type !== 'chat') return;
-      socket.emit('typing', {
-        toUserId: currentSession.partnerUserId,
-        isTyping: isTyping
-      });
-    }
-
-    chatInput.addEventListener('input', function () {
-      if (!currentSession || currentSession.type !== 'chat') return;
-      sendTyping(true);
-      if (typingTimeout) clearTimeout(typingTimeout);
-      typingTimeout = setTimeout(function () {
-        sendTyping(false);
-      }, 1200);
-    });
-
-    socket.on('typing', function (data) {
-      var fromUserId = data.fromUserId;
-      var isTyping = data.isTyping;
-
-      if (!currentSession || currentSession.type !== 'chat') return;
-      if (currentSession.partnerUserId !== fromUserId) return;
-      typingIndicator.textContent = isTyping ? 'அவர்கள் typing…' : '';
-    });
-
-    chatInput.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        chatSendBtn.click();
-      }
-    });
-
-    // ===== Audio record & send (chat message) =====
-    recordAudioBtn.onclick = async function () {
-      if (!currentSession || currentSession.type !== 'chat') {
-        alert('முதலில் chat session start செய்யுங்கள்.');
-        return;
-      }
-
-      if (!isRecording) {
-        try {
-          var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          audioChunks = [];
-          mediaRecorder = new MediaRecorder(stream);
-
-          mediaRecorder.ondataavailable = function (e) {
-            if (e.data && e.data.size > 0) {
-              audioChunks.push(e.data);
-            }
-          };
-
-          mediaRecorder.onstop = async function () {
-            stream.getTracks().forEach(function (t) { t.stop(); });
-            var blob = new Blob(audioChunks, { type: 'audio/webm' });
-            var file = new File(
-              [blob],
-              'audio-' + Date.now() + '.webm',
-              { type: 'audio/webm' }
-            );
-            await uploadAndSendFile(file, 'audio');
-            isRecording = false;
-            recordAudioBtn.textContent = '🎙 Audio Record';
-          };
-
-          mediaRecorder.start();
-          isRecording = true;
-          recordAudioBtn.textContent = '⏹ Stop Recording';
-        } catch (err) {
-          console.error('Audio record error:', err);
-          alert('Mic access error: ' + err.message);
-        }
       } else {
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-          mediaRecorder.stop();
-        }
-      }
-    };
+        // === AUDIO / VIDEO MODE ===
+        if (document.getElementById('btnEndChat')) document.getElementById('btnEndChat').style.display = 'none';
+        controls.classList.remove('hidden');
 
-    // ===== File upload =====
-    fileInput.onchange = async function (e) {
-      var file = e.target.files[0];
-      if (!file) return;
-      if (!currentSession || currentSession.type !== 'chat') {
-        alert('Chat session active இல்லை. முதலில் chat session start செய்யுங்கள்.');
-        fileInput.value = '';
-        return;
-      }
-
-      await uploadAndSendFile(file, 'file');
-      fileInput.value = '';
-    };
-
-    async function uploadAndSendFile(file, kind) {
-      try {
-        var fd = new FormData();
-        fd.append('file', file);
-
-        var res = await fetch('/upload', {
-          method: 'POST',
-          body: fd
-        });
-        var json = await res.json();
-        if (!json.ok) {
-          alert('Upload failed: ' + json.error);
-          return;
-        }
-
-        var toUserId = currentSession.partnerUserId;
-        var sessionId = currentSession.id;
-        var ts = Date.now();
-        var messageId = makeMessageId();
-
-        var content;
-        if (kind === 'audio') {
-          content = {
-            type: 'audio',
-            url: json.url,
-            mimeType: json.mimeType,
-            name: json.originalName
-          };
+        if (type === 'audio') {
+          vArea.style.height = '250px';
+          vArea.style.flex = '0 0 250px';
+          vArea.style.background = '#1F2937';
+          localV.style.display = 'none';
+          remoteV.style.display = 'none';
+          timer.style.color = 'white';
         } else {
-          content = {
-            type: 'file',
-            url: json.url,
-            mimeType: json.mimeType,
-            name: json.originalName
-          };
+          vArea.style.flex = '1';
+          vArea.style.background = 'black';
+          localV.style.display = 'block';
+          remoteV.style.display = 'block';
+          timer.style.color = 'white';
         }
-
-        socket.emit('chat-message', {
-          toUserId: toUserId,
-          sessionId: sessionId,
-          content: content,
-          timestamp: ts,
-          messageId: messageId
-        });
-
-        addChatMessage('நான்', true, content, ts, messageId, 'sent');
-      } catch (err) {
-        console.error('uploadAndSendFile error', err);
-        alert('Upload error: ' + err.message);
       }
+
+      if (!isInit && type !== 'chat') startWebRTC(false);
     }
 
-    // ===== Session ended from remote =====
-    socket.on('session-ended', function (data) {
-      var sessionId = data.sessionId;
-      var fromUserId = data.fromUserId;
-      var type = data.type;
-      var durationMs = data.durationMs;
+    async function startWebRTC(initiator) {
+      if (state.session.type === 'chat') return; // No AV for chat only mode in this demo
 
-      logDebug('session-ended (remote)', data);
+      try {
+        const constraints = {
+          audio: true,
+          video: state.session.type === 'video'
+        };
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
-      if (!currentSession || currentSession.id !== sessionId) return;
+        // UI Feedback
+        if (state.session.type === 'video') {
+          document.getElementById('localVideo').srcObject = stream;
+        }
 
-      stopTimerAndGetDuration();
-      var d = durationMs || 0;
-      setStatus(
-        'Session ended by ' + fromUserId +
-        '. Type=' + type +
-        ', Duration=' + formatDuration(d)
-      );
-      typingIndicator.textContent = '';
-      resetMedia();
-      currentSession = null;
-      pendingSignals = [];
+        const p = new SimplePeer({ initiator, stream, trickle: false });
+        p.on('signal', d => socket.emit('signal', { sessionId: state.session.id, toUserId: state.session.partnerId, signal: d }));
+        p.on('stream', s => {
+          const rv = document.getElementById('remoteVideo');
+          rv.srcObject = s;
+          if (state.session.type === 'audio') {
+            rv.style.opacity = 0; // Hide video element but keep audio
+            // Show audio wave or avatar?
+          } else {
+            rv.style.opacity = 1;
+          }
+        });
+
+        socket.on('signal', d => { if (d.sessionId === state.session.id) p.signal(d.signal); });
+
+        state.peer = p;
+        state.localStream = stream;
+      } catch (e) { console.error(e); alert('Device Error: ' + e.message); }
+    }
+
+    document.getElementById('btnEnd').onclick = () => {
+      socket.emit('session-ended', { sessionId: state.session.id, toUserId: state.session.partnerId });
+      endLocal();
+    };
+    socket.on('session-ended', endLocal);
+
+    // Update endLocal to stop timer
+    function endLocal() {
+      stopTimer(); // STOP TIMER
+      if (state.peer) state.peer.destroy();
+      if (state.localStream) state.localStream.getTracks().forEach(t => t.stop());
+      sSes.classList.add('hidden');
+      state.session = null;
+      // ... existing resets
+      document.querySelector('.video-area').style = '';
+      document.getElementById('localVideo').srcObject = null;
+      document.querySelector('.controls').classList.remove('hidden');
+    }
+
+    // --- Chat Logic ---
+    const appendMsg = (txt, isMe) => {
+      const div = document.createElement('div');
+      div.style.maxWidth = '80%';
+      div.style.padding = '8px 12px';
+      div.style.borderRadius = '12px';
+      div.style.marginBottom = '8px';
+      div.style.fontSize = '0.9rem';
+      div.style.alignSelf = isMe ? 'flex-end' : 'flex-start';
+      div.style.background = isMe ? '#FFD700' : 'white';
+      div.style.border = isMe ? 'none' : '1px solid #eee';
+      div.style.color = 'black';
+      div.style.marginLeft = isMe ? 'auto' : '0';
+      div.textContent = txt;
+      document.getElementById('messagesList').appendChild(div);
+      document.getElementById('messagesList').scrollTop = document.getElementById('messagesList').scrollHeight;
+    };
+
+    document.getElementById('btnSend').onclick = () => {
+      const txt = document.getElementById('msgInput').value.trim();
+      if (!txt) return;
+      socket.emit('chat-message', {
+        toUserId: state.session.partnerId, sessionId: state.session.id,
+        content: { type: 'text', text: txt }, messageId: Date.now()
+      });
+      appendMsg(txt, true);
+      document.getElementById('msgInput').value = '';
+    };
+
+    socket.on('chat-message', d => {
+      if (state.session && d.fromUserId === state.session.partnerId) {
+        appendMsg(d.content.text || 'Message', false);
+      }
     });
+
   </script>
 </body>
+
 </html>
