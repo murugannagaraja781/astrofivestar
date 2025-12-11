@@ -12,6 +12,12 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 
+interface WebViewPermissionRequest {
+  grant: (resources: string[]) => void;
+  deny: () => void;
+  resources: string[];
+}
+
 function App(): React.JSX.Element {
   const [hasPermissions, setHasPermissions] = useState(false);
 
@@ -22,6 +28,8 @@ function App(): React.JSX.Element {
           const granted = await PermissionsAndroid.requestMultiple([
             PermissionsAndroid.PERMISSIONS.CAMERA,
             PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+            PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+            PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
           ]);
 
           if (
@@ -64,6 +72,9 @@ function App(): React.JSX.Element {
         style={styles.webview}
         javaScriptEnabled={true}
         domStorageEnabled={true}
+        allowFileAccess={true}
+        allowFileAccessFromFileURLs={true}
+        allowUniversalAccessFromFileURLs={true}
         allowsInlineMediaPlayback={true}
         mediaPlaybackRequiresUserAction={false}
         startInLoadingState={true}
@@ -72,14 +83,9 @@ function App(): React.JSX.Element {
             <ActivityIndicator size="large" color="#0000ff" />
           </View>
         )}
-        // Important for Android WebRTC
-        userAgent={
-          Platform.OS === 'android'
-            ? 'Mozilla/5.0 (Linux; Android 10; Android SDK built for x86) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36'
-            : undefined
-        }
+        mediaCapturePermissionGrantType="grant"
         originWhitelist={['*']}
-        onPermissionRequest={(request) => {
+        onPermissionRequest={(request: WebViewPermissionRequest) => {
           request.grant(request.resources);
         }}
       />

@@ -1260,6 +1260,10 @@
           audio: true,
           video: state.session.type === 'video'
         };
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          alert('WebRTC Error: Camera access requires HTTPS. You are likely on HTTP.');
+          throw new Error('Secure Context Required (HTTPS)');
+        }
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
         // UI Feedback
