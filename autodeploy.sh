@@ -23,28 +23,42 @@ echo -e "${GREEN}Starting Full Auto-Deployment for $DOMAIN...${NC}"
 cd /root || cd ~ || cd /
 
 # 1. STOP & CLEAN OLD PROCESSES
-echo -e "${GREEN}[1/8] Cleaning up old processes...${NC}"
+echo -e "${GREEN}[1/8] Stopping existing sites...${NC}"
+# Stop the specific app
 pm2 stop $PM2_NAME 2>/dev/null
 pm2 delete $PM2_NAME 2>/dev/null
+# Flush logs to save space
+pm2 flush
 
-# Kill any process on port 3000 (Force Kill)
+# Kill any rogue process on port 3000
 PID=$(lsof -t -i:$PORT)
 if [ -n "$PID" ]; then
   echo "Killing process on port $PORT (PID: $PID)..."
   kill -9 $PID
 fi
 
-# 2. PREPARE DIRECTORY (FRESH CLONE)
-echo -e "${GREEN}[2/8] Fetching fresh code from GitHub...${NC}"
-echo "Forcing removal of $APP_DIR..."
-rm -rf $APP_DIR
+# 2. PREPARE DIRECTORY (CLEAN & PULL)
+echo -e "${GREEN}[2/8] Downloading fresh code...${NC}"
 
-# Clone Repo
-git clone $REPO_URL $APP_DIR
+# If directory exists, reset it. If not, clone it.
+if [ -d "$APP_DIR" ]; then
+    cd $APP_DIR
+    # This matches the user request: "delete then download" equivalent
+    # We fetch ALL new data, then Hard Reset to match origin/main exactly.
+    # This discards ANY local changes/files not in git.
+    git fetch --all
+    git reset --hard origin/main
+    git pull origin main
+else
+    # First time setup
+    git clone $REPO_URL $APP_DIR
+    cd $APP_DIR
+fi
 
 # 3. INSTALL DEPENDENCIES
-echo -e "${GREEN}[3/8] Installing Dependencies...${NC}"
-cd $APP_DIR
+echo -e "${GREEN}[3/8] Installing Dependencies & Clean Install...${NC}"
+# Remove old modules to ensure clean state
+rm -rf node_modules package-lock.json
 npm install
 
 # 4. START APP WITH PM2
