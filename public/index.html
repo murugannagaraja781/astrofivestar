@@ -10,11 +10,17 @@
   <style>
     :root {
       /* Shared Colors */
-      --primary: #FFD700;
-      --bg-body: #F3F4F6;
-      --accent-green: #22C55E;
-      --accent-red: #EF4444;
-      --border: #E5E7EB;
+      /* Shared Colors - Milk Green Luxury Theme */
+      --primary: #047857;
+      /* Deep Emerald for Text/Important */
+      --secondary: #6EE7B7;
+      /* Soft Milk Green */
+      --bg-body: #F0FDF4;
+      /* Very Light Mint Background */
+      --accent-gold: #D4AF37;
+      /* Luxury Gold Accent */
+      --surface: #FFFFFF;
+      --border: #A7F3D0;
     }
 
     * {
@@ -51,7 +57,7 @@
     #screen-login {
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg, #4c1d95, #312e81, #1e3a8a);
+      background: linear-gradient(135deg, #065F46, #059669, #34D399);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -60,9 +66,10 @@
     }
 
     .form-box {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
       border-radius: 20px;
       padding: 30px;
       width: 90%;
@@ -86,9 +93,12 @@
       margin-top: 10px;
       border-radius: 8px;
       border: none;
-      background: linear-gradient(to right, #059669, #0d9488);
+      background: linear-gradient(to right, #059669, #047857);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
       color: white;
       cursor: pointer;
+      font-weight: 600;
+      letter-spacing: 0.5px;
     }
 
     /* === DASHBOARD LAYOUT === */
@@ -98,17 +108,20 @@
       flex-direction: column;
       max-width: 480px;
       margin: 0 auto;
-      background: #F3F4F6;
+      background: var(--bg-body);
       position: relative;
     }
 
     .app-header {
-      background: #FFFFFF;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
       padding: 15px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      box-shadow: none;
+      color: var(--primary);
     }
 
     .content-area {
@@ -710,8 +723,44 @@
   <script>
     // State
     const state = { me: null, socket: null, session: null, peer: null };
+
+    // Test Sound Function
+    window.testSound = () => {
+      const audio = new Audio('sound.mpeg');
+      audio.volume = 1.0;
+      const btn = document.querySelector('button[onclick="testSound()"]');
+      const originalText = btn.innerHTML;
+
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Playing...';
+
+      audio.play()
+        .then(() => {
+          setTimeout(() => {
+            audio.pause();
+            btn.innerHTML = originalText;
+          }, 5000);
+        })
+        .catch(e => {
+          alert('Sound Error: ' + e.message + '\nEnsure sound.mpeg is on server.');
+          btn.innerHTML = originalText;
+        });
+    };
     const socket = io();
     state.socket = socket;
+
+    // --- Automatic Reconnection Handling ---
+    // If the app disconnects (internet lost, backgrounded), we must re-register on reconnect.
+    socket.on('connect', () => {
+      console.log('Socket Connected:', socket.id);
+      if (state.me) {
+        console.log('Re-registering session on reconnect...');
+        socket.emit('register', {
+          name: state.me.name,
+          phone: state.me.phone,
+          userId: state.me.userId
+        });
+      }
+    });
 
     // --- DOM ---
     const sLogin = document.getElementById('screen-login');
@@ -1260,10 +1309,6 @@
           audio: true,
           video: state.session.type === 'video'
         };
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          alert('WebRTC Error: Camera access requires HTTPS. You are likely on HTTP.');
-          throw new Error('Secure Context Required (HTTPS)');
-        }
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
         // UI Feedback
