@@ -69,6 +69,74 @@ function computeMahadashaSequence(date, moonLongitude, years = 120) {
     return sequence;
 }
 
+function computeBhuktisForMahadasha(mahadasha) {
+    // Bhukti (Antardasha) follows same lord sequence, starting from Mahadasha Lord.
+    // Formula: (Maha Years * Bhukti Years) / 120 = Bhukti Duration in Years
+
+    const DASHA_LORDS = [
+        { lord: 'Ketu', years: 7 },
+        { lord: 'Venus', years: 20 },
+        { lord: 'Sun', years: 6 },
+        { lord: 'Moon', years: 10 },
+        { lord: 'Mars', years: 7 },
+        { lord: 'Rahu', years: 18 },
+        { lord: 'Jupiter', years: 16 },
+        { lord: 'Saturn', years: 19 },
+        { lord: 'Mercury', years: 17 }
+    ];
+
+    const mahaLordName = mahadasha.lord;
+    const mahaTotalYears = DASHA_LORDS.find(d => d.lord === mahaLordName).years; // Standard years, not balance
+
+    // Find start index
+    let startIdx = DASHA_LORDS.findIndex(d => d.lord === mahaLordName);
+
+    const bhuktis = [];
+    let currentStart = new Date(mahadasha.start);
+
+    // If this is the birth dasha (balance), we need to adjust.
+    // COMPLEXITY: Calculating bhuktis for a *balance* dasha is tricky because some bhuktis have already passed.
+    // Using Proportional Method for MVP:
+    // If Mahadasha is 10 years, but we only have 5 years balance, we only show remaining bhuktis?
+    // Or we show all bhuktis but adjust dates to be in past?
+    // Standard approach: Calculate theoretical start of FULL mahadasha, then filter.
+
+    // 1. Calculate Theoretical Start Date of this Mahadasha
+    // passedYears = TotalYears - balanceYears
+    // theoreticalStart = actualStart - passedYears
+    const passedYears = mahaTotalYears - mahadasha.years;
+    // (This works only if 'mahadasha.years' is the balance. For full dashas, passedYears is 0)
+
+    // Let's iterate full cycle
+    let tempDate = new Date(currentStart);
+    // Adjust tempDate backwards to theoretical start
+    // const days to subtract...
+    // Only do this if passedYears > 0.01
+
+    // Correct Approach:
+    // We iterate all 9 bhuktis. Determine duration. Add to TheoreticalStart.
+    // Then trim/clip based on actual Mahadasha Start/End.
+
+    // Simplify for MVP: Just standard division relative to 'Start' is WRONG for Birth Dasha.
+    // Let's assume standard calculation unless we want to implement the back-calculation.
+    // For now, we will just start from Mahadasha start and distribute relative to *Standard* years,
+    // which might look weird if it's a balance dasha.
+
+    // REVISED STRATEGY for Balance Dasha:
+    // We know the fractionRemaining at birth.
+    // We know the sequence of sub-lords.
+    // We find which sub-lord we are currently in at birth?
+    // This is getting complex for a script.
+
+    // Simplified: Just list the bhuktis proportional to the *remaining* time? No, that's wrong astrology.
+    // We will just return the sub-periods for the *entire* standard duration, starting from theoretical start.
+
+    return []; // Placeholder to avoid crash, but better logic needed.
+
+    // Let's implement full cycle logic assuming 'mahadasha' object has standard full years if not birth.
+    // But 'computeMahadashaSequence' returns balance years for first item.
+}
+
 // Fixed implementation for Bhuktis
 function computeBhuktisForMahadasha(mahadasha) {
     const DASHA_LORDS = [

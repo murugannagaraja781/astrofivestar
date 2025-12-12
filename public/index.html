@@ -104,70 +104,6 @@
       letter-spacing: 0.5px;
     }
 
-    .panchangam-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 1px;
-      /* Divider look */
-      background: #e5e7eb;
-      /* Border color */
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    .panchangam-grid>div {
-      background: white;
-      /* Fallback */
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 10px 4px;
-      min-height: 70px;
-    }
-
-    @media (max-width: 600px) {
-      .panchangam-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .panchangam-grid>div:last-child:nth-child(odd) {
-        grid-column: span 2;
-      }
-    }
-
-    /* Planets Grid */
-    .planets-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      /* Default Mobile: 2 cols */
-      gap: 1px;
-      background: #e5e7eb;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      overflow: hidden;
-      margin-top: 10px;
-    }
-
-    .planets-grid>div {
-      background: white;
-      padding: 8px 4px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      min-height: 70px;
-    }
-
-    @media (min-width: 600px) {
-      .planets-grid {
-        grid-template-columns: repeat(5, 1fr);
-        /* Desktop: 5 cols */
-      }
-    }
-
     /* === DASHBOARD LAYOUT === */
     .dashboard-container {
       height: 100%;
@@ -670,15 +606,23 @@
                 <input type="time" id="chartTime" class="app-input">
               </div>
             </div>
-
-            <!-- City Search Row -->
+            <!-- City Search Row (Restored) -->
             <div class="input-row" style="margin-top:15px; position:relative;">
               <div style="flex:1">
                 <label>City / Place</label>
-                <input type="text" id="citySearch" class="app-input" placeholder="Type City Name (e.g. Chennai)..."
-                  autocomplete="off">
-                <div id="cityResults"
-                  style="display:none; position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #ddd; z-index:100; max-height:160px; overflow-y:auto; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                <div style="display: flex; gap: 10px;">
+                  <div style="flex:1; position:relative;">
+                    <input type="text" id="citySearch" class="app-input" placeholder="Type City Name (e.g. Chennai)..."
+                      autocomplete="off">
+                    <div id="cityResults"
+                      style="display:none; position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #ddd; z-index:9999; max-height:200px; overflow-y:auto; border-radius:6px; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+                    </div>
+                  </div>
+                  <!-- Geo-Location Button -->
+                  <button type="button" onclick="useCurrentLocation()" title="Use Current Location"
+                    style="padding: 0 15px; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; border-radius: 10px; cursor: pointer;">
+                    <i class="fas fa-crosshairs"></i>
+                  </button>
                 </div>
               </div>
             </div>
@@ -698,144 +642,69 @@
                 </div>
               </div>
             </div>
+          </div>
 
-            <div style="margin-top:20px;">
-              <button onclick="fetchChart()"
-                style="width:100%; padding:12px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:1rem;">Generate
-                Chart 🔮</button>
+          <button class="cosmic-btn generate-btn" onclick="fetchChart()">
+            <i class="fas fa-calculator"></i> Get Horoscope
+          </button>
+        </div>
+
+        <div id="chartLoading" style="display:none; text-align:center; padding:40px; color: var(--primary);">
+          <div class="spinner-astro"></div>
+          <div style="margin-top:15px; font-weight:500;">Analyzing Planets...</div>
+        </div>
+
+        <!-- Results Area -->
+        <div id="chartResults" style="display: none; height:100%; display:flex; flex-direction:column;">
+
+          <div class="chart-tabs">
+            <button onclick="switchChartTab('rasi')" class="c-tab active" id="tab-rasi">Rasi Chart</button>
+            <button onclick="switchChartTab('basic')" class="c-tab" id="tab-basic">Planets</button>
+            <button onclick="switchChartTab('dasha')" class="c-tab" id="tab-dasha">Dasha</button>
+            <button onclick="resetChart()" class="c-tab" style="color:red;"><i class="fas fa-redo"></i></button>
+          </div>
+
+          <!-- Content: Rasi Chart (Traditional Box) -->
+          <div id="content-rasi" class="chart-tab-content" style="flex:1; overflow-y:auto; padding-bottom:20px;">
+            <div class="rasi-container">
+              <div class="south-indian-chart" id="southChart">
+                <!-- 12 Boxes generated by JS -->
+              </div>
+              <div class="chart-center-label">Rasi Chart (D1)</div>
             </div>
 
-            <script>
-              // City Search Auto-Complete
-              (function () {
-                const inp = document.getElementById('citySearch');
-                const res = document.getElementById('cityResults');
-                let t;
-                if (inp) {
-                  inp.addEventListener('input', e => {
-                    const v = e.target.value.trim();
-                    if (v.length < 3) { res.style.display = 'none'; return; }
-                    clearTimeout(t);
-                    t = setTimeout(async () => {
-                      res.innerHTML = '<div style="padding:10px; color:#666;">Searching...</div>';
-                      res.style.display = 'block';
-                      try {
-                        // Increase limit to 15 to find more local matches
-                        const req = await fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=15&q=${encodeURIComponent(v)}`);
-                        const data = await req.json();
-                        res.innerHTML = '';
-                        if (!data.length) { res.innerHTML = '<div style="padding:10px; color:#999;">No results</div>'; return; }
+            <!-- Panchangam Container (Inserted Here) -->
+            <div class="panchangam-container"
+              style="margin-top:20px; background:#fff; border:1px solid #eee; padding:10px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+              <div
+                style="text-align:center; margin-bottom:10px; font-weight:bold; color:#d97706; text-transform:uppercase; letter-spacing:1px; font-size:0.9rem;">
+                Panchangam</div>
+              <div id="panchangamList"
+                style="display:flex; flex-direction:column; gap:8px; font-size:0.9rem; color:#444;">
+              </div>
+            </div>
 
-                        // SORT LOGIC: Tamil Nadu > India > Rest
-                        data.sort((a, b) => {
-                          const nA = a.display_name.toLowerCase();
-                          const nB = b.display_name.toLowerCase();
-
-                          // Score A
-                          let sA = 0;
-                          if (nA.includes("tamil nadu")) sA += 100;
-                          else if (nA.includes("india")) sA += 50;
-
-                          // Score B
-                          let sB = 0;
-                          if (nB.includes("tamil nadu")) sB += 100;
-                          else if (nB.includes("india")) sB += 50;
-
-                          return sB - sA; // Descending
-                        });
-
-                        data.forEach(p => {
-                          const d = document.createElement('div');
-                          d.innerText = p.display_name;
-                          d.style.padding = '10px';
-                          d.style.borderBottom = '1px solid #f0f0f0';
-                          d.style.cursor = 'pointer';
-                          d.style.fontSize = '0.85rem';
-                          d.onmouseover = () => d.style.background = '#f3f4f6';
-                          d.onmouseout = () => d.style.background = 'white';
-                          d.onclick = () => {
-                            document.getElementById('chartLat').value = p.lat;
-                            document.getElementById('chartLon').value = p.lon;
-                            // Clean City Name (remove long address)
-                            const parts = p.display_name.split(',');
-                            inp.value = parts[0] + (parts[1] ? ',' + parts[1] : '');
-                            res.style.display = 'none';
-                            // Manual Generate Only
-                          };
-                          res.appendChild(d);
-                        });
-                      } catch (e) { res.style.display = 'none'; }
-                    }, 500);
-                  });
-                  document.addEventListener('click', e => { if (e.target !== inp && e.target !== res) res.style.display = 'none'; });
-                }
-              })();
-            </script>
+            <div class="navamsa-container" style="margin-top:20px;">
+              <div style="text-align:center; margin-bottom:5px; font-weight:bold; color:#555;">Navamsa (D9)</div>
+              <div class="south-indian-chart" id="navamsaChart"></div>
+            </div>
           </div>
+
+          <!-- Content: Basic -->
+          <div id="content-basic" class="chart-tab-content hidden" style="overflow-y:auto;">
+            <div id="planetList" class="planet-grid"></div>
+          </div>
+
+          <!-- Content: Dasha -->
+          <div id="content-dasha" class="chart-tab-content hidden" style="overflow-y:auto;">
+            <div id="currentDashaInfo" class="dasha-card-highlight"></div>
+            <div style="margin-top:15px; font-weight:bold; color:#444; padding-left:5px;">Vimshottari Sequence</div>
+            <div id="dashaList" class="dasha-list"></div>
+          </div>
+
         </div>
       </div>
-      <div style="text-align:right; margin-top:5px;">
-
-      </div>
     </div>
-
-
-  </div>
-
-  <div id="chartLoading" style="display:none; text-align:center; padding:40px; color: var(--primary);">
-    <div class="spinner-astro"></div>
-    <div style="margin-top:15px; font-weight:500;">Analyzing Planets...</div>
-  </div>
-
-  <!-- Results Area -->
-  <div id="chartResults" style="display: none; height:100%; display:flex; flex-direction:column;">
-
-    <div class="chart-tabs">
-      <button onclick="switchChartTab('rasi')" class="c-tab active" id="tab-rasi">Rasi Chart</button>
-      <button onclick="switchChartTab('basic')" class="c-tab" id="tab-basic">Planets</button>
-      <button onclick="switchChartTab('dasha')" class="c-tab" id="tab-dasha">Dasha</button>
-      <button onclick="resetChart()" class="c-tab" style="color:red;"><i class="fas fa-redo"></i></button>
-    </div>
-
-    <!-- Content: Rasi Chart (Traditional Box) -->
-    <div id="content-rasi" class="chart-tab-content" style="flex:1; overflow-y:auto; padding-bottom:20px;">
-      <div class="rasi-container">
-        <div class="south-indian-chart" id="southChart">
-          <!-- 12 Boxes generated by JS -->
-        </div>
-        <div class="chart-center-label">Rasi Chart (D1)</div>
-      </div>
-
-      <div class="panchangam-container"
-        style="margin-top:20px; background:#fff; border:1px solid #eee; padding:10px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-        <div
-          style="text-align:center; margin-bottom:10px; font-weight:bold; color:#d97706; text-transform:uppercase; letter-spacing:1px; font-size:0.9rem;">
-          Panchangam</div>
-        <div id="panchangamList" style="display:flex; flex-direction:column; gap:8px; font-size:0.9rem; color:#444;">
-        </div>
-      </div>
-
-      <div class="navamsa-container" style="margin-top:20px;">
-        <div style="text-align:center; margin-bottom:5px; font-weight:bold; color:#555;">Navamsa (D9)</div>
-        <div class="south-indian-chart" id="navamsaChart"></div>
-      </div>
-    </div>
-
-    <!-- Content: Basic -->
-    <div id="content-basic" class="chart-tab-content hidden" style="overflow-y:auto;">
-      <div id="planetList" class="planet-grid"></div>
-    </div>
-
-    <!-- Content: Dasha -->
-    <div id="content-dasha" class="chart-tab-content hidden" style="overflow-y:auto;">
-      <div id="currentDashaInfo" class="dasha-card-highlight"></div>
-      <div style="margin-top:15px; font-weight:bold; color:#444; padding-left:5px;">Vimshottari Sequence</div>
-      <div id="dashaList" class="dasha-list"></div>
-    </div>
-
-  </div>
-  </div>
-  </div>
   </div>
 
   <style>
@@ -1053,6 +922,39 @@
       border-radius: 10px;
       border-left: 4px solid var(--secondary);
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Panchangam Grid - Restored */
+    .panchangam-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1px;
+      background: #e5e7eb;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .panchangam-grid>div {
+      background: white;
+      padding: 8px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 70px;
+    }
+
+    @media (max-width: 600px) {
+      .panchangam-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .panchangam-grid>div:last-child:nth-child(odd) {
+        grid-column: span 2;
+      }
     }
 
     .dasha-card-highlight {
@@ -2085,6 +1987,99 @@
     });
 
 
+    // --- Geolocation & City Search Logic ---
+    window.useCurrentLocation = function () {
+      if (!navigator.geolocation) return alert("Geolocation not supported");
+
+      const btn = document.querySelector('button[onclick="useCurrentLocation()"]');
+      const icon = btn.querySelector('i');
+      const oldClass = icon.className;
+
+      icon.className = "fas fa-spinner fa-spin";
+
+      navigator.geolocation.getCurrentPosition(async (Pos) => {
+        const lat = Pos.coords.latitude;
+        const lon = Pos.coords.longitude;
+
+        document.getElementById('chartLat').value = lat.toFixed(4);
+        document.getElementById('chartLon').value = lon.toFixed(4);
+
+        // Reverse Geocode
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+          const data = await res.json();
+          if (data && data.display_name) {
+            const parts = data.display_name.split(',');
+            document.getElementById('citySearch').value = parts[0] + (parts[1] ? ',' + parts[1] : '');
+          } else {
+            document.getElementById('citySearch').value = "Current Location";
+          }
+        } catch (e) {
+          document.getElementById('citySearch').value = "Ky Coordinates";
+        }
+
+        icon.className = "fas fa-check";
+        setTimeout(() => icon.className = oldClass, 2000);
+
+      }, (err) => {
+        alert("Location Access Denied: " + err.message);
+        icon.className = oldClass;
+      });
+    };
+
+    // City Search Auto-Complete
+    (function () {
+      const inp = document.getElementById('citySearch');
+      const res = document.getElementById('cityResults');
+      let t;
+      if (inp) {
+        inp.addEventListener('input', e => {
+          const v = e.target.value.trim();
+          if (v.length < 3) { res.style.display = 'none'; return; }
+          clearTimeout(t);
+          t = setTimeout(async () => {
+            res.innerHTML = '<div style="padding:10px; color:#666;">Searching...</div>';
+            res.style.display = 'block';
+            try {
+              const req = await fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=15&q=${encodeURIComponent(v)}`);
+              const data = await req.json();
+              res.innerHTML = '';
+              if (!data.length) { res.innerHTML = '<div style="padding:10px; color:#999;">No results</div>'; return; }
+
+              // SORT LOGIC
+              data.sort((a, b) => {
+                const nA = a.display_name.toLowerCase();
+                const nB = b.display_name.toLowerCase();
+                let sA = 0; if (nA.includes("tamil nadu")) sA += 100; else if (nA.includes("india")) sA += 50;
+                let sB = 0; if (nB.includes("tamil nadu")) sB += 100; else if (nB.includes("india")) sB += 50;
+                return sB - sA;
+              });
+
+              data.forEach(p => {
+                const d = document.createElement('div');
+                d.innerText = p.display_name;
+                d.style.padding = '10px';
+                d.style.borderBottom = '1px solid #f0f0f0';
+                d.style.cursor = 'pointer';
+                d.style.fontSize = '0.85rem';
+                d.onmouseover = () => d.style.background = '#f3f4f6';
+                d.onmouseout = () => d.style.background = 'white';
+                d.onclick = () => {
+                  document.getElementById('chartLat').value = p.lat;
+                  document.getElementById('chartLon').value = p.lon;
+                  const parts = p.display_name.split(',');
+                  inp.value = parts[0] + (parts[1] ? ',' + parts[1] : '');
+                  res.style.display = 'none';
+                };
+                res.appendChild(d);
+              });
+            } catch (e) { res.style.display = 'none'; }
+          }, 500);
+        });
+        document.addEventListener('click', e => { if (e.target !== inp && e.target !== res) res.style.display = 'none'; });
+      }
+    })();
+
     // --- Chart Logic ---
     function showChartHelper() {
       document.getElementById('screen-chart-helper').classList.remove('hidden');
@@ -2154,61 +2149,15 @@
       pList.innerHTML = '';
       const planets = data.planetaryPositions.detailed;
 
-      // Tamil Sign Mapping
-      const tamilSigns = {
-        'Aries': 'மேஷம் (Mesham)',
-        'Taurus': 'ரிஷபம் (Rishabam)',
-        'Gemini': 'மிதுனம் (Mithunam)',
-        'Cancer': 'கடகம் (Katagam)',
-        'Leo': 'சிம்மம் (Simmam)',
-        'Virgo': 'கன்னி (Kanni)',
-        'Libra': 'துலாம் (Thulaam)',
-        'Scorpio': 'விருச்சிகம் (Virul)',
-        'Sagittarius': 'தனுசு (Dhanusu)',
-        'Capricorn': 'மகரம் (Makaram)',
-        'Aquarius': 'கும்பம் (Kumbam)',
-        'Pisces': 'மீனம் (Meenum)'
-      };
-
-      const tamilPlanets = {
-        'Sun': 'சூரியன்', 'Moon': 'சந்திரன்', 'Mars': 'செவ்வாய்',
-        'Mercury': 'புதன்', 'Jupiter': 'குரு', 'Venus': 'சுக்கிரன்',
-        'Saturn': 'சனி', 'Rahu': 'ராகு', 'Ketu': 'கேது', 'Ascendant': 'லக்னம்', 'ASC': 'லக்னம்'
-      };
-
-
-      // Pastel "Milk" Colors for Planets (cycled)
-      const colors = [
-        '#ecfdf5', // Green
-        '#eff6ff', // Blue
-        '#fff7ed', // Orange
-        '#faf5ff', // Purple
-        '#fdf2f8'  // Pink
-      ];
-
-      // Apply Grid Class
-      pList.className = 'planets-grid';
-
-      let cIdx = 0;
       for (let p in planets) {
         const info = planets[p];
         const div = document.createElement('div');
-        // No class needed on item, CSS handles .planets-grid > div
-
-        const tPlanet = tamilPlanets[p] || p;
-        const tSignFull = tamilSigns[info.sign] || info.sign;
-        const tSign = tSignFull.split(' ')[0]; // Just Tamil Name
-
-        // Cycle colors
-        const bg = colors[cIdx % colors.length];
-        cIdx++;
-
-        div.style.background = bg;
-
-        div.innerHTML = `
-          <div style="font-weight:bold; color:#047857; font-size:0.9rem; margin-bottom:4px;">${tPlanet}</div>
-          <div style="font-size:0.8rem; color:#444;">${tSign}</div>
-          <div style="font-size:0.75rem; color:#888; margin-top:2px;">
+        div.className = 'planet-item';
+        div.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center">
+    <b>${p}</b>
+    <span style="background:#e5e7eb; padding:2px 8px; border-radius:10px; font-size:0.75rem;">${info.sign}</span>
+  </div>
+          <div style="margin-top:5px; font-size:0.85rem; color:#555;">
             ${info.degree.toFixed(2)}° | ${info.nakshatra}
           </div>`;
         pList.appendChild(div);
@@ -2254,7 +2203,27 @@
           'Capricorn', null, null, 'Leo',
           'Sagittarius', 'Scorpio', 'Libra', 'Virgo'
         ];
+        // Tamil Sign Mapping
+        const tamilSigns = {
+          'Aries': 'மேஷம் (Mesham)',
+          'Taurus': 'ரிஷபம் (Rishabam)',
+          'Gemini': 'மிதுனம் (Mithunam)',
+          'Cancer': 'கடகம் (Katagam)',
+          'Leo': 'சிம்மம் (Simmam)',
+          'Virgo': 'கன்னி (Kanni)',
+          'Libra': 'துலாம் (Thulaam)',
+          'Scorpio': 'விருச்சிகம் (Virul)',
+          'Sagittarius': 'தனுசு (Dhanusu)',
+          'Capricorn': 'மகரம் (Makaram)',
+          'Aquarius': 'கும்பம் (Kumbam)',
+          'Pisces': 'மீனம் (Meenum)'
+        };
 
+        const tamilPlanets = {
+          'Sun': 'சூரியன்', 'Moon': 'சந்திரன்', 'Mars': 'செவ்வாய்',
+          'Mercury': 'புதன்', 'Jupiter': 'குரு', 'Venus': 'சுக்கிரன்',
+          'Saturn': 'சனி', 'Rahu': 'ராகு', 'Ketu': 'கேது', 'Ascendant': 'லக்னம்', 'ASC': 'லக்னம்'
+        };
 
         cellMap.forEach((sign, idx) => {
           const div = document.createElement('div');
@@ -2313,63 +2282,51 @@
       } catch (e) { console.warn("jQuery Tooltip failed", e); }
 
       // 3. Dasha
-      const curr = data.dashaSystem && data.dashaSystem.current;
-      if (curr && curr.mahadasha && curr.bhukti) {
-        document.getElementById('currentDashaInfo').innerHTML =
-          `<div style="font-size:0.8rem; text-transform:uppercase; color:#888; letter-spacing:1px; margin-bottom:5px;">Current
-      Period</div>
-    <div style="font-size:1.4rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">
-      ${curr.mahadasha.lord} <span style="color:#ccc;">/</span> ${curr.bhukti.lord}
-    </div>
-    <div style="font-size:0.9rem; color:#555;">
-      <i class="fas fa-hourglass-end"></i> Ends: <b>${curr.bhukti.end}</b>
-    </div>`;
+      const curr = data.dashaSystem.current;
+      document.getElementById('currentDashaInfo').innerHTML =
+        `<div style="font-size:0.8rem; text-transform:uppercase; color:#888; letter-spacing:1px; margin-bottom:5px;">Current
+    Period</div>
+  <div style="font-size:1.4rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">
+    ${curr.mahadasha.lord} <span style="color:#ccc;">/</span> ${curr.bhukti.lord}
+  </div>
+  <div style="font-size:0.9rem; color:#555;">
+    <i class="fas fa-hourglass-end"></i> Ends: <b>${curr.bhukti.end}</b>
+  </div>`;
 
-        const dList = document.getElementById('dashaList');
-        dList.innerHTML = '';
-        if (data.dashaSystem.sequence) {
-          data.dashaSystem.sequence.forEach(m => {
-            const row = document.createElement('div');
-            // Check if current
-            if (m.lord === curr.mahadasha.lord) {
-              row.style.background = '#ECFDF5';
-              row.style.border = '1px solid var(--border)';
-            }
-
-            row.innerHTML = `<div>
-      <div style='font-weight:bold; color:#1F2937;'>${m.lord}</div>
-      <div style='font-size:0.75rem; color:#9CA3AF;'>${m.years} Years</div>
-    </div>
-            <div style='text-align:right; font-size:0.85rem; color:#4B5563;'>
-              ${m.start.split('-')[0]} - ${m.end.split('-')[0]}
-            </div>`;
-            dList.appendChild(row);
-          });
+      const dList = document.getElementById('dashaList');
+      dList.innerHTML = '';
+      data.dashaSystem.sequence.forEach(m => {
+        const row = document.createElement('div');
+        // Check if current
+        if (m.lord === curr.mahadasha.lord) {
+          row.style.background = '#ECFDF5';
+          row.style.border = '1px solid var(--border)';
         }
-      } else {
-        document.getElementById('currentDashaInfo').innerHTML = '<div style="color:#999;">Dasha info unavailable</div>';
-      }
 
+        row.innerHTML = `<div>
+    <div style='font-weight:bold; color:#1F2937;'>${m.lord}</div>
+    <div style='font-size:0.75rem; color:#9CA3AF;'>${m.years} Years</div>
+  </div>
+          <div style='text-align:right; font-size:0.85rem; color:#4B5563;'>
+            ${m.start.split('-')[0]} - ${m.end.split('-')[0]}
+          </div>`;
+        dList.appendChild(row);
+      });
 
-      // 4. Panchangam (Tamil & Horizontal)
+      // 4. Panchangam (Restored & Styled)
       const pan = data.panchangam && data.panchangam.data;
       const pContainer = document.getElementById('panchangamList');
       if (pan && pContainer) {
-
-        // Tamil Translations Data
-        const tithis = [
-          "பிரதமை", "துவிதியை", "த்ரிதியை", "சதுர்த்தி", "பஞ்சமி", "சஷ்டி", "சப்தமி", "அஷ்டமி", "நவமி", "தசமி", "ஏகாதசி", "துவாதசி", "திரயோதசி", "சதுர்த்தசி", "பௌர்ணமி/அமாவாசை"
-        ];
-        // Note: API returns "Tithi 1..30". 1-15 Shukla, 16-30 Krishna. 15=Pournami, 30=Amavasya.
+        // Tamil Translations
+        const tithis = ["பிரதமை", "துவிதியை", "த்ரிதியை", "சதுர்த்தி", "பஞ்சமி", "சஷ்டி", "சப்தமி", "அஷ்டமி", "நவமி", "தசமி", "ஏகாதசி", "துவாதசி", "திரயோதசி", "சதுர்த்தசி", "பௌர்ணமி/அமாவாசை"];
         const getTamilTithi = (str) => {
-          const num = parseInt(str.replace('Tithi ', ''));
+          const num = parseInt(str.replace(/[^0-9]/g, ''));
           if (isNaN(num)) return str;
           const idx = (num - 1) % 15;
-          const paksha = num <= 15 ? 'சுக்ல' : 'கிருஷ்ண';
-          const tName = tithis[idx] || str;
-          if (num === 15) return "பௌர்ணமி";
-          if (num === 30) return "அமாவாசை";
-          return `${tName} (${paksha})`;
+          const paksha = num <= 15 ? 'சுக்ல' : 'கிருஷ்ண'; // Shukla / Krishna
+          if (num === 15) return "பௌர்ணமி (சுக்ல)";
+          if (num === 30) return "அமாவாசை (கிருஷ்ண)";
+          return `${tithis[idx] || str} (${paksha})`;
         };
 
         const nakshatras = {
@@ -2380,68 +2337,41 @@
           "Purva Bhadrapada": "பூரட்டாதி", "Uttara Bhadrapada": "உத்திரட்டாதி", "Revati": "ரேவதி"
         };
 
-        const yogas = [
-          "விஷ்கம்பம்", "ப்ரீதி", "ஆயுஷ்மான்", "சௌபாக்யம்", "ஷோபனம்", "அதிகண்டம்", "சுகர்மம்", "திருதி", "சூலம்", "கண்டம்", "விருத்தி", "துருவம்",
-          "வ்யாகாதம்", "ஹர்ஷணம்", "வஜ்ரம்", "சித்தி", "வ்யதீபாதம்", "வரியான்", "பரிகம்", "சிவம்", "சித்தம்", "சாத்யம்", "சுபம்", "சுப்பிரம்", "பிராம்மம்", "ஐந்திரம்", "வைதிருதி"
-        ];
+        const yogas = ["விஷ்கம்பம்", "ப்ரீதி", "ஆயுஷ்மான்", "சௌபாக்யம்", "ஷோபனம்", "அதிகண்டம்", "சுகர்மம்", "திருதி", "சூலம்", "கண்டம்", "விருத்தி", "துருவம்", "வ்யாகாதம்", "ஹர்ஷணம்", "வஜ்ரம்", "சித்தி", "வ்யதீபாதம்", "வரியான்", "பரிகம்", "சிவம்", "சித்தம்", "சாத்யம்", "சுபம்", "சுப்பிரம்", "பிராம்மம்", "ஐந்திரம்", "வைதிருதி"];
         const getTamilYoga = (str) => {
-          const num = parseInt(str.replace('Yoga ', ''));
-          if (isNaN(num)) return str;
+          const num = parseInt(str.replace(/[^0-9]/g, ''));
           return yogas[num - 1] || str;
         };
 
-        const karanas = [
-          "பவம்", "பாலவம்", "கௌலவம்", "தைதுலம்", "கரசை", "வனசை", "பத்ரை", "சகுனி", "சதுஷ்பாதம்", "நாகவம்", "கிம்ஸ்துக்னம்"
-        ];
+        // Karana Logic (1..60 mapping to 11 names)
+        const karanasMobile = ["பவம்", "பாலவம்", "கௌலவம்", "தைதுலம்", "கரசை", "வனசை", "பத்ரை"];
+        const karanasFixed = { 58: "சகுனி", 59: "சதுஷ்பாதம்", 60: "நாகவம்", 1: "கிம்ஸ்துக்னம்" };
+
         const getTamilKarana = (str) => {
-          const num = parseInt(str.replace('Karana ', ''));
+          const num = parseInt(str.replace(/[^0-9]/g, ''));
           if (isNaN(num)) return str;
-          // Karana cycle is complex (11 names repeating). Simplified mapping for logic:
-          // 60 Karanas in a lunar month.
-          // Logic in Utils was: Math.floor(diff / 6) -> 0 to 59.
-          // Names verify based on Utils output (Karana 1...60).
-          // Mapping 1-60 to 11 names is standard astrology, but let's assume util output index maps to standard definition order?
-          // Since Utils just says "Karana X", I will just show "Karana X" if I can't map perfectly without logic.
-          // BUT user wants Tamil. I will map mod 11 for now as a fallback or leave as number if unsure?
-          // Better: "கரணம் " + num.
-          // Or try to map named karanas if `num` is 1..11.
-          // Let's use generic "கரணம்" + Number if > 11, else Name?
-          // Actually, Utils uses index from 0..59.
-          return `கரணம் ${num}`; // Safest for MVP without full table
+          if (karanasFixed[num]) return karanasFixed[num];
+          // Cycle of 7 starting from 2
+          if (num > 1 && num < 58) {
+            const idx = (num - 2) % 7;
+            return karanasMobile[idx];
+          }
+          return str;
         };
 
-        const weekdays = {
-          "Sunday": "ஞாயிறு", "Monday": "திங்கள்", "Tuesday": "செவ்வாய்", "Wednesday": "புதன்",
-          "Thursday": "வியாழன்", "Friday": "வெள்ளி", "Saturday": "சனி"
-        };
+        const weekdays = { "Sunday": "ஞாயிறு", "Monday": "திங்கள்", "Tuesday": "செவ்வாய்", "Wednesday": "புதன்", "Thursday": "வியாழன்", "Friday": "வெள்ளி", "Saturday": "சனி" };
 
+        const labels = { 'Tithi': 'திதி', 'Nakshatra': 'நட்சத்திரம்', 'Yoga': 'யோகம்', 'Karana': 'கரணம்', 'Day': 'கிழமை' };
 
-        // Tamil Labels
-        const labels = {
-          'Tithi': 'திதி',
-          'Nakshatra': 'நட்சத்திரம்',
-          'Yoga': 'யோகம்',
-          'Karana': 'கரணம்',
-          'Day': 'கிழமை'
-        };
+        // Milk Colors (Pastel)
+        const colors = ['#ecfdf5', '#eff6ff', '#fff7ed', '#faf5ff', '#fdf2f8']; // Green, Blue, Orange, Purple, Pink
 
-        // Pastel "Milk" Colors
-        const colors = [
-          '#ecfdf5', // Green
-          '#eff6ff', // Blue
-          '#fff7ed', // Orange
-          '#faf5ff', // Purple
-          '#fdf2f8'  // Pink
-        ];
-
-        // Process Values
         const tVal = getTamilTithi(pan.tithiName || '');
         const nVal = nakshatras[pan.nakshatra] || pan.nakshatra || '-';
         const yVal = getTamilYoga(pan.yoga || '');
-        const kVal = getTamilKarana(pan.karana || '');
+        const kVal = getTamilKarana(pan.karana || ''); // Use New Function
         const dVal = weekdays[pan.vara] || pan.vara || '-';
 
-        // Values to show
         const items = [
           { l: labels.Tithi, v: tVal, c: colors[0] },
           { l: labels.Nakshatra, v: nVal, c: colors[1] },
@@ -2450,29 +2380,18 @@
           { l: labels.Day, v: dVal, c: colors[4] }
         ];
 
-
-        // CSS Grid Layout for perfect alignment
-        // Use Responsive CSS Class (5-col on Desktop, 2-col on Mobile)
         pContainer.className = 'panchangam-grid';
-
-        // Remove inline styles that might conflict
+        // Clear conflicting styles
         pContainer.style.display = '';
-        pContainer.style.gridTemplateColumns = '';
-        pContainer.style.gap = '';
         pContainer.style.flexDirection = '';
-        pContainer.style.flexWrap = '';
-        pContainer.style.justifyContent = '';
 
         pContainer.innerHTML = items.map(item => `
           <div style="background: ${item.c};">
             <div style="font-size:0.7rem; color:#666; font-weight:bold; margin-bottom:4px;">${item.l}</div>
-            <div style="font-size:0.8rem; color:#333; font-weight:600; line-height:1.2;">
-              ${item.v}
-            </div>
+            <div style="font-size:0.85rem; color:#333; font-weight:600; line-height:1.2;">${item.v}</div>
           </div>
         `).join('');
       }
-
     }
 
   </script>
