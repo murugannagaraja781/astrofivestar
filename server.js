@@ -61,6 +61,10 @@ function sendMsg91(phoneNumber, otp) {
 
 // ===== File upload setup =====
 const uploadDir = path.join(__dirname, 'uploads');
+const fs = require('fs'); // Ensure fs is required if not already global/top
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
 const upload = multer({ dest: uploadDir });
 
 app.use('/uploads', express.static(uploadDir));
