@@ -11,6 +11,23 @@ const multer = require('multer');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+const cors = require("cors");
+
+app.use(cors({ origin: "*" }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public'));  // Serve static files (HTML, CSS, JS, Images)
+
+// Routes
+const vimshottariRouter = require("./routes/vimshottari");
+const astrologyRouter = require("./routes/astrology");
+const matchRouter = require("./routes/match");
+const horoscopeRouter = require("./routes/horoscope");
+
+app.use("/api/vimshottari", vimshottariRouter);
+app.use("/api/astrology", astrologyRouter);
+app.use("/api/match", matchRouter);
+app.use("/api/horoscope", horoscopeRouter);
 
 // ===== MSG91 Helper =====
 function sendMsg91(phoneNumber, otp) {
@@ -47,8 +64,7 @@ const uploadDir = path.join(__dirname, 'uploads');
 const upload = multer({ dest: uploadDir });
 
 app.use('/uploads', express.static(uploadDir));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
 
 app.post('/upload', upload.single('file'), (req, res) => {
   // ... (keeping upload logic if valid) ...
