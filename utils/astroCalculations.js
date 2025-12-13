@@ -152,15 +152,15 @@ function calculateAscendant(date, lat, lon) {
     };
 }
 
-function calculatePanchangam(date, lat, lon) {
-    // Simplified Logic
-    // Tithi: (Moon Long - Sun Long) / 12
-    // Nakshatra: Moon Long / 13.33
-    // Yoga: (Moon + Sun) / 13.33
+function calculatePanchangam(date, lat, lon, existingPositions) {
+    // Optimization: Use existing positions if provided
+    let pos;
+    if (existingPositions) {
+        pos = existingPositions;
+    } else {
+        pos = generatePlanetaryPositions(date, lat, lon);
+    }
 
-    // Need positions first. This function is called in routes independently.
-    // This is inefficient. We should reuse positions.
-    const pos = generatePlanetaryPositions(date, lat, lon);
     const sun = pos.Sun;
     const moon = pos.Moon;
 

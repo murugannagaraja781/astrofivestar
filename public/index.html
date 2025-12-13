@@ -2385,12 +2385,137 @@
         pContainer.style.display = '';
         pContainer.style.flexDirection = '';
 
+
         pContainer.innerHTML = items.map(item => `
           <div style="background: ${item.c};">
             <div style="font-size:0.7rem; color:#666; font-weight:bold; margin-bottom:4px;">${item.l}</div>
             <div style="font-size:0.85rem; color:#333; font-weight:600; line-height:1.2;">${item.v}</div>
           </div>
         `).join('');
+
+        // ==========================================
+        // 5) Render Planets List (Tamil)
+        // ==========================================
+        const planetList = document.getElementById('planetList');
+        if (planetList && data.planetaryPositions && data.planetaryPositions.detailed) {
+
+          const planetTam = {
+            "Sun": "சூரியன்", "Moon": "சந்திரன்", "Mars": "செவ்வாய்", "Mercury": "புதன்",
+            "Jupiter": "குரு", "Venus": "சுக்கிரன்", "Saturn": "சனி", "Rahu": "ராகு", "Ketu": "கேது",
+            "Ascendant": "லக்னம்", "Uranus": "யுரேனஸ்", "Neptune": "நெப்டியூன்", "Pluto": "புளூட்டோ"
+          };
+
+          const signsTam = {
+            "Aries": "மேஷம்", "Taurus": "ரிஷபம்", "Gemini": "மிதுனம்", "Cancer": "கடகம்",
+            "Leo": "சிம்மம்", "Virgo": "கன்னி", "Libra": "துலாம்", "Scorpio": "விருச்சிகம்",
+            "Sagittarius": "தனுசு", "Capricorn": "மகரம்", "Aquarius": "கும்பம்", "Pisces": "மீனம்"
+          };
+
+          const pOrder = ["Ascendant", "Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"];
+
+          let pHtml = '';
+          pOrder.forEach(key => {
+            const p = data.planetaryPositions.detailed[key];
+            if (!p && key !== 'Ascendant') return;
+
+            // Handle Ascendant special case if not in detailed list but in root
+            let info = p;
+            if (key === 'Ascendant' && data.ascendant) {
+              // normalize to match structure
+              info = {
+                sign: data.ascendant.sign,
+                degree: data.ascendant.degree,
+                minute: data.ascendant.minute || 0,
+                nakshatra: '-', // Ascendant nakshatra might not be calculated in simple object
+                nakshatraPada: '-'
+              };
+              // Try to find if ascendant details are computed
+              // If not, we skip Nakshatra for Ascendant for now or basic calc
+            }
+
+            if (!info) return;
+
+            const pName = planetTam[key] || key;
+            const signName = signsTam[info.sign] || info.sign;
+            const degStr = `${Math.floor(info.degree)}° ${info.minute}'`;
+            const nakName = nakshatras[info.nakshatra] || info.nakshatra || '-';
+
+            pHtml += `
+                <div class="planet-item" style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:white; margin-bottom:8px; border-radius:8px; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                  <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width:36px; height:36px; background:${getColorBg(key)}; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:0.8rem;">
+                      ${key.substring(0, 2)}
+                    </div>
+                    <div>
+                      <div style="font-weight:700; color:#374151;">${pName}</div>
+                      <div style="font-size:0.75rem; color:#6B7280;">${signName} | ${degStr}</div>
+                    </div>
+                  </div>
+                  <div style="text-align:right;">
+                     <div style="font-size:0.8rem; font-weight:600; color:#4B5563;">${nakName}</div>
+                     <div style="font-size:0.7rem; color:#9CA3AF;">பாதம்: ${info.nakshatraPada || 1}</div>
+                  </div>
+                </div>
+               `;
+          });
+          planetList.innerHTML = pHtml;
+        }
+
+        // ==========================================
+        // 6) Render Dasha (Tamil)
+        // ==========================================
+        const dashaList = document.getElementById('dashaList');
+        const dashaInfo = document.getElementById('currentDashaInfo');
+
+        if (data.dashaSystem) {
+          const planetTamM = {
+            "Ketu": "கேது", "Venus": "சுக்கிரன்", "Sun": "சூரியன்", "Moon": "சந்திரன்",
+            "Mars": "செவ்வாய்", "Rahu": "ராகு", "Jupiter": "குரு", "Saturn": "சனி", "Mercury": "புதன்"
+          };
+
+          // Current Dasha
+          const curr = data.dashaSystem.current;
+          if (curr && dashaInfo) {
+            const mName = planetTamM[curr.mahadasha?.lord] || curr.mahadasha?.lord || '-';
+            const bName = planetTamM[curr.bhukti?.lord] || curr.bhukti?.lord || '-';
+            const aName = planetTamM[curr.pratyantar?.lord] || curr.pratyantar?.lord || '-'; // Assuming API sends pratyantar or antaram
+            // Note: API sends 'pratyantar' key as level 3 usually.
+
+            dashaInfo.innerHTML = `
+                <div style="background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); color: white; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                   <div style="font-size:0.75rem; opacity:0.9; text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">தற்போதைய தசை</div>
+                   <div style="font-size:1.1rem; font-weight:bold;">${mName} மகாதிசை</div>
+                   <div style="display:flex; margin-top:10px; gap:10px;">
+                      <span style="background:rgba(255,255,255,0.2); padding:4px 8px; border-radius:6px; font-size:0.8rem;">புக்தி: ${bName}</span>
+                      <span style="background:rgba(255,255,255,0.2); padding:4px 8px; border-radius:6px; font-size:0.8rem;">அந்தரம்: ${aName}</span>
+                   </div>
+                   <div style="margin-top:8px; font-size:0.75rem; opacity:0.8;">முடிவு: ${curr.mahadasha?.end || '-'}</div>
+                </div>
+              `;
+          }
+
+          // Sequence
+          if (data.dashaSystem.sequence && dashaList) {
+            dashaList.innerHTML = data.dashaSystem.sequence.map(d => {
+              const dName = planetTamM[d.lord] || d.lord;
+              return `
+                     <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee; align-items:center;">
+                        <div style="font-weight:600; color:#333;">${dName}</div>
+                        <div style="font-size:0.8rem; color:#666;">
+                           ${d.start.split('-').reverse().join('-')}  முதல்  ${d.end.split('-').reverse().join('-')}
+                        </div>
+                     </div>
+                   `;
+            }).join('');
+          }
+        }
+
+        // Helper for color
+        function getColorBg(p) {
+          const map = { 'Sun': '#ef4444', 'Moon': '#3b82f6', 'Mars': '#b91c1c', 'Mercury': '#10b981', 'Jupiter': '#f59e0b', 'Venus': '#ec4899', 'Saturn': '#374151', 'Rahu': '#1f2937', 'Ketu': '#4b5563', 'Ascendant': '#8b5cf6' };
+          return map[p] || '#6b7280';
+        }
+
       }
     }
 

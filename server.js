@@ -12,8 +12,11 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 const cors = require("cors");
+const compression = require('compression');
 
+app.use(compression());
 app.use(cors({ origin: "*" }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));  // Serve static files (HTML, CSS, JS, Images)

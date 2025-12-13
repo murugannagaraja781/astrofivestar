@@ -12,11 +12,8 @@ const {
 } = require('../utils/astroCalculations');
 
 const {
-    computeMahadashaSequence,
-    computeBhuktisForMahadasha,
-    computePratyantarsForBhukti,
-    getCurrentDasha,
-    getNakshatraLord
+    computeMahadasha,
+    getCurrentDashaTree
 } = require('../utils/vimshottari');
 
 /**
@@ -60,7 +57,7 @@ router.post('/complete', (req, res) => {
         const navamsaChart = calculateNavamsaChart(planetaryPositions);
 
         // Calculate Panchangam
-        const panchangam = calculatePanchangam(birthDate, latitude, longitude);
+        const panchangam = calculatePanchangam(birthDate, latitude, longitude, planetaryPositions);
 
         // Calculate Dasha details
         const moonLongitude = planetaryPositions.Moon;
@@ -222,12 +219,12 @@ router.get('/complete', (req, res) => {
         const navamsaChart = calculateNavamsaChart(planetaryPositions);
 
         // Calculate Panchangam
-        const panchangam = calculatePanchangam(birthDate, latitude, longitude);
+        const panchangam = calculatePanchangam(birthDate, latitude, longitude, planetaryPositions);
 
         // Calculate Dasha details
         const moonLongitude = planetaryPositions.Moon;
-        const mahadashas = computeMahadashaSequence(birthDate, moonLongitude, 120);
-        const currentDasha = getCurrentDasha(birthDate, moonLongitude);
+        const mahadashas = computeMahadasha(birthDate, moonLongitude, 'en'); // New Function (returns full array)
+        const currentDasha = getCurrentDashaTree(birthDate, moonLongitude, new Date(), 'en'); // New Tree Logic
 
         // Get current Bhukti and Pratyantar details
         let currentBhuktiDetails = null;
