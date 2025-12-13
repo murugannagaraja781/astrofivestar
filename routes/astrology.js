@@ -61,8 +61,8 @@ router.post('/complete', (req, res) => {
 
         // Calculate Dasha details
         const moonLongitude = planetaryPositions.Moon;
-        const mahadashas = computeMahadashaSequence(birthDate, moonLongitude, 120);
-        const currentDasha = getCurrentDasha(birthDate, moonLongitude);
+        const mahadashas = computeMahadasha(birthDate, moonLongitude, 'en');
+        const currentDasha = getCurrentDashaTree(birthDate, moonLongitude, new Date(), 'en');
 
 
 
@@ -191,23 +191,7 @@ router.get('/complete', (req, res) => {
         const mahadashas = computeMahadasha(birthDate, moonLongitude, 'en'); // New Function (returns full array)
         const currentDasha = getCurrentDashaTree(birthDate, moonLongitude, new Date(), 'en'); // New Tree Logic
 
-        // Get current Bhukti and Pratyantar details
-        let currentBhuktiDetails = null;
-        let currentPratyntarDetails = null;
 
-        if (currentDasha.bhukti) {
-            const bhuktis = computeBhuktisForMahadasha(currentDasha.mahadasha);
-            currentBhuktiDetails = bhuktis.find(b =>
-                new Date() >= b.start && new Date() < b.end
-            );
-
-            if (currentBhuktiDetails) {
-                const pratyantars = computePratyantarsForBhukti(currentBhuktiDetails);
-                currentPratyntarDetails = pratyantars.find(p =>
-                    new Date() >= p.start && new Date() < p.end
-                );
-            }
-        }
 
         // Calculate Nakshatra for each planet
         const nakshatraDetails = {};
@@ -267,28 +251,9 @@ router.get('/complete', (req, res) => {
 
             dashaSystem: {
                 description: 'Vimshottari Dasha System',
-                current: {
-                    mahadasha: currentDasha.mahadasha ? {
-                        lord: currentDasha.mahadasha.lord,
-                        start: currentDasha.mahadasha.start.toISOString().split('T')[0],
-                        end: currentDasha.mahadasha.end.toISOString().split('T')[0],
-                        years: currentDasha.mahadasha.years.toFixed(2)
-                    } : null,
-                    bhukti: currentBhuktiDetails ? {
-                        lord: currentBhuktiDetails.subLord,
-                        start: currentBhuktiDetails.start.toISOString().split('T')[0],
-                        end: currentBhuktiDetails.end.toISOString().split('T')[0],
-                        years: currentBhuktiDetails.years.toFixed(2)
-                    } : null,
-                    pratyantar: currentPratyntarDetails ? {
-                        lord: currentPratyntarDetails.pratyantarLord,
-                        start: currentPratyntarDetails.start.toISOString().split('T')[0],
-                        end: currentPratyntarDetails.end.toISOString().split('T')[0],
-                        years: currentPratyntarDetails.years.toFixed(2)
-                    } : null
-                },
-                sequence: mahadashas.slice(0, 10).map(m => ({
-                    lord: m.lord,
+                current: currentDasha,
+                sequence: mahadashas.map(m => ({
+                    lord: m.name,
                     start: m.start.toISOString().split('T')[0],
                     end: m.end.toISOString().split('T')[0],
                     years: m.years.toFixed(2)
