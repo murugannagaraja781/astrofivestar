@@ -1310,12 +1310,16 @@
       setupToggle('toggleCall', 'audio');
       setupToggle('toggleVideo', 'video');
 
-      if (user.image) {
-        document.getElementById('astroAvatar').src = user.image;
-        document.getElementById('astroAvatar').onerror = function () {
-          this.onerror = null;
+      if (user.image && user.image !== 'undefined' && user.image !== 'null') {
+        const img = document.getElementById('astroAvatar');
+        img.src = user.image;
+        img.onerror = function () {
+          this.onerror = null; // Prevent loops
           this.src = `https://ui-avatars.com/api/?name=${user.name}&background=random`;
+          console.log("Avatar load failed, using fallback.");
         };
+      } else {
+        document.getElementById('astroAvatar').src = `https://ui-avatars.com/api/?name=${user.name}&background=random`;
       }
     }
 
@@ -2281,37 +2285,7 @@
         });
       } catch (e) { console.warn("jQuery Tooltip failed", e); }
 
-      // 3. Dasha
-      const curr = data.dashaSystem.current;
-      document.getElementById('currentDashaInfo').innerHTML =
-        `<div style="font-size:0.8rem; text-transform:uppercase; color:#888; letter-spacing:1px; margin-bottom:5px;">Current
-    Period</div>
-  <div style="font-size:1.4rem; font-weight:bold; color:var(--primary); margin-bottom:5px;">
-    ${curr.mahadasha.lord} <span style="color:#ccc;">/</span> ${curr.bhukti.lord}
-  </div>
-  <div style="font-size:0.9rem; color:#555;">
-    <i class="fas fa-hourglass-end"></i> Ends: <b>${curr.bhukti.end}</b>
-  </div>`;
 
-      const dList = document.getElementById('dashaList');
-      dList.innerHTML = '';
-      data.dashaSystem.sequence.forEach(m => {
-        const row = document.createElement('div');
-        // Check if current
-        if (m.lord === curr.mahadasha.lord) {
-          row.style.background = '#ECFDF5';
-          row.style.border = '1px solid var(--border)';
-        }
-
-        row.innerHTML = `<div>
-    <div style='font-weight:bold; color:#1F2937;'>${m.lord}</div>
-    <div style='font-size:0.75rem; color:#9CA3AF;'>${m.years} Years</div>
-  </div>
-          <div style='text-align:right; font-size:0.85rem; color:#4B5563;'>
-            ${m.start.split('-')[0]} - ${m.end.split('-')[0]}
-          </div>`;
-        dList.appendChild(row);
-      });
 
       // 4. Panchangam (Restored & Styled)
       const pan = data.panchangam && data.panchangam.data;
