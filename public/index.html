@@ -12,16 +12,10 @@
   <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
   <style>
     :root {
-      /* Shared Colors */
-      /* Shared Colors - Milk Green Luxury Theme */
       --primary: #047857;
-      /* Deep Emerald for Text/Important */
       --secondary: #6EE7B7;
-      /* Soft Milk Green */
       --bg-body: #F0FDF4;
-      /* Very Light Mint Background */
       --accent-gold: #D4AF37;
-      /* Luxury Gold Accent */
       --surface: #FFFFFF;
       --border: #A7F3D0;
     }
@@ -56,7 +50,6 @@
       width: 100%;
     }
 
-    /* === LOGIN === */
     #screen-login {
       position: absolute;
       inset: 0;
@@ -104,7 +97,6 @@
       letter-spacing: 0.5px;
     }
 
-    /* === DASHBOARD LAYOUT === */
     .dashboard-container {
       height: 100%;
       display: flex;
@@ -134,7 +126,6 @@
       padding-bottom: 80px;
     }
 
-    /* === CLIENT DASHBOARD (Rise Style) === */
     .filter-tabs {
       display: flex;
       gap: 10px;
@@ -178,7 +169,6 @@
       bottom: 12px;
       left: 54px;
       background: #9CA3AF;
-      /* gray default */
     }
 
     .status-dot.online {
@@ -189,7 +179,6 @@
       background: #EF4444;
     }
 
-    /* === ASTROLOGER DASHBOARD (New UI) === */
     .astro-dash-header {
       background: white;
       padding: 15px;
@@ -294,7 +283,6 @@
       color: #333;
     }
 
-    /* === MODALS === */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -355,7 +343,6 @@
       border: none;
     }
 
-    /* === SESSION === */
     #screen-session {
       position: fixed;
       inset: 0;
@@ -413,7 +400,6 @@
       display: none !important;
     }
 
-    /* === ADMIN DASHBOARD === */
     .admin-card {
       background: white;
       border-radius: 12px;
@@ -464,6 +450,312 @@
       font-size: 0.7rem;
       color: #555;
     }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(100%);
+      }
+
+      to {
+        transform: translateY(0);
+      }
+    }
+
+    .chart-modal-content {
+      background: #F3F4F6;
+      width: 100%;
+      height: 90vh;
+      border-top-left-radius: 25px;
+      border-top-right-radius: 25px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.2);
+      animation: slideUp 0.3s ease-out;
+    }
+
+    .chart-header {
+      padding: 20px;
+      background: white;
+      font-weight: 700;
+      font-size: 1.2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #e5e5e5;
+      color: #1F2937;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      color: #6B7280;
+      cursor: pointer;
+    }
+
+    .chart-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      position: relative;
+    }
+
+    .input-card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      margin-bottom: 20px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 15px;
+    }
+
+    .input-row label {
+      display: block;
+      font-size: 0.85rem;
+      color: #4B5563;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .app-input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #D1D5DB;
+      border-radius: 10px;
+      font-size: 1rem;
+      color: #111827;
+      background: #F9FAFB;
+      transition: 0.2s;
+    }
+
+    .app-input:focus {
+      border-color: var(--primary);
+      background: white;
+    }
+
+    .generate-btn {
+      font-size: 1.1rem;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 10px 15px -3px rgba(4, 120, 87, 0.2);
+    }
+
+    .chart-tabs {
+      display: flex;
+      gap: 5px;
+      background: white;
+      padding: 5px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .c-tab {
+      flex: 1;
+      background: none;
+      border: none;
+      padding: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #6B7280;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .c-tab.active {
+      background: var(--border);
+      color: #064E3B;
+    }
+
+    .rasi-container {
+      position: relative;
+      width: 100%;
+      max-width: 360px;
+      margin: 0 auto;
+    }
+
+    .south-indian-chart {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 0;
+      border: 2px solid #D97706;
+      background: #FEF3C7;
+      width: 100%;
+      aspect-ratio: 1/1;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .SouthChartBox {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      border: 1px solid #D97706;
+      overflow: hidden;
+    }
+
+    .SouthChartBox[data-center="true"] {
+      background: white;
+      border: none;
+    }
+
+    .s-sign-label {
+      position: absolute;
+      top: 1px;
+      left: 2px;
+      font-size: 0.6rem;
+      font-weight: bold;
+      color: #D97706;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.8;
+    }
+
+    .s-planet-text {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #111;
+      line-height: 1.2;
+      z-index: 2;
+    }
+
+    .asc-badge {
+      color: #DC2626 !important;
+    }
+
+    .chart-center-label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-weight: 900;
+      color: #F59E0B;
+      opacity: 0.2;
+      font-size: 2rem;
+      pointer-events: none;
+    }
+
+    .planet-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .planet-item {
+      background: white;
+      padding: 12px;
+      border-radius: 10px;
+      border-left: 4px solid var(--secondary);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .panchangam-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1px;
+      background: #e5e7eb;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .panchangam-grid>div {
+      background: white;
+      padding: 8px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 70px;
+    }
+
+    .dasha-card-highlight {
+      background: white;
+      padding: 20px;
+      border-radius: 15px;
+      border-left: 5px solid var(--primary);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .dasha-list>div {
+      background: white;
+      margin-bottom: 8px;
+      padding: 12px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .spinner-astro {
+      width: 50px;
+      height: 50px;
+      border: 5px solid var(--border);
+      border-top: 5px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    .text-muted {
+      color: #6c757d;
+    }
+
+    @media (max-width: 600px) {
+      .panchangam-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .panchangam-grid>div:last-child:nth-child(odd) {
+        grid-column: span 2;
+      }
+    }
+
+    .chat-overlay {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: white;
+    }
+
+
+    #messagesList {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      background: #f9fafb;
+      position: relative;
+    }
+
+    #birthChartColumn {
+      flex: 0 0 400px;
+      display: none;
+      flex-direction: column;
+      background: #f9fafb;
+      border-left: 1px solid #eee;
+      overflow-y: auto;
+      max-height: 100%;
+      position: relative;
+    }
   </style>
 </head>
 
@@ -507,6 +799,68 @@
       </div>
     </div>
   </div>
+
+  <!-- Screen: Universal Chart Modal (For Dashboard) -->
+  <div id="universalChartModal" class="modal-overlay hidden"
+    style="align-items: center; justify-content: center; z-index: 10000;">
+    <!-- Chart Form for Dashboard -->
+    <div id="dashboardChartPanel"
+      style="background:#F3F4F6; width:100%; height:90vh; border-top-left-radius:25px; border-top-right-radius:25px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 -5px 20px rgba(0,0,0,0.2); animation:slideUp 0.3s ease-out; max-width:500px;">
+      <div
+        style="padding:20px; background:white; font-weight:700; font-size:1.2rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e5e5e5; color:#1F2937;">
+        <span>🔮 Birth Chart</span>
+        <button onclick="document.getElementById('universalChartModal').classList.add('hidden')"
+          style="background:none; border:none; font-size:1.4rem; color:#6B7280; cursor:pointer;"><i
+            class="fas fa-times"></i></button>
+      </div>
+      <div style="flex:1; overflow-y:auto; padding:20px;">
+        <div
+          style="background:white; border-radius:16px; padding:20px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom:20px;">
+          <div style="display:flex; gap:15px; margin-bottom:15px;">
+            <div style="flex:1;">
+              <label style="display:block; font-size:0.85rem; color:#4B5563; margin-bottom:6px; font-weight:500;">Date
+                of Birth</label>
+              <input type="date" id="dashboardChartDate" class="app-input"
+                style="width:100%; padding:12px; border:1px solid #D1D5DB; border-radius:10px; font-size:1rem; color:#111827; background:#F9FAFB;">
+            </div>
+            <div style="flex:1;">
+              <label style="display:block; font-size:0.85rem; color:#4B5563; margin-bottom:6px; font-weight:500;">Time
+                of Birth</label>
+              <input type="time" id="dashboardChartTime" class="app-input"
+                style="width:100%; padding:12px; border:1px solid #D1D5DB; border-radius:10px; font-size:1rem; color:#111827; background:#F9FAFB;">
+            </div>
+          </div>
+          <div style="display:flex; gap:15px; margin-bottom:15px;">
+            <div style="flex:1;">
+              <label
+                style="display:block; font-size:0.85rem; color:#4B5563; margin-bottom:6px; font-weight:500;">Latitude</label>
+              <input type="text" id="dashboardChartLat" class="app-input" placeholder="e.g., 13.0827"
+                style="width:100%; padding:12px; border:1px solid #D1D5DB; border-radius:10px; font-size:1rem; color:#111827; background:#F9FAFB;">
+            </div>
+            <div style="flex:1;">
+              <label
+                style="display:block; font-size:0.85rem; color:#4B5563; margin-bottom:6px; font-weight:500;">Longitude</label>
+              <input type="text" id="dashboardChartLon" class="app-input" placeholder="e.g., 80.2707"
+                style="width:100%; padding:12px; border:1px solid #D1D5DB; border-radius:10px; font-size:1rem; color:#111827; background:#F9FAFB;">
+            </div>
+          </div>
+          <div style="display:flex; gap:15px;">
+            <div style="flex:1;">
+              <label
+                style="display:block; font-size:0.85rem; color:#4B5563; margin-bottom:6px; font-weight:500;">Timezone
+                (IST = 5.5)</label>
+              <input type="number" id="dashboardChartTz" class="app-input" value="5.5" step="0.5"
+                style="width:100%; padding:12px; border:1px solid #D1D5DB; border-radius:10px; font-size:1rem; color:#111827; background:#F9FAFB;">
+            </div>
+          </div>
+        </div>
+        <button class="cosmic-btn" onclick="fetchDashboardChart()"
+          style="font-size:1.1rem; padding:15px; border-radius:12px; box-shadow:0 10px 15px -3px rgba(4,120,87,0.2); width:100%; border:none; background:linear-gradient(to right, #059669, #047857); color:white; cursor:pointer; font-weight:600;">
+          <i class="fas fa-calculator"></i> Get Birth Chart
+        </button>
+      </div>
+    </div>
+  </div>""
 
   <!-- Screen: Astrologer Dashboard -->
   <div id="screen-astro" class="dashboard-container hidden">
@@ -583,6 +937,69 @@
     </div>
   </div>
 
+  <!-- Screen: Client Birth Chart Form Modal -->
+  <div id="screen-client-birth-chart" class="modal-overlay hidden" style="align-items: center;">
+    <div class="chart-modal-content" style="height: auto; max-height: 90vh; max-width: 500px;">
+      <div class="chart-header">
+        <span>📊 Send Your Birth Details</span>
+        <button onclick="document.getElementById('screen-client-birth-chart').classList.add('hidden')"
+          class="close-btn"><i class="fas fa-times"></i></button>
+      </div>
+
+      <div class="chart-body" style="padding: 20px;">
+        <div class="input-card">
+          <div class="input-row">
+            <div style="flex:1">
+              <label>Date of Birth</label>
+              <input type="date" id="clientChartDate" class="app-input">
+            </div>
+            <div style="flex:1">
+              <label>Time of Birth</label>
+              <input type="time" id="clientChartTime" class="app-input">
+            </div>
+          </div>
+
+          <div class="input-row" style="margin-top:15px; position:relative;">
+            <div style="flex:1">
+              <label>City / Place</label>
+              <div style="position:relative;">
+                <input type="text" id="clientCitySearch" class="app-input" placeholder="Type City Name..."
+                  autocomplete="off" oninput="handleCityInput(this.value)">
+                <div id="clientCityResults"
+                  style="display:none; position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #ddd; z-index:9999; max-height:200px; overflow-y:auto; border-radius:6px; box-shadow:0 4px 15px rgba(0,0,0,0.2); margin-top:5px;">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="input-row" style="margin-top:10px;">
+            <div style="flex:1; display:flex; gap:10px;">
+              <div style="flex:1">
+                <label style="font-size:0.75rem; color:#666;">Latitude</label>
+                <input type="text" id="clientChartLat" class="app-input" placeholder="e.g., 13.0827">
+              </div>
+              <div style="flex:1">
+                <label style="font-size:0.75rem; color:#666;">Longitude</label>
+                <input type="text" id="clientChartLon" class="app-input" placeholder="e.g., 80.2707">
+              </div>
+            </div>
+          </div>
+
+          <div class="input-row" style="margin-top:10px;">
+            <div style="flex:1">
+              <label>Timezone (IST = 5.5)</label>
+              <input type="number" id="clientChartTz" class="app-input" value="5.5" step="0.5">
+            </div>
+          </div>
+        </div>
+
+        <button class="cosmic-btn" onclick="sendChatWithBirthChart()" style="margin-top:20px;">
+          <i class="fas fa-comments"></i> Start Chat with Birth Details
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Screen: Chart Helper Modal -->
   <div id="screen-chart-helper" class="modal-overlay hidden" style="align-items: flex-end;">
     <div class="chart-modal-content">
@@ -606,7 +1023,7 @@
                 <input type="time" id="chartTime" class="app-input">
               </div>
             </div>
-            <!-- City Search Row (Restored) -->
+            <!-- City Search Row -->
             <div class="input-row" style="margin-top:15px; position:relative;">
               <div style="flex:1">
                 <label>City / Place</label>
@@ -627,7 +1044,7 @@
               </div>
             </div>
 
-            <!-- Auto-Filled Coordinates (Visible) -->
+            <!-- Auto-Filled Coordinates -->
             <div class="input-row" style="margin-top:10px;">
               <div style="flex:1; display:flex; gap:10px;">
                 <div style="flex:1">
@@ -640,6 +1057,15 @@
                   <input type="text" id="chartLon" value="80.2707" class="app-input" readonly
                     style="background:#f9fafb; color:#555;">
                 </div>
+              </div>
+            </div>
+
+            <!-- Timezone Field -->
+            <div class="input-row" style="margin-top:10px;">
+              <div style="flex:1">
+                <label style="font-size:0.75rem; color:#666;">Timezone (IST = 5.5)</label>
+                <input type="number" id="chartTz" value="5.5" class="app-input" step="0.5" readonly
+                  style="background:#f9fafb; color:#555;">
               </div>
             </div>
           </div>
@@ -661,6 +1087,8 @@
             <button onclick="switchChartTab('rasi')" class="c-tab active" id="tab-rasi">Rasi Chart</button>
             <button onclick="switchChartTab('basic')" class="c-tab" id="tab-basic">Planets</button>
             <button onclick="switchChartTab('dasha')" class="c-tab" id="tab-dasha">Dasha</button>
+            <button id="btnShareChart" onclick="shareChartInChat()" class="c-tab"
+              style="color:#22C55E; display:none;"><i class="fas fa-share-alt"></i> Share</button>
             <button onclick="resetChart()" class="c-tab" style="color:red;"><i class="fas fa-redo"></i></button>
           </div>
 
@@ -673,7 +1101,7 @@
               <div class="chart-center-label">Rasi Chart (D1)</div>
             </div>
 
-            <!-- Panchangam Container (Inserted Here) -->
+            <!-- Panchangam Container -->
             <div class="panchangam-container"
               style="margin-top:20px; background:#fff; border:1px solid #eee; padding:10px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
               <div
@@ -706,284 +1134,6 @@
       </div>
     </div>
   </div>
-
-  <style>
-    /* Modal Mobile Animation */
-    .chart-modal-content {
-      background: #F3F4F6;
-      width: 100%;
-      height: 90vh;
-      border-top-left-radius: 25px;
-      border-top-right-radius: 25px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.2);
-      animation: slideUp 0.3s ease-out;
-    }
-
-    @keyframes slideUp {
-      from {
-        transform: translateY(100%);
-      }
-
-      to {
-        transform: translateY(0);
-      }
-    }
-
-    .chart-header {
-      padding: 20px;
-      background: white;
-      font-weight: 700;
-      font-size: 1.2rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #e5e5e5;
-      color: #1F2937;
-    }
-
-    .close-btn {
-      background: none;
-      border: none;
-      font-size: 1.4rem;
-      color: #6B7280;
-      cursor: pointer;
-    }
-
-    .chart-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-      position: relative;
-    }
-
-    .input-card {
-      background: white;
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-      margin-bottom: 20px;
-    }
-
-    .input-row {
-      display: flex;
-      gap: 15px;
-    }
-
-    .input-row label {
-      display: block;
-      font-size: 0.85rem;
-      color: #4B5563;
-      margin-bottom: 6px;
-      font-weight: 500;
-    }
-
-    .app-input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #D1D5DB;
-      border-radius: 10px;
-      font-size: 1rem;
-      color: #111827;
-      background: #F9FAFB;
-      transition: 0.2s;
-    }
-
-    .app-input:focus {
-      border-color: var(--primary);
-      background: white;
-    }
-
-    .generate-btn {
-      font-size: 1.1rem;
-      padding: 15px;
-      border-radius: 12px;
-      box-shadow: 0 10px 15px -3px rgba(4, 120, 87, 0.2);
-    }
-
-    /* Tabs */
-    .chart-tabs {
-      display: flex;
-      gap: 5px;
-      background: white;
-      padding: 5px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    }
-
-    .c-tab {
-      flex: 1;
-      background: none;
-      border: none;
-      padding: 10px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: #6B7280;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .c-tab.active {
-      background: var(--border);
-      color: #064E3B;
-    }
-
-    /* CHART VISUALIZATION - Real Rasi Kadam */
-    .rasi-container {
-      position: relative;
-      width: 100%;
-      max-width: 360px;
-      margin: 0 auto;
-    }
-
-    .south-indian-chart {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: repeat(4, 1fr);
-      gap: 0;
-      border: 2px solid #D97706;
-      /* Traditional Dark Gold/Orange Border */
-      background: #FEF3C7;
-      /* Light Yellow Parchment Background */
-      width: 100%;
-      aspect-ratio: 1/1;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .SouthChartBox {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      position: relative;
-      border: 1px solid #D97706;
-      /* Inner borders */
-      overflow: hidden;
-    }
-
-    /* Center "Kovil" (Empty Space) */
-    .SouthChartBox[data-center="true"] {
-      background: white;
-      border: none;
-    }
-
-    /* Ensure borders don't double up awkwardly - handled by grid spacing 0 and proper border assignment, or use outline. Simple border on box works well for classic look. */
-
-    .s-sign-label {
-      position: absolute;
-      top: 1px;
-      left: 2px;
-      font-size: 0.6rem;
-      font-weight: bold;
-      color: #D97706;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      opacity: 0.8;
-    }
-
-    .s-planet-text {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #111;
-      line-height: 1.2;
-      z-index: 2;
-    }
-
-    .asc-badge {
-      color: #DC2626 !important;
-    }
-
-    .chart-center-label {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-weight: 900;
-      color: #F59E0B;
-      opacity: 0.2;
-      font-size: 2rem;
-      pointer-events: none;
-    }
-
-    /* Lists */
-    .planet-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .planet-item {
-      background: white;
-      padding: 12px;
-      border-radius: 10px;
-      border-left: 4px solid var(--secondary);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    }
-
-    /* Panchangam Grid - Restored */
-    .panchangam-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 1px;
-      background: #e5e7eb;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      overflow: hidden;
-      margin-top: 10px;
-    }
-
-    .panchangam-grid>div {
-      background: white;
-      padding: 8px 4px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      min-height: 70px;
-    }
-
-    @media (max-width: 600px) {
-      .panchangam-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .panchangam-grid>div:last-child:nth-child(odd) {
-        grid-column: span 2;
-      }
-    }
-
-    .dasha-card-highlight {
-      background: white;
-      padding: 20px;
-      border-radius: 15px;
-      border-left: 5px solid var(--primary);
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    }
-
-    .dasha-list>div {
-      background: white;
-      margin-bottom: 8px;
-      padding: 12px;
-      border-radius: 8px;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .spinner-astro {
-      width: 50px;
-      height: 50px;
-      border: 5px solid var(--border);
-      border-top: 5px solid var(--primary);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto;
-    }
-  </style>
 
   <!-- Screen: Super Admin Dashboard -->
   <div id="screen-admin" class="dashboard-container hidden">
@@ -1065,19 +1215,6 @@
     </div>
   </div>
 
-  <!-- Screen: Chart Helper -->
-  <div id="screen-chart-helper" class="modal-overlay hidden" style="z-index: 3100 !important;">
-    <div
-      style="background: white; width: 95%; max-width: 500px; height: 90vh; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; overflow: hidden;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <div style="font-weight: bold; font-size: 1.2rem; color: var(--primary);">Birth Chart Calculator</div>
-        <i class="fas fa-times" style="font-size: 1.2rem; cursor: pointer;"
-          onclick="document.getElementById('screen-chart-helper').classList.add('hidden')"></i>
-      </div>
-      <!-- Chart content will go here -->
-    </div>
-  </div>
-
   <!-- Screen: Profile -->
   <div id="screen-profile" class="modal-overlay hidden">
     <div style="background: white; width: 90%; max-width: 400px; border-radius: 20px; padding: 20px;">
@@ -1126,68 +1263,235 @@
       </div>
     </div>
 
-    <!-- Chat Overlay (Visible in all modes, but dominant in Chat Mode) -->
-    <div class="chat-overlay"
-      style="flex: 1; display:flex; flex-direction:column; background: white; border-top:1px solid #eee;">
-      <div id="messagesList" style="flex:1; overflow-y:auto; padding:15px; background:#f9fafb;"></div>
-      <div class="chat-input" style="padding:10px; border-top:1px solid #eee; display:flex; gap:10px;">
-        <button id="btnChatChart" onclick="showChartHelper()"
-          style="display:none; padding:0 12px; height:40px; border-radius:20px; background:#fff; border:1px solid #ddd; color:#d97706; font-weight:600; white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
-          <i class="fas fa-chart-pie"></i> Birth Chart
-        </button>
-        <input id="msgInput" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:20px;"
-          placeholder="Type Message...">
-        <button id="btnSend" style="width:40px; height:40px; border-radius:50%; background:#FFD700; border:none;"><i
-            class="fas fa-paper-plane"></i></button>
+    <!-- Two Column Layout Container -->
+    <div style="display:flex; flex:1; gap:0; overflow:hidden;">
+      <!-- Column 1: Chat Window (Left) -->
+      <div
+        style="flex:1; display:flex; flex-direction:column; background:white; border-right:1px solid #eee; min-width:0;">
+        <div class="chat-overlay">
+          <!-- Client Details Header (For Astrologer) -->
+          <div id="clientDetailsHeader"
+            style="display:none; padding:12px 15px; background:#f0fdf4; border-bottom:1px solid #d1fae5; font-size:0.9rem;">
+            <div style="font-weight:600; color:#047857; margin-bottom:5px;">Client Details</div>
+            <div id="clientDetailsContent" style="color:#555; font-size:0.85rem;">
+              <!-- Will be populated by JavaScript -->
+            </div>
+          </div>
+
+          <div id="messagesList">
+            <!-- Client Request Details Watermark -->
+            <div id="clientRequestDetails"
+              style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); text-align:center; z-index:1; pointer-events:none;">
+              <div
+                style="font-size:3rem; color:rgba(200,200,200,0.3); font-weight:300; margin-bottom:20px; letter-spacing:2px;">
+                📋</div>
+              <div style="color:rgba(150,150,150,0.4); font-size:1.1rem; font-weight:500; margin-bottom:10px;">Chat
+                Request from Client</div>
+              <div id="clientRequestContent"
+                style="color:rgba(130,130,130,0.35); font-size:0.95rem; line-height:1.6; max-width:300px;">
+                <!-- Will be populated by JavaScript -->
+              </div>
+            </div>
+
+            <!-- Inline Birth Chart Panel -->
+            <div id="inlineChartPanel"
+              style="display:none; background:white; border-radius:12px; padding:20px; margin:10px 0; box-shadow:0 2px 8px rgba(0,0,0,0.1); max-height:70vh; overflow-y:auto;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <div style="font-weight:bold; font-size:1.1rem; color:#d97706;">🔮 Birth Chart</div>
+                <button onclick="closeInlineChart()"
+                  style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:#999;">✕</button>
+              </div>
+
+              <!-- Input Form -->
+              <div id="chartInputSection">
+                <div class="input-card">
+                  <div class="input-row">
+                    <div style="flex:1">
+                      <label>Date of Birth</label>
+                      <input type="date" id="chartDate" class="app-input">
+                    </div>
+                    <div style="flex:1">
+                      <label>Time of Birth</label>
+                      <input type="time" id="chartTime" class="app-input">
+                    </div>
+                  </div>
+                  <!-- City Search Row -->
+                  <div class="input-row" style="margin-top:15px; position:relative;">
+                    <div style="flex:1">
+                      <label>City / Place</label>
+                      <div style="position:relative;">
+                        <input type="text" id="citySearch" class="app-input" placeholder="Type City Name..."
+                          autocomplete="off">
+                        <div id="cityResults"
+                          style="display:none; position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #ddd; z-index:9999; max-height:200px; overflow-y:auto; border-radius:6px; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Coordinates -->
+                  <div class="input-row" style="margin-top:10px;">
+                    <div style="flex:1; display:flex; gap:10px;">
+                      <div style="flex:1">
+                        <label style="font-size:0.75rem; color:#666;">Latitude</label>
+                        <input type="text" id="chartLat" value="13.0827" class="app-input" readonly
+                          style="background:#f9fafb; color:#555;">
+                      </div>
+                      <div style="flex:1">
+                        <label style="font-size:0.75rem; color:#666;">Longitude</label>
+                        <input type="text" id="chartLon" value="80.2707" class="app-input" readonly
+                          style="background:#f9fafb; color:#555;">
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Timezone -->
+                  <div class="input-row" style="margin-top:10px;">
+                    <div style="flex:1">
+                      <label style="font-size:0.75rem; color:#666;">Timezone (IST = 5.5)</label>
+                      <input type="number" id="chartTz" value="5.5" class="app-input" step="0.5" readonly
+                        style="background:#f9fafb; color:#555;">
+                    </div>
+                  </div>
+                </div>
+
+                <button class="cosmic-btn generate-btn" onclick="fetchChart()" style="margin-top:15px; width:100%;">
+                  <i class="fas fa-calculator"></i> Get Horoscope
+                </button>
+              </div>
+
+              <div id="chartLoading" style="display:none; text-align:center; padding:40px; color: var(--primary);">
+                <div class="spinner-astro"></div>
+                <div style="margin-top:15px; font-weight:500;">Analyzing Planets...</div>
+              </div>
+
+              <!-- Results Area -->
+              <div id="chartResults" style="display: none; height:100%; display:flex; flex-direction:column;">
+                <div class="chart-tabs">
+                  <button onclick="switchChartTab('rasi')" class="c-tab active" id="tab-rasi">Rasi Chart</button>
+                  <button onclick="switchChartTab('basic')" class="c-tab" id="tab-basic">Planets</button>
+                  <button onclick="switchChartTab('dasha')" class="c-tab" id="tab-dasha">Dasha</button>
+                  <button onclick="resetChart()" class="c-tab" style="color:red;"><i class="fas fa-redo"></i></button>
+                </div>
+
+                <!-- Content: Rasi Chart -->
+                <div id="content-rasi" class="chart-tab-content" style="flex:1; overflow-y:auto; padding-bottom:20px;">
+                  <div class="rasi-container">
+                    <div class="south-indian-chart" id="southChart"></div>
+                    <div class="chart-center-label">Rasi Chart (D1)</div>
+                  </div>
+                  <div class="panchangam-container"
+                    style="margin-top:20px; background:#fff; border:1px solid #eee; padding:10px; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                    <div
+                      style="text-align:center; margin-bottom:10px; font-weight:bold; color:#d97706; text-transform:uppercase; letter-spacing:1px; font-size:0.9rem;">
+                      Panchangam</div>
+                    <div id="panchangamList"
+                      style="display:flex; flex-direction:column; gap:8px; font-size:0.9rem; color:#444;"></div>
+                  </div>
+                  <div class="navamsa-container" style="margin-top:20px;">
+                    <div style="text-align:center; margin-bottom:5px; font-weight:bold; color:#555;">Navamsa (D9)</div>
+                    <div class="south-indian-chart" id="navamsaChart"></div>
+                  </div>
+                </div>
+
+                <!-- Content: Planets -->
+                <div id="content-basic" class="chart-tab-content hidden" style="flex:1; overflow-y:auto;">
+                  <div id="planetsList"></div>
+                </div>
+
+                <!-- Content: Dasha -->
+                <div id="content-dasha" class="chart-tab-content hidden" style="flex:1; overflow-y:auto;">
+                  ```
+                </div>
+              </div>
+            </div>
+          </div>
+          <style>
+            .chat-input {
+              padding: 10px;
+              border-top: 1px solid #eee;
+              display: flex;
+              gap: 10px;
+              align-items: center;
+              position: sticky;
+              bottom: 0;
+              background: white;
+              z-index: 20;
+            }
+
+            .msg-input-reduced {
+              flex: 0 0 60%;
+            }
+
+            #inlineChartPanel {
+              margin-bottom: 80px;
+              /* space for chat input */
+              position: relative;
+              z-index: 10;
+              max-height: calc(70vh - 80px);
+              overflow-y: auto;
+            }
+          </style>
+          <div class="chat-input">
+            <button id="btnChatChart" onclick="showChartHelperWithData()"
+              style="display:none; padding:8px 12px; height:40px; border-radius:20px; background:#fff; border:1px solid #ddd; color:#d97706; font-weight:600; white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,0.05); cursor:pointer; transition:0.2s;">
+              <i class="fas fa-chart-pie"></i> Birth Chart
+            </button>
+            <input id="msgInput" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:20px;"
+              placeholder="Type Message...">
+            <button id="btnSend"
+              style="width:40px; height:40px; border-radius:50%; background:#FFD700; border:none; cursor:pointer;"><i
+                class="fas fa-paper-plane"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Column 2: Birth Chart Details (Right) - Responsive -->
+      <div id="birthChartColumn">
+        <div
+          style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-weight:bold; font-size:1rem; color:#d97706;">🔮 Birth Chart</div>
+          <button onclick="closeBirthChartColumn()"
+            style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:#999;">✕</button>
+        </div>
+        <div style="padding:15px; border-bottom:1px solid #eee;">
+          <button onclick="fetchChart()" class="cosmic-btn" style="width:100%; padding:10px; font-size:0.9rem;">
+            <i class="fas fa-calculator"></i> Get Birth Chart
+          </button>
+        </div>
+        <div id="birthChartContent" style="flex:1; overflow-y:auto; padding:15px;">
+          <!-- Birth chart content will be displayed here -->
+        </div>
       </div>
     </div>
   </div>
+  </div>
 
-  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script src="https://unpkg.com/simple-peer/simplepeer.min.js"></script>
   <script>
     // State
-    const state = { me: null, socket: null, session: null, peer: null };
+    const state = { me: null, socket: null, session: null, peer: null, localStream: null };
 
-    // Test Sound Function
-    window.testSound = () => {
-      const audio = new Audio('sound.mpeg');
-      audio.volume = 1.0;
-      const btn = document.querySelector('button[onclick="testSound()"]');
-      const originalText = btn.innerHTML;
+    // Persistent Session Helper
+    const SESSION_KEY = 'astro_session';
+    const TWO_MONTHS = 60 * 24 * 60 * 60 * 1000;
 
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Playing...';
+    function saveSession(user) {
+      const session = { ...user, expiresAt: Date.now() + TWO_MONTHS };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    }
 
-      audio.play()
-        .then(() => {
-          setTimeout(() => {
-            audio.pause();
-            btn.innerHTML = originalText;
-          }, 5000);
-        })
-        .catch(e => {
-          alert('Sound Error: ' + e.message + '\nEnsure sound.mpeg is on server.');
-          btn.innerHTML = originalText;
-        });
-    };
+    function clearSession() {
+      localStorage.removeItem(SESSION_KEY);
+      window.location.reload();
+    }
+
+    // Initialize Socket
     const socket = io();
     state.socket = socket;
 
-    // --- Automatic Reconnection Handling ---
-    // If the app disconnects (internet lost, backgrounded), we must re-register on reconnect.
-    socket.on('connect', () => {
-      console.log('Socket Connected:', socket.id);
-      if (state.me) {
-        console.log('Re-registering session on reconnect...');
-        socket.emit('register', {
-          name: state.me.name,
-          phone: state.me.phone,
-          userId: state.me.userId
-        });
-      }
-    });
-
-    // --- DOM ---
+    // DOM Elements
     const sLogin = document.getElementById('screen-login');
     const sClient = document.getElementById('screen-client');
     const sAstro = document.getElementById('screen-astro');
@@ -1195,7 +1499,32 @@
     const sInc = document.getElementById('screen-incoming');
     const sSes = document.getElementById('screen-session');
 
-    // Login
+    // Check for existing session
+    function checkSession() {
+      try {
+        const saved = localStorage.getItem(SESSION_KEY);
+        if (!saved) return;
+
+        const session = JSON.parse(saved);
+        if (Date.now() > session.expiresAt) {
+          localStorage.removeItem(SESSION_KEY);
+          return;
+        }
+
+        // Auto Login
+        console.log('Restoring session for:', session.name);
+        state.me = session;
+        socket.emit('register', { name: session.name, phone: session.phone, userId: session.userId }, (ack) => {
+          sLogin.classList.add('hidden');
+          if (session.role === 'astrologer') loadAstroDash(session);
+          else if (session.role === 'superadmin') loadAdminDash(session);
+          else loadClientDash(session);
+        });
+
+      } catch (e) { console.error('Session Error', e); }
+    }
+
+    // Login Handlers
     document.getElementById('btnSendOtp').onclick = async () => {
       const phone = document.getElementById('inputPhone').value;
       if (!phone) { alert('Enter Phone'); return; }
@@ -1222,52 +1551,7 @@
       btn.textContent = original;
       btn.disabled = false;
     };
-    // Persistent Session Helper
-    const SESSION_KEY = 'astro_session';
-    const TWO_MONTHS = 60 * 24 * 60 * 60 * 1000;
 
-    function saveSession(user) {
-      const session = { ...user, expiresAt: Date.now() + TWO_MONTHS };
-      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    }
-
-    function clearSession() {
-      localStorage.removeItem(SESSION_KEY);
-      window.location.reload();
-    }
-
-    function checkSession() {
-      try {
-        const saved = localStorage.getItem(SESSION_KEY);
-        if (!saved) return;
-
-        const session = JSON.parse(saved);
-        if (Date.now() > session.expiresAt) {
-          localStorage.removeItem(SESSION_KEY);
-          return;
-        }
-
-        // Auto Login
-        console.log('Restoring session for:', session.name);
-        state.me = session;
-        // We emit register again to ensure server knows we are online/connected socket-wise
-        socket.emit('register', { name: session.name, phone: session.phone, userId: session.userId }, (ack) => {
-          sLogin.classList.add('hidden');
-          if (session.role === 'astrologer') loadAstroDash(session);
-          else if (session.role === 'superadmin') loadAdminDash(session);
-          else loadClientDash(session);
-        });
-
-      } catch (e) { console.error('Session Error', e); }
-    }
-
-    // Auto-check on load (after socket connects usually, but here is fine immediately)
-    // We wait for socket connect actually? No, we can emit register, it buffers if not connected,
-    // BUT socket.id is needed in some server logic.
-    // Best to call checkSession inside socket.on('connect')?
-    // Let's call it immediately; socket.io client buffers packets.
-
-    // --- Login Handlers ---
     document.getElementById('btnVerifyOtp').onclick = async () => {
       const phone = document.getElementById('inputPhone').value;
       const otp = document.getElementById('inputOtp').value;
@@ -1278,7 +1562,7 @@
 
       if (res.ok) {
         state.me = res;
-        saveSession(res); // Save to LocalStorage
+        saveSession(res);
 
         socket.emit('register', { name: res.name, phone: phone }, (ack) => {
           sLogin.classList.add('hidden');
@@ -1295,40 +1579,117 @@
       }
     };
 
-    // Call Check Session
-    checkSession();
+    // Client Dashboard Logic
+    function loadClientDash(user) {
+      sClient.classList.remove('hidden');
+      document.getElementById('clientWallet').innerText = user.walletBalance || 0;
 
-    // --- Astrologer Dash Logic ---
+      fetchAstrologers();
+
+      socket.on('astrologer-update', (list) => {
+        renderAstroList(list);
+      });
+
+      socket.on('wallet-update', (data) => {
+        document.getElementById('clientWallet').innerText = data.balance;
+        state.me.walletBalance = data.balance;
+        saveSession(state.me);
+      });
+    }
+
+    function fetchAstrologers() {
+      socket.emit('get-astrologers', (res) => {
+        renderAstroList(res.astrologers);
+      });
+    }
+
+    function renderAstroList(list) {
+      const container = document.getElementById('astroList');
+      container.innerHTML = '';
+      list.forEach(a => {
+        const div = document.createElement('div');
+        div.className = 'astro-card';
+
+        const btnStyle = (active, color) =>
+          `background: ${active ? 'white' : '#f3f4f6'}; ` +
+          `border: 1px solid ${active ? color : '#ddd'}; ` +
+          `color: ${active ? color : '#999'}; ` +
+          `width: 35px; height: 35px; border-radius: 8px; cursor: pointer; ` +
+          `display: flex; align-items: center; justify-content: center; ` +
+          `pointer-events: ${active ? 'auto' : 'none'}; ` +
+          `opacity: ${active ? '1' : '0.5'};`;
+
+        div.innerHTML = `
+          <div style="position: relative;">
+            <img src="${a.image || 'https://ui-avatars.com/api/?name=' + a.name + '&background=random'}" class="astro-img" style="object-fit:cover;">
+            <div class="status-dot ${a.isOnline ? 'online' : ''}"></div>
+          </div>
+          <div style="flex: 1;">
+            <div style="display:flex; justify-content:space-between;">
+              <div style="font-weight: bold;">${a.name}</div>
+              <div style="font-size:0.8rem; font-weight:bold;">₹${a.price}/min</div>
+            </div>
+            <div style="font-size: 0.8rem; color: #666; margin-bottom: 2px;">${a.skills ? a.skills.join(', ') : ''}</div>
+            <div style="font-size: 0.75rem; color: #888; margin-bottom: 8px;">
+              ${a.experience ? `Exp: ${a.experience} Yrs` : 'New Astrologer'}
+            </div>
+
+            <div style="display:flex; gap: 10px;">
+              <button onclick="showChatWithBirthChart('${a.userId}')" style="${btnStyle(a.isChatOnline, '#3B82F6')}">
+                <i class="fas fa-comment-alt"></i>
+              </button>
+              <button onclick="requestSession('${a.userId}', 'audio')" style="${btnStyle(a.isAudioOnline, '#22C55E')}">
+                <i class="fas fa-phone-alt"></i>
+              </button>
+              <button onclick="requestSession('${a.userId}', 'video')" style="${btnStyle(a.isVideoOnline, '#F59E0B')}">
+                <i class="fas fa-video"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // Astrologer Dashboard Logic
     function loadAstroDash(user) {
       sAstro.classList.remove('hidden');
       document.getElementById('astroName').textContent = user.name;
       document.getElementById('astroId').textContent = user.userId.slice(0, 6);
-      document.getElementById('astroAvatar').src = `https://ui-avatars.com/api/?name=${user.name}&background=random`;
 
-      // Setup Toggles
+      const avatarImg = document.getElementById('astroAvatar');
+      if (user.image && user.image !== 'undefined' && user.image !== 'null') {
+        avatarImg.src = user.image;
+        avatarImg.onerror = function () {
+          this.src = `https://ui-avatars.com/api/?name=${user.name}&background=random`;
+        };
+      } else {
+        avatarImg.src = `https://ui-avatars.com/api/?name=${user.name}&background=random`;
+      }
+
       setupToggle('toggleChat', 'chat');
       setupToggle('toggleCall', 'audio');
       setupToggle('toggleVideo', 'video');
-
-      if (user.image && user.image !== 'undefined' && user.image !== 'null') {
-        const img = document.getElementById('astroAvatar');
-        img.src = user.image;
-        img.onerror = function () {
-          this.onerror = null; // Prevent loops
-          this.src = `https://ui-avatars.com/api/?name=${user.name}&background=random`;
-          console.log("Avatar load failed, using fallback.");
-        };
-      } else {
-        document.getElementById('astroAvatar').src = `https://ui-avatars.com/api/?name=${user.name}&background=random`;
-      }
     }
 
-    // --- Profile Logic ---
+    function setupToggle(id, type) {
+      const el = document.getElementById(id);
+      if (!el) return;
+
+      el.onclick = () => {
+        el.classList.toggle('active');
+        const isOnline = el.classList.contains('active');
+        socket.emit('toggle-status', { online: isOnline, type: type });
+      };
+    }
+
+    // Profile Logic
     let tempAvatarUrl = '';
 
     function showProfile() {
       const u = state.me;
-      document.getElementById('editAvatar').src = u.image || `https://ui-avatars.com/api/?name=${u.name}&background=random`;
+      const editAvatar = document.getElementById('editAvatar');
+      editAvatar.src = u.image || `https://ui-avatars.com/api/?name=${u.name}&background=random`;
       document.getElementById('editPrice').value = u.price || 20;
       document.getElementById('editExp').value = u.experience || 0;
       document.getElementById('screen-profile').classList.remove('hidden');
@@ -1339,7 +1700,7 @@
       const formData = new FormData();
       formData.append('file', input.files[0]);
 
-      const btn = input.nextElementSibling; // The button
+      const btn = input.nextElementSibling;
       const oldText = btn.textContent;
       btn.textContent = 'Uploading...';
 
@@ -1370,18 +1731,19 @@
       socket.emit('update-profile', update, (res) => {
         if (res.ok) {
           state.me = res.user;
-          saveSession(res.user); // Update local storage
+          saveSession(res.user);
           alert('Saved!');
           document.getElementById('screen-profile').classList.add('hidden');
-          // Update Dash
-          if (state.me.image) document.getElementById('astroAvatar').src = state.me.image;
+          if (state.me.image) {
+            document.getElementById('astroAvatar').src = state.me.image;
+          }
         } else {
           alert(res.error || 'Failed');
         }
       });
     }
 
-    // --- History Logic ---
+    // History Logic
     function showHistory() {
       const modal = document.getElementById('screen-history');
       const list = document.getElementById('historyList');
@@ -1407,122 +1769,38 @@
           const otherId = isMe ? s.toUserId : s.fromUserId;
 
           const item = document.createElement('div');
-          item.style = 'background: #f9f9f9; padding: 10px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid #FFD700;';
+          item.style.cssText = 'background: #f9f9f9; padding: 10px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid #FFD700;';
           item.innerHTML = `
-                <div style="font-weight:bold; font-size:0.9rem;">${s.type.toUpperCase()}</div>
-                <div style="font-size:0.8rem; color:#555;">ID: ${otherId ? otherId.slice(0, 6) : 'Unknown'}</div>
-                <div style="font-size:0.75rem; color:#999; display:flex; justify-content:space-between; margin-top:5px;">
-                   <span>${date}</span>
-                   <span>${dura}</span>
-                </div>
-             `;
+            <div style="font-weight:bold; font-size:0.9rem;">${s.type.toUpperCase()}</div>
+            <div style="font-size:0.8rem; color:#555;">ID: ${otherId ? otherId.slice(0, 6) : 'Unknown'}</div>
+            <div style="font-size:0.75rem; color:#999; display:flex; justify-content:space-between; margin-top:5px;">
+              <span>${date}</span>
+              <span>${dura}</span>
+            </div>
+          `;
           list.appendChild(item);
         });
       });
     }
 
-    function setupToggle(id, type) {
-      const el = document.getElementById(id);
-      el.onclick = () => {
-        el.classList.toggle('active');
-        const isOnline = el.classList.contains('active');
-        // Update Server
-        socket.emit('toggle-status', { online: isOnline, type: type });
-      };
-    }
-
-    // --- Client Dash Logic ---
-    function loadClientDash(user) {
-      sClient.classList.remove('hidden');
-      document.getElementById('clientWallet').innerText = user.walletBalance || 0;
-
-      fetchAstrologers();
-
-      socket.on('astrologer-update', (list) => {
-        renderAstroList(list);
-      });
-
-      socket.on('wallet-update', (data) => {
-        document.getElementById('clientWallet').innerText = data.balance;
-        state.me.walletBalance = data.balance;
-        saveSession(state.me); // Update persistent session
-      });
-    }
-
-    function fetchAstrologers() {
-      socket.emit('get-astrologers', (res) => {
-        renderAstroList(res.astrologers);
-      });
-    }
-
-    function renderAstroList(list) {
-      const container = document.getElementById('astroList');
-      container.innerHTML = '';
-      list.forEach(a => {
-        const div = document.createElement('div');
-        div.className = 'astro-card';
-        // Style for action buttons
-        const btnStyle = (active, color) => `
-             background: ${active ? 'white' : '#f3f4f6'};
-             border: 1px solid ${active ? color : '#ddd'};
-             color: ${active ? color : '#999'};
-             width: 35px; height: 35px; border-radius: 8px; cursor: pointer;
-             display: flex; align-items: center; justify-content: center;
-             pointer-events: ${active ? 'auto' : 'none'};
-             opacity: ${active ? '1' : '0.5'};
-          `;
-
-        div.innerHTML = `
-             <div style="position: relative;">
-               <img src="${a.image || 'https://ui-avatars.com/api/?name=' + a.name + '&background=random'}" class="astro-img" style="object-fit:cover;">
-               <div class="status-dot ${a.isOnline ? 'online' : ''}"></div>
-             </div>
-             <div style="flex: 1;">
-               <div style="display:flex; justify-content:space-between;">
-                 <div style="font-weight: bold;">${a.name}</div>
-                 <div style="font-size:0.8rem; font-weight:bold;">₹${a.price}/min</div>
-               </div>
-               <div style="font-size: 0.8rem; color: #666; margin-bottom: 2px;">${a.skills.join(', ')}</div>
-               <div style="font-size: 0.75rem; color: #888; margin-bottom: 8px;">
-                 ${a.experience ? `Exp: ${a.experience} Yrs` : 'New Astrologer'}
-               </div>
-
-               <div style="display:flex; gap: 10px;">
-                  <button onclick="requestSession('${a.userId}', 'chat')" style="${btnStyle(a.isChatOnline, '#3B82F6')}">
-                     <i class="fas fa-comment-alt"></i>
-                  </button>
-                  <button onclick="requestSession('${a.userId}', 'audio')" style="${btnStyle(a.isAudioOnline, '#22C55E')}">
-                     <i class="fas fa-phone-alt"></i>
-                  </button>
-                  <button onclick="requestSession('${a.userId}', 'video')" style="${btnStyle(a.isVideoOnline, '#F59E0B')}">
-                     <i class="fas fa-video"></i>
-                  </button>
-               </div>
-             </div>
-          `;
-        container.appendChild(div);
-      });
-    }
-
-    // --- P2P / Call Logic ---
+    // Session Request Logic
     window.requestSession = (targetId, type) => {
       const titles = { chat: 'Chat', audio: 'Audio Call', video: 'Video Call' };
-      // Show Modal
       const modal = document.createElement('div');
       modal.id = 'calling-modal';
       modal.className = 'modal-overlay';
       modal.innerHTML = `
-          <div class="call-popup" style="background:white; padding:20px; border-radius:15px; text-align:center;">
-             ${type !== 'chat' ? `<div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid ${type === 'chat' ? '#3B82F6' : type === 'audio' ? '#22C55E' : '#F59E0B'}; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 0 auto 15px;"></div>` : ''}
-             <h3>Requesting ${titles[type]}...</h3>
-             <button onclick="document.getElementById('calling-modal').remove()" style="margin-top:10px; padding:8px 20px; border-radius:8px; border:none; background:#ccc;">Cancel</button>
-          </div>
-       `;
+        <div class="call-popup" style="background:white; padding:20px; border-radius:15px; text-align:center;">
+          ${type !== 'chat' ? `<div class="spinner-astro" style="margin: 0 auto 15px;"></div>` : ''}
+          <h3>Requesting ${titles[type]}...</h3>
+          <button onclick="document.getElementById('calling-modal').remove()" style="margin-top:10px; padding:8px 20px; border-radius:8px; border:none; background:#ccc;">Cancel</button>
+        </div>
+      `;
       document.body.appendChild(modal);
 
       socket.emit('request-session', { toUserId: targetId, type }, (res) => {
         if (res.ok) {
-          initSession(res.sessionId, targetId, type, true);
+          initSession(res.sessionId, targetId, type, true, null);
           document.getElementById('calling-modal').remove();
         } else {
           document.getElementById('calling-modal').remove();
@@ -1531,20 +1809,31 @@
       });
     };
 
+    // Incoming Session Handler
     socket.on('incoming-session', (data) => {
+      console.log('Incoming session:', data);
       if (state.session) {
         socket.emit('answer-session', { sessionId: data.sessionId, toUserId: data.fromUserId, accept: false });
         return;
       }
+
+      if (data.birthData) {
+        window.receivedBirthData = data.birthData;
+      } else {
+        window.receivedBirthData = null;
+      }
+
       sInc.classList.remove('hidden');
       const titles = { chat: 'Chat Request', audio: 'Incoming Call', video: 'Incoming Video Call' };
       document.getElementById('callerName').innerHTML = `
-           <strong>${titles[data.type]}</strong><br>Client ${data.fromUserId.slice(0, 4)}
-       `;
+        <strong>${titles[data.type]}</strong><br>Client ${data.fromUserId.slice(0, 4)}
+      `;
 
-      // Play Sound
       try {
-        if (window.incomingAudio) { window.incomingAudio.pause(); window.incomingAudio = null; }
+        if (window.incomingAudio) {
+          window.incomingAudio.pause();
+          window.incomingAudio = null;
+        }
         const soundUrl = 'sound.mpeg';
         window.incomingAudio = new Audio(soundUrl);
         window.incomingAudio.loop = true;
@@ -1552,13 +1841,21 @@
       } catch (e) { console.error('Sound Error', e); }
 
       document.getElementById('btnAccept').onclick = () => {
-        if (window.incomingAudio) { window.incomingAudio.pause(); window.incomingAudio = null; }
+        if (window.incomingAudio) {
+          window.incomingAudio.pause();
+          window.incomingAudio = null;
+        }
         sInc.classList.add('hidden');
         socket.emit('answer-session', { sessionId: data.sessionId, toUserId: data.fromUserId, type: data.type, accept: true });
-        initSession(data.sessionId, data.fromUserId, data.type, false);
+        initSession(data.sessionId, data.fromUserId, data.type, false, data.birthData);
+        if (data.type === 'chat') { startTimer(); }
       };
+
       document.getElementById('btnReject').onclick = () => {
-        if (window.incomingAudio) { window.incomingAudio.pause(); window.incomingAudio = null; }
+        if (window.incomingAudio) {
+          window.incomingAudio.pause();
+          window.incomingAudio = null;
+        }
         sInc.classList.add('hidden');
         socket.emit('answer-session', { sessionId: data.sessionId, toUserId: data.fromUserId, accept: false });
       };
@@ -1578,7 +1875,7 @@
       }
     });
 
-    // --- Timer Logic ---
+    // Timer Logic
     let timerInt = null;
     let timerSec = 0;
 
@@ -1605,148 +1902,100 @@
       document.getElementById('sessionTimer').innerText = `${m}:${s}`;
     }
 
-    // --- Session / WebRTC ---
-    function initSession(sid, pid, type, isInit) {
-      // Clear previous chat
+    // Session Management
+    function initSession(sid, pid, type, isInit, birthData) {
       document.getElementById('messagesList').innerHTML = '';
 
       state.session = { id: sid, partnerId: pid, type };
       sSes.classList.remove('hidden');
 
-      // NEW: Show Chat Chart Button for Astrologer
+      if (birthData) {
+        window.receivedBirthData = birthData;
+      }
+
       if (state.me && state.me.role === 'astrologer') {
         const btn = document.getElementById('btnChatChart');
+        const headerDiv = document.getElementById('clientDetailsHeader');
+        const contentDiv = document.getElementById('clientDetailsContent');
+
         if (btn) btn.style.display = 'block';
+
+        if (window.receivedBirthData) {
+          const bd = window.receivedBirthData;
+          if (headerDiv) {
+            contentDiv.innerHTML = `
+              <div>📅 DOB: ${bd.day}/${bd.month}/${bd.year}</div>
+              <div>⏰ Time: ${String(bd.hour).padStart(2, '0')}:${String(bd.minute).padStart(2, '0')}</div>
+              <div>📍 Location: ${bd.city || 'N/A'}</div>
+              <div>🌍 Coordinates: ${bd.latitude}°N, ${bd.longitude}°E</div>
+            `;
+            headerDiv.style.display = 'block';
+          }
+        } else {
+          if (headerDiv) headerDiv.style.display = 'none';
+        }
       } else {
         const btn = document.getElementById('btnChatChart');
         if (btn) btn.style.display = 'none';
+        const headerDiv = document.getElementById('clientDetailsHeader');
+        if (headerDiv) headerDiv.style.display = 'none';
       }
 
-      if (type !== 'chat') {
-        if (document.getElementById('connectionStatus')) {
-          document.getElementById('connectionStatus').classList.remove('hidden');
-        } else {
-          const d = document.createElement('div');
-          d.id = 'connectionStatus';
-          d.style = 'position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.7); z-index:1001; backdrop-filter:blur(5px);';
-          d.innerHTML = `
-          <div class="loader-spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
-            <div style="margin-top:15px; color:white; font-size:1.1rem; font-weight:500;">Connecting...</div>
-            <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
-        `;
-          sSes.appendChild(d);
-        }
-      } else {
-        // Ensure loader is hidden for chat
-        if (document.getElementById('connectionStatus')) {
-          document.getElementById('connectionStatus').classList.add('hidden');
-        }
-      }
-
-      // Start timer if Receiver AND Chat.
-      // For A/V, we wait for stream connection (handled in startWebRTC -> stream event)
-      if (!isInit && type === 'chat') {
-        startTimer();
-      }
-
-      // UI Mode
       const vArea = document.querySelector('.video-area');
       const localV = document.getElementById('localVideo');
       const remoteV = document.getElementById('remoteVideo');
       const controls = document.querySelector('.controls');
-
       const sessionInfo = document.getElementById('sessionInfo');
       const recInd = document.getElementById('recIndicator');
       const timer = document.getElementById('sessionTimer');
 
-      // Reset Timer UI immediately
       timer.innerText = '00:00';
       timerSec = 0;
 
-      // Reset Styles first
-      vArea.style = '';
-      localV.style.display = '';
-      remoteV.style.display = '';
-      controls.style.display = '';
-
-      // Reset Info Bar
-      sessionInfo.style.position = 'absolute';
-      sessionInfo.style.top = '20px';
-      sessionInfo.style.left = '20px';
-      sessionInfo.style.display = 'block';
-      sessionInfo.style.color = 'white';
-      recInd.style.display = 'inline';
-      timer.style.color = 'white';
-
-
       if (type === 'chat') {
-        // === CHAT MODE ===
-        vArea.style.height = '60px';
-        vArea.style.flex = '0 0 60px';
-        vArea.style.background = '#FFFFFF';
-        vArea.style.borderBottom = '1px solid #ddd';
-        vArea.style.display = 'flex';
-        vArea.style.alignItems = 'center';
-        vArea.style.justifyContent = 'space-between';
-        vArea.style.padding = '0 15px';
-
+        vArea.style.cssText = 'height: 60px; flex: 0 0 60px; background: #FFFFFF; border-bottom: 1px solid #ddd; display: flex; align-items: center; justify-content: space-between; padding: 0 15px;';
         localV.style.display = 'none';
         remoteV.style.display = 'none';
         controls.classList.add('hidden');
-
-        // Hide REC
         recInd.style.display = 'none';
+        sessionInfo.style.cssText = 'position: static; color: black;';
+        timer.style.cssText = 'color: black; font-weight: bold; font-size: 1.1rem;';
 
-        // Style Info Bar for Header
-        sessionInfo.style.position = 'static';
-        sessionInfo.style.color = 'black';
-        timer.style.color = 'black';
-        timer.style.fontWeight = 'bold';
-        timer.style.fontSize = '1.1rem';
-
-        // Ensure End Button Exists
         let btnEndTitle = document.getElementById('btnEndChat');
         if (!btnEndTitle) {
           const btn = document.createElement('button');
           btn.id = 'btnEndChat';
           btn.innerHTML = 'End Chat';
-          btn.style = 'background:#EF4444; color:white; border:none; padding:8px 15px; border-radius:20px; font-weight:bold; cursor:pointer; font-size:0.9rem;';
+          btn.style.cssText = 'background:#EF4444; color:white; border:none; padding:8px 15px; border-radius:20px; font-weight:bold; cursor:pointer; font-size:0.9rem;';
           btn.onclick = () => document.getElementById('btnEnd').click();
           vArea.appendChild(btn);
         } else {
           btnEndTitle.style.display = 'block';
         }
-
       } else {
-        // === AUDIO / VIDEO MODE ===
         if (document.getElementById('btnEndChat')) document.getElementById('btnEndChat').style.display = 'none';
         controls.classList.remove('hidden');
 
         if (type === 'audio') {
-          vArea.style.height = '250px';
-          vArea.style.flex = '0 0 250px';
-          vArea.style.background = '#1F2937';
+          vArea.style.cssText = 'height: 250px; flex: 0 0 250px; background: #1F2937;';
           localV.style.display = 'none';
           remoteV.style.display = 'none';
-          timer.style.color = 'white';
         } else {
-          vArea.style.flex = '1';
-          vArea.style.background = 'black';
+          vArea.style.cssText = 'flex: 1; background: black;';
           localV.style.display = 'block';
           remoteV.style.display = 'block';
-          timer.style.color = 'white';
         }
       }
 
       if (!isInit && type !== 'chat') startWebRTC(false);
     }
 
+    // WebRTC Logic
     async function startWebRTC(initiator) {
-      if (state.session.type === 'chat') return; // No AV for chat only mode in this demo
+      if (state.session.type === 'chat') return;
 
-      // Check for MediaDevices support (Secure Context required)
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert("Camera/Mic access failed. \n\nIMPORTANT: Browsers block camera access on insecure connections (HTTP).\n\nPlease try:\n1. Use 'localhost' instead of IP address.\n2. Or set up HTTPS.");
+        alert("Camera/Mic access failed. Please use HTTPS or localhost.");
         const loader = document.getElementById('connectionStatus');
         if (loader) loader.classList.add('hidden');
         return;
@@ -1759,13 +2008,12 @@
         };
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
-        // UI Feedback
         if (state.session.type === 'video') {
           document.getElementById('localVideo').srcObject = stream;
         }
 
         const p = new SimplePeer({ initiator, stream, trickle: false });
-        // Emit signal when generated
+
         p.on('signal', d => {
           if (state.session) {
             socket.emit('signal', { sessionId: state.session.id, toUserId: state.session.partnerId, signal: d });
@@ -1773,27 +2021,23 @@
         });
 
         p.on('stream', s => {
-          // Remove Connecting UI
           const loader = document.getElementById('connectionStatus');
           if (loader) loader.classList.add('hidden');
 
           const rv = document.getElementById('remoteVideo');
           rv.srcObject = s;
           if (state.session.type === 'audio') {
-            rv.style.opacity = 0; // Hide video element but keep audio
+            rv.style.opacity = 0;
           } else {
             rv.style.opacity = 1;
           }
-          startTimer(); // Start Timer when stream is received/connected
+          startTimer();
         });
 
-        // Error handling
         p.on('error', err => {
           console.error('Peer Error', err);
-          // alert('Connection Failed: ' + err.message);
         });
 
-        // Do NOT add socket.on('signal') here. Defined globally.
         state.peer = p;
         state.localStream = stream;
       } catch (e) {
@@ -1804,37 +2048,28 @@
       }
     }
 
-    // --- Global Signal Listener ---
-    // Moved outside to prevent duplicate listeners on multiple calls
+    // Signal Handler
     socket.on('signal', d => {
       if (state.session && d.sessionId === state.session.id && state.peer) {
         state.peer.signal(d.signal);
       }
     });
 
-
-
-
-    // End session button: notify server, set astrologer online, and clean up
-    // End session button: notify server and clean up
+    // End Session
     document.getElementById('btnEnd').onclick = () => {
-      // Notify server that the session has ended
       if (state.session) {
         socket.emit('session-ended', { sessionId: state.session.id, toUserId: state.session.partnerId });
       }
-      // Clean up local resources and UI
       endLocal();
     };
-    // Listen for session-ended events from server
+
     socket.on('session-ended', endLocal);
 
-    // Update endLocal to stop timer and reset status
     function endLocal() {
-      // Ensure Astrologer is marked as available when session ends
       if (state.me && state.me.role === 'astrologer') {
         socket.emit('toggle-status', { online: true, type: 'online' });
       }
-      stopTimer(); // STOP TIMER
+      stopTimer();
       if (state.peer) { state.peer.destroy(); state.peer = null; }
       if (state.localStream) {
         state.localStream.getTracks().forEach(t => t.stop());
@@ -1843,25 +2078,15 @@
       }
       sSes.classList.add('hidden');
       state.session = null;
-      // ... existing resets
-      document.querySelector('.video-area').style = '';
+      document.querySelector('.video-area').style.cssText = '';
       document.getElementById('localVideo').srcObject = null;
       document.querySelector('.controls').classList.remove('hidden');
     }
 
-    // --- Chat Logic ---
+    // Chat Logic
     const appendMsg = (txt, isMe) => {
       const div = document.createElement('div');
-      div.style.maxWidth = '80%';
-      div.style.padding = '8px 12px';
-      div.style.borderRadius = '12px';
-      div.style.marginBottom = '8px';
-      div.style.fontSize = '0.9rem';
-      div.style.alignSelf = isMe ? 'flex-end' : 'flex-start';
-      div.style.background = isMe ? '#FFD700' : 'white';
-      div.style.border = isMe ? 'none' : '1px solid #eee';
-      div.style.color = 'black';
-      div.style.marginLeft = isMe ? 'auto' : '0';
+      div.style.cssText = 'max-width: 80%; padding: 8px 12px; border-radius: 12px; margin-bottom: 8px; font-size: 0.9rem; align-self: ' + (isMe ? 'flex-end' : 'flex-start') + '; background: ' + (isMe ? '#FFD700' : 'white') + '; border: ' + (isMe ? 'none' : '1px solid #eee') + '; color: black; margin-left: ' + (isMe ? 'auto' : '0') + ';';
       div.textContent = txt;
       document.getElementById('messagesList').appendChild(div);
       document.getElementById('messagesList').scrollTop = document.getElementById('messagesList').scrollHeight;
@@ -1870,6 +2095,12 @@
     document.getElementById('btnSend').onclick = () => {
       const txt = document.getElementById('msgInput').value.trim();
       if (!txt) return;
+
+      const requestDetailsDiv = document.getElementById('clientRequestDetails');
+      if (requestDetailsDiv) {
+        requestDetailsDiv.style.display = 'none';
+      }
+
       socket.emit('chat-message', {
         toUserId: state.session.partnerId, sessionId: state.session.id,
         content: { type: 'text', text: txt }, messageId: Date.now()
@@ -1880,11 +2111,15 @@
 
     socket.on('chat-message', d => {
       if (state.session && d.fromUserId === state.session.partnerId) {
+        const requestDetailsDiv = document.getElementById('clientRequestDetails');
+        if (requestDetailsDiv) {
+          requestDetailsDiv.style.display = 'none';
+        }
         appendMsg(d.content.text || 'Message', false);
       }
     });
 
-    // --- Admin Dashboard Logic ---
+    // Admin Dashboard Logic
     let adminUsersCache = [];
 
     function loadAdminDash(user) {
@@ -1918,13 +2153,13 @@
         const div = document.createElement('div');
         div.className = 'admin-card';
         div.innerHTML = `
-          < div class="admin-user-header" >
+          <div class="admin-user-header">
             <div style="font-weight:bold;">
               ${u.name} <span class="user-pill">${u.role}</span>
               ${u.isBanned ? '<span class="user-pill" style="background:#fee2e2; color:#b91c1c;">Banned</span>' : ''}
             </div>
             <div style="font-size:0.8rem;">₹${u.walletBalance}</div>
-          </div >
+          </div>
           <div style="font-size:0.8rem; color:#666;">
             Phone: ${u.phone || 'N/A'}<br>
             ID: ${u.userId.slice(0, 8)}...
@@ -1951,7 +2186,6 @@
       }
     };
 
-    // Role Change State
     let roleChangeTargetId = null;
 
     window.adminRole = (uid, currentRole) => {
@@ -1984,14 +2218,12 @@
       }
     };
 
-    // Force Logout Listener
     socket.on('force-logout', () => {
       alert('Your account has been suspended by Admin.');
       clearSession();
     });
 
-
-    // --- Geolocation & City Search Logic ---
+    // Geolocation
     window.useCurrentLocation = function () {
       if (!navigator.geolocation) return alert("Geolocation not supported");
 
@@ -2008,7 +2240,6 @@
         document.getElementById('chartLat').value = lat.toFixed(4);
         document.getElementById('chartLon').value = lon.toFixed(4);
 
-        // Reverse Geocode
         try {
           const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
           const data = await res.json();
@@ -2031,7 +2262,7 @@
       });
     };
 
-    // City Search Auto-Complete
+    // City Search
     (function () {
       const inp = document.getElementById('citySearch');
       const res = document.getElementById('cityResults');
@@ -2050,7 +2281,6 @@
               res.innerHTML = '';
               if (!data.length) { res.innerHTML = '<div style="padding:10px; color:#999;">No results</div>'; return; }
 
-              // SORT LOGIC
               data.sort((a, b) => {
                 const nA = a.display_name.toLowerCase();
                 const nB = b.display_name.toLowerCase();
@@ -2062,10 +2292,7 @@
               data.forEach(p => {
                 const d = document.createElement('div');
                 d.innerText = p.display_name;
-                d.style.padding = '10px';
-                d.style.borderBottom = '1px solid #f0f0f0';
-                d.style.cursor = 'pointer';
-                d.style.fontSize = '0.85rem';
+                d.style.cssText = 'padding: 10px; border-bottom: 1px solid #f0f0f0; cursor: pointer; font-size: 0.85rem;';
                 d.onmouseover = () => d.style.background = '#f3f4f6';
                 d.onmouseout = () => d.style.background = 'white';
                 d.onclick = () => {
@@ -2084,21 +2311,399 @@
       }
     })();
 
-    // --- Chart Logic ---
-    function showChartHelper() {
-      document.getElementById('screen-chart-helper').classList.remove('hidden');
-      // Set default date/time now
+    // Client Birth Chart Form
+    let citySearchTimeout;
+
+    window.handleCityInput = async function (query) {
+      clearTimeout(citySearchTimeout);
+      const resultsDiv = document.getElementById('clientCityResults');
+
+      if (!query || query.trim().length < 2) {
+        resultsDiv.style.display = 'none';
+        return;
+      }
+
+      citySearchTimeout = setTimeout(async () => {
+        try {
+          const response = await fetch('/api/city-autocomplete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: query.trim() })
+          });
+
+          const data = await response.json();
+
+          if (data.ok && data.results && data.results.length > 0) {
+            let html = '';
+            data.results.forEach((city, index) => {
+              const stateLabel = city.state ? ` (${city.state})` : '';
+              html += `
+                <div onclick="selectCity(${index}, '${city.name}', '${city.state}', ${city.latitude}, ${city.longitude})"
+                  style="padding:10px 15px; cursor:pointer; border-bottom:1px solid #eee; hover:background:#f5f5f5; transition:0.2s;"
+                  onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='white'">
+                  <div style="font-weight:500; color:#333;">${city.name}${stateLabel}</div>
+                  <div style="font-size:0.85rem; color:#999;">${city.displayName}</div>
+                </div>
+              `;
+            });
+            resultsDiv.innerHTML = html;
+            resultsDiv.style.display = 'block';
+          } else {
+            resultsDiv.innerHTML = '<div style="padding:10px 15px; color:#999;">No cities found</div>';
+            resultsDiv.style.display = 'block';
+          }
+        } catch (error) {
+          console.error('City search error:', error);
+          resultsDiv.innerHTML = '<div style="padding:10px 15px; color:#f00;">Error searching cities</div>';
+          resultsDiv.style.display = 'block';
+        }
+      }, 300);
+    };
+
+    window.selectCity = async function (index, cityName, state, latitude, longitude) {
+      document.getElementById('clientCitySearch').value = cityName;
+      document.getElementById('clientCityResults').style.display = 'none';
+      document.getElementById('clientChartLat').value = latitude;
+      document.getElementById('clientChartLon').value = longitude;
+
+      try {
+        const response = await fetch('/api/city-timezone', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ latitude, longitude })
+        });
+
+        const data = await response.json();
+
+        if (data.ok) {
+          const gmtOffset = data.gmtOffset || 5.5;
+          document.getElementById('clientChartTz').value = gmtOffset;
+        } else {
+          document.getElementById('clientChartTz').value = '5.5';
+        }
+      } catch (error) {
+        console.error('Timezone fetch error:', error);
+        document.getElementById('clientChartTz').value = '5.5';
+      }
+    };
+
+    window.showChatWithBirthChart = function (astroId) {
+      window.selectedAstroId = astroId;
+      document.getElementById('screen-client-birth-chart').classList.remove('hidden');
+
       const now = new Date();
-      document.getElementById('chartDate').value = now.toISOString().split('T')[0];
-      document.getElementById('chartTime').value = now.toTimeString().slice(0, 5);
+      document.getElementById('clientChartDate').value = now.toISOString().split('T')[0];
+      document.getElementById('clientChartTime').value = now.toTimeString().slice(0, 5);
+      document.getElementById('clientChartTz').value = '5.5';
+    };
+
+    window.sendChatWithBirthChart = function () {
+      const date = document.getElementById('clientChartDate').value;
+      const time = document.getElementById('clientChartTime').value;
+      const city = document.getElementById('clientCitySearch').value;
+      const lat = document.getElementById('clientChartLat').value;
+      const lon = document.getElementById('clientChartLon').value;
+      const tz = document.getElementById('clientChartTz').value;
+
+      if (!date || !time || !lat || !lon) {
+        alert('Please fill all required fields');
+        return;
+      }
+
+      const [y, m, d] = date.split('-');
+      const [h, min] = time.split(':');
+
+      const birthData = {
+        year: parseInt(y),
+        month: parseInt(m),
+        day: parseInt(d),
+        hour: parseInt(h),
+        minute: parseInt(min),
+        latitude: parseFloat(lat),
+        longitude: parseFloat(lon),
+        timezone: parseFloat(tz),
+        city: city
+      };
+
+      document.getElementById('screen-client-birth-chart').classList.add('hidden');
+
+      socket.emit('request-session', {
+        toUserId: window.selectedAstroId,
+        type: 'chat',
+        birthData: birthData
+      }, (res) => {
+        if (res.ok) {
+          initSession(res.sessionId, window.selectedAstroId, 'chat', true, null);
+        } else {
+          alert('Request failed: ' + res.error);
+        }
+      });
+    };
+
+    socket.on('client-birth-chart', (data) => {
+      if (state.me && state.me.role === 'astrologer') {
+        window.receivedBirthData = data.birthData;
+        alert(`📊 Birth chart received from client!\n\nDate: ${data.birthData.day}/${data.birthData.month}/${data.birthData.year}\nTime: ${data.birthData.hour}:${String(data.birthData.minute).padStart(2, '0')}\nLocation: ${data.birthData.city}`);
+      }
+    });
+
+    // Chart Logic
+    function showChartHelper() {
+      const panel = document.getElementById('inlineChartPanel');
+      const universalModal = document.getElementById('universalChartModal');
+      const messagesList = document.getElementById('messagesList');
+      const isInSession = state.session && !document.getElementById('screen-session').classList.contains('hidden');
+
+      // If panel doesn't exist, create it or return
+      if (!panel) {
+        console.warn('inlineChartPanel not found');
+        return;
+      }
+
+      if (isInSession) {
+        // We are in a chat session -> Move panel to chat, hide modal
+        if (panel.parentElement !== messagesList) {
+          // Find the correct insertion point (before dasha or at end?)
+          // actually, index.html structure had it before the style block.
+          // Appending to messagesList is safe as it's a flex col.
+          // But wait, messagesList content is cleared in initSession.
+          // The structure in index.html has it after clientRequestDetails.
+          // We can just append it for now, or insert before the end.
+          messagesList.appendChild(panel);
+        }
+        if (universalModal) universalModal.classList.add('hidden');
+        panel.style.display = 'block';
+
+        // Add responsive class to input
+        const msgInput = document.getElementById('msgInput');
+        if (msgInput) msgInput.classList.add('msg-input-reduced');
+
+      } else {
+        // We are in dashboard (or elsewhere) -> Move panel to modal, show modal
+        if (universalModal) {
+          if (panel.parentElement !== universalModal) {
+            universalModal.appendChild(panel);
+          }
+          universalModal.classList.remove('hidden');
+        }
+        panel.style.display = 'block'; // Make sure the panel itself is visible inside modal
+        // Ensure no chat-specific styles interfere (like margin-bottom 80px)
+        // We might need to reset styles or use specific classes.
+        // For now, the modal centers content, so panel should look okay.
+      }
+
+      document.getElementById('chartInputSection').style.display = 'block';
+      document.getElementById('chartResults').style.display = 'none';
+      document.getElementById('chartLoading').style.display = 'none';
+
+      if (window.receivedBirthData) {
+        const bd = window.receivedBirthData;
+        document.getElementById('chartDate').value = `${bd.year}-${String(bd.month).padStart(2, '0')}-${String(bd.day).padStart(2, '0')}`;
+        document.getElementById('chartTime').value = `${String(bd.hour).padStart(2, '0')}:${String(bd.minute).padStart(2, '0')}`;
+        document.getElementById('chartLat').value = bd.latitude;
+        document.getElementById('chartLon').value = bd.longitude;
+        document.getElementById('chartTz').value = bd.timezone || '5.5';
+        document.getElementById('citySearch').value = bd.city || '';
+      } else {
+        const now = new Date();
+        document.getElementById('chartDate').value = now.toISOString().split('T')[0];
+        document.getElementById('chartTime').value = now.toTimeString().slice(0, 5);
+        document.getElementById('chartTz').value = '5.5';
+
+        if (state.session && state.session.type === 'chat') {
+          // kept previous dev default
+          document.getElementById('chartDate').value = '1990-05-15';
+          document.getElementById('chartTime').value = '14:30';
+          document.getElementById('chartLat').value = '13.0827';
+          document.getElementById('chartLon').value = '80.2707';
+          document.getElementById('chartTz').value = '5.5';
+          document.getElementById('citySearch').value = 'Chennai, Tamil Nadu';
+        }
+      }
     }
+
+    window.closeInlineChart = function () {
+      const panel = document.getElementById('inlineChartPanel');
+      if (panel) panel.style.display = 'none';
+
+      const universalModal = document.getElementById('universalChartModal');
+      if (universalModal) universalModal.classList.add('hidden');
+
+      const msgInput = document.getElementById('msgInput');
+      if (msgInput) msgInput.classList.remove('msg-input-reduced');
+    };
+
+    window.showBirthChartColumn = function () {
+      const column = document.getElementById('birthChartColumn');
+      column.style.display = 'flex';
+      showChartHelper();
+    };
+
+    window.closeBirthChartColumn = function () {
+      document.getElementById('birthChartColumn').style.display = 'none';
+    };
+
+    // Fetch chart from dashboard form
+    async function fetchDashboardChart() {
+      const dateStr = document.getElementById('dashboardChartDate')?.value;
+      const timeStr = document.getElementById('dashboardChartTime')?.value;
+      const lat = document.getElementById('dashboardChartLat')?.value;
+      const lon = document.getElementById('dashboardChartLon')?.value;
+      const tz = document.getElementById('dashboardChartTz')?.value;
+
+      if (!dateStr || !timeStr || !lat || !lon) {
+        return alert("Please fill all required fields");
+      }
+
+      const [year, month, day] = dateStr.split('-');
+      const [hour, minute] = timeStr.split(':');
+
+      const bd = {
+        year: parseInt(year),
+        month: parseInt(month),
+        day: parseInt(day),
+        hour: parseInt(hour),
+        minute: parseInt(minute),
+        latitude: parseFloat(lat),
+        longitude: parseFloat(lon),
+        timezone: parseFloat(tz) || 5.5
+      };
+
+      try {
+        // Show loading state
+        const panel = document.getElementById('dashboardChartPanel');
+        const originalContent = panel.innerHTML;
+        panel.innerHTML = '<div style="text-align:center; padding:60px 20px;"><div class="spinner-astro"></div><div style="margin-top:20px; font-weight:500; color:#d97706; font-size:1.1rem;">Analyzing Planets...</div></div>';
+
+        const res = await fetch('https://newapi-production-ea98.up.railway.app/api/charts/birth-chart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bd)
+        }).then(r => r.json());
+
+        if (res.error) throw new Error(res.error);
+
+        // Display results
+        displayDashboardChartResults(res);
+      } catch (e) {
+        alert("Error: " + e.message);
+        console.error('Chart API Error:', e);
+      }
+    }
+
+    // Display chart results in dashboard modal
+    function displayDashboardChartResults(data) {
+      const panel = document.getElementById('dashboardChartPanel');
+      const rawPlanets = data.data?.rawPlanets || {};
+      const panchangam = data.data?.panchangam || {};
+      const dasha = data.data?.dasha || {};
+      const lagna = data.data?.lagna || {};
+
+      let html = `
+        <div style="padding:20px; background:white; font-weight:700; font-size:1.2rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e5e5e5; color:#1F2937;">
+          <span>🔮 Birth Chart Results</span>
+          <button onclick="document.getElementById('universalChartModal').classList.add('hidden')" style="background:none; border:none; font-size:1.4rem; color:#6B7280; cursor:pointer;"><i class="fas fa-times"></i></button>
+        </div>
+        <div style="flex:1; overflow-y:auto; padding:20px;">
+          <!-- Lagna Section -->
+          <div style="background:linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color:white; padding:20px; border-radius:12px; margin-bottom:20px;">
+            <div style="font-size:0.9rem; opacity:0.9; margin-bottom:5px;">🌟 Lagna (Ascendant)</div>
+            <div style="font-size:1.8rem; font-weight:bold;">${lagna.tamil || lagna.name || 'N/A'}</div>
+            <div style="font-size:0.9rem; margin-top:8px;">Lord: ${lagna.lordTamil || lagna.lord || 'N/A'}</div>
+          </div>
+
+          <!-- Planets Section -->
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:bold; color:#d97706; margin-bottom:12px; font-size:1.1rem;">🌟 Planets</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+      `;
+
+      // Add planets
+      const planetOrder = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'];
+      const planetColors = {
+        'Sun': '#ef4444', 'Moon': '#3b82f6', 'Mars': '#b91c1c', 'Mercury': '#10b981',
+        'Jupiter': '#f59e0b', 'Venus': '#ec4899', 'Saturn': '#374151', 'Rahu': '#1f2937', 'Ketu': '#4b5563'
+      };
+
+      planetOrder.forEach(planet => {
+        const p = rawPlanets[planet];
+        if (p) {
+          const color = planetColors[planet] || '#6b7280';
+          html += `
+            <div style="background:white; border-left:4px solid ${color}; padding:12px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+              <div style="font-weight:bold; color:${color}; margin-bottom:4px;">${p.nameTamil || planet}</div>
+              <div style="font-size:0.85rem; color:#555;">
+                <div>${p.signTamil || p.sign}</div>
+                <div style="color:#999; font-size:0.8rem;">${p.degreeFormatted || p.degree}</div>
+              </div>
+            </div>
+          `;
+        }
+      });
+
+      html += `
+            </div>
+          </div>
+
+          <!-- Panchangam Section -->
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:bold; color:#d97706; margin-bottom:12px; font-size:1.1rem;">📅 Panchangam</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <div style="background:#ecfdf5; padding:12px; border-radius:8px; border-left:4px solid #10b981;">
+                <div style="font-size:0.8rem; color:#666; margin-bottom:4px;">Tithi</div>
+                <div style="font-weight:bold; color:#047857;">${panchangam.tithi || 'N/A'}</div>
+              </div>
+              <div style="background:#eff6ff; padding:12px; border-radius:8px; border-left:4px solid #3b82f6;">
+                <div style="font-size:0.8rem; color:#666; margin-bottom:4px;">Nakshatra</div>
+                <div style="font-weight:bold; color:#1e40af;">${panchangam.nakshatra || 'N/A'}</div>
+              </div>
+              <div style="background:#fff7ed; padding:12px; border-radius:8px; border-left:4px solid #f59e0b;">
+                <div style="font-size:0.8rem; color:#666; margin-bottom:4px;">Yoga</div>
+                <div style="font-weight:bold; color:#b45309;">${panchangam.yoga || 'N/A'}</div>
+              </div>
+              <div style="background:#faf5ff; padding:12px; border-radius:8px; border-left:4px solid #a855f7;">
+                <div style="font-size:0.8rem; color:#666; margin-bottom:4px;">Karana</div>
+                <div style="font-weight:bold; color:#6b21a8;">${panchangam.karana || 'N/A'}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dasha Section -->
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:bold; color:#d97706; margin-bottom:12px; font-size:1.1rem;">⏳ Current Dasha</div>
+            <div style="background:linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); color:white; padding:15px; border-radius:8px;">
+              <div style="font-size:0.9rem; opacity:0.9; margin-bottom:5px;">Mahadasha</div>
+              <div style="font-size:1.3rem; font-weight:bold; margin-bottom:10px;">${dasha.currentLord || 'N/A'}</div>
+              <div style="font-size:0.85rem; opacity:0.9;">
+                <div>Remaining: ${dasha.remainingYearsInCurrentDasha ? parseFloat(dasha.remainingYearsInCurrentDasha).toFixed(2) : 'N/A'} years</div>
+                <div>Elapsed: ${dasha.yearsElapsedInCurrentDasha ? parseFloat(dasha.yearsElapsedInCurrentDasha).toFixed(2) : 'N/A'} years</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Moon Sign Section -->
+          <div style="background:#fdf2f8; padding:15px; border-radius:8px; border-left:4px solid #ec4899; margin-bottom:20px;">
+            <div style="font-size:0.9rem; color:#666; margin-bottom:5px;">🌙 Moon Sign</div>
+            <div style="font-size:1.2rem; font-weight:bold; color:#be185d;">${data.data?.moonSign?.tamil || data.data?.moonSign?.name || 'N/A'}</div>
+          </div>
+        </div>
+      `;
+
+      panel.innerHTML = html;
+    }
+
+    window.showChartHelperWithData = function () {
+      showBirthChartColumn();
+    };
 
     function switchChartTab(tab) {
       document.querySelectorAll('.chart-tab-content').forEach(d => d.classList.add('hidden'));
       document.querySelectorAll('.c-tab').forEach(b => b.classList.remove('active'));
 
-      document.getElementById('content-' + tab).classList.remove('hidden');
-      document.getElementById('tab-' + tab).classList.add('active');
+      const contentTab = document.getElementById('content-' + tab);
+      const tabBtn = document.getElementById('tab-' + tab);
+      if (contentTab) contentTab.classList.remove('hidden');
+      if (tabBtn) tabBtn.classList.add('active');
     }
 
     function resetChart() {
@@ -2108,98 +2713,241 @@
     }
 
     async function fetchChart() {
-      const date = document.getElementById('chartDate').value;
-      const time = document.getElementById('chartTime').value;
-      const lat = document.getElementById('chartLat').value;
-      const lon = document.getElementById('chartLon').value;
+      // Try to use received birth data first, otherwise use form inputs
+      let bd = window.receivedBirthData;
+      console.log('fetchChart called. Received birth data:', bd);
 
-      if (!date || !time) return alert("Select Date & Time");
+      if (!bd) {
+        // Get data from form inputs
+        const dateStr = document.getElementById('chartDate')?.value;
+        const timeStr = document.getElementById('chartTime')?.value;
+        const lat = document.getElementById('chartLat')?.value;
+        const lon = document.getElementById('chartLon')?.value;
+        const tz = document.getElementById('chartTz')?.value;
 
-      document.getElementById('chartInputSection').style.display = 'none';
-      document.getElementById('chartLoading').style.display = 'block';
-      document.getElementById('chartResults').style.display = 'none';
+        console.log('Using form inputs:', { dateStr, timeStr, lat, lon, tz });
 
-      const [y, m, d] = date.split('-');
-      const [h, min] = time.split(':');
+        if (!dateStr || !timeStr || !lat || !lon) {
+          return alert("Please fill all required fields (Date, Time, Latitude, Longitude)");
+        }
+
+        const [year, month, day] = dateStr.split('-');
+        const [hour, minute] = timeStr.split(':');
+
+        bd = {
+          year: parseInt(year),
+          month: parseInt(month),
+          day: parseInt(day),
+          hour: parseInt(hour),
+          minute: parseInt(minute),
+          latitude: parseFloat(lat),
+          longitude: parseFloat(lon),
+          timezone: parseFloat(tz) || 5.5,
+          city: document.getElementById('citySearch')?.value || ''
+        };
+        console.log('Birth data from form:', bd);
+      }
+
+      const birthChartColumn = document.getElementById('birthChartColumn');
+      if (birthChartColumn && birthChartColumn.style.display === 'flex') {
+        document.getElementById('birthChartContent').innerHTML = '<div style="text-align:center; padding:40px;"><div class="spinner-astro"></div><div style="margin-top:15px; font-weight:500; color:#d97706;">Analyzing Planets...</div></div>';
+      }
 
       try {
-        const res = await fetch('/api/astrology/complete', {
+        const res = await fetch('https://newapi-production-ea98.up.railway.app/api/charts/birth-chart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            year: y, month: m, day: d, hour: h, minute: min, lat, lon
+            year: bd.year,
+            month: bd.month,
+            day: bd.day,
+            hour: bd.hour,
+            minute: bd.minute,
+            latitude: bd.latitude,
+            longitude: bd.longitude,
+            timezone: bd.timezone
           })
         }).then(r => r.json());
 
         if (res.error) throw new Error(res.error);
 
-        // Wait a sec for effect
         setTimeout(() => {
           renderChartResults(res);
           document.getElementById('chartLoading').style.display = 'none';
-          document.getElementById('chartResults').style.display = 'flex'; // Flex for vertical layout
+          document.getElementById('chartResults').style.display = 'flex';
+
+          if (birthChartColumn && birthChartColumn.style.display === 'flex') {
+            displayChartInColumn2(res);
+          }
         }, 800);
 
       } catch (e) {
         alert("Error: " + e.message);
+        console.error('Chart API Error:', e);
         document.getElementById('chartLoading').style.display = 'none';
         document.getElementById('chartInputSection').style.display = 'block';
+
+        if (birthChartColumn && birthChartColumn.style.display === 'flex') {
+          document.getElementById('birthChartContent').innerHTML = '<div style="color:#f00; padding:20px;">Error: ' + e.message + '</div>';
+        }
       }
     }
 
-    function renderChartResults(data) {
-      // 1. Basic Planets
-      const pList = document.getElementById('planetList');
-      pList.innerHTML = '';
-      const planets = data.planetaryPositions.detailed;
+    function displayChartInColumn2(data) {
+      const rawPlanets = data.data?.rawPlanets || data.rawPlanets || {};
+      const panchangam = data.data?.panchangam || data.panchangam || {};
+      const dasha = data.data?.dasha || data.dasha || {};
+      const lagna = data.data?.lagna || data.lagna || {};
 
-      for (let p in planets) {
-        const info = planets[p];
-        const div = document.createElement('div');
-        div.className = 'planet-item';
-        div.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center">
-    <b>${p}</b>
-    <span style="background:#e5e7eb; padding:2px 8px; border-radius:10px; font-size:0.75rem;">${info.sign}</span>
-  </div>
-          <div style="margin-top:5px; font-size:0.85rem; color:#555;">
-            ${info.degree.toFixed(2)}° | ${info.nakshatra}
-          </div>`;
-        pList.appendChild(div);
+      const planetColors = {
+        'Sun': '#ef4444', 'Moon': '#3b82f6', 'Mars': '#b91c1c', 'Mercury': '#10b981',
+        'Jupiter': '#f59e0b', 'Venus': '#ec4899', 'Saturn': '#374151', 'Rahu': '#1f2937', 'Ketu': '#4b5563'
+      };
+
+      let html = '<div style="padding:15px;">';
+
+      // Lagna
+      if (lagna && lagna.tamil) {
+        html += `
+          <div style="background:linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color:white; padding:15px; border-radius:12px; margin-bottom:15px;">
+            <div style="font-size:0.85rem; opacity:0.9;">🌟 Lagna</div>
+            <div style="font-size:1.3rem; font-weight:bold;">${lagna.tamil}</div>
+          </div>
+        `;
       }
 
-      // 2. Rasi Charts (D1 & D9)
-      function renderSouthGrid(containerId, planetDataKey) {
-        const chartData = data[planetDataKey].planets;
+      // Planets
+      if (Object.keys(rawPlanets).length > 0) {
+        html += '<div style="margin-bottom:15px;"><div style="font-weight:bold; color:#d97706; margin-bottom:10px; font-size:1rem;">🌟 Planets</div>';
+        html += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">';
 
-        // Aggregate planets by sign
-        const signs = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn',
-          'Aquarius', 'Pisces'];
-        const signPlanets = {};
-        signs.forEach(s => signPlanets[s] = []);
-
-        for (let p in chartData) {
-          // Determine sign from planet object
-          const pObj = chartData[p];
-          if (pObj && pObj.sign) {
-            signPlanets[pObj.sign].push(p.substr(0, 2));
+        const planetOrder = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'];
+        planetOrder.forEach(planet => {
+          const p = rawPlanets[planet];
+          if (p) {
+            const color = planetColors[planet] || '#6b7280';
+            html += `
+              <div style="background:white; border-left:4px solid ${color}; padding:10px; border-radius:6px; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                <div style="font-weight:bold; color:${color}; font-size:0.85rem; margin-bottom:3px;">${p.nameTamil || planet}</div>
+                <div style="font-size:0.75rem; color:#555;">${p.signTamil || p.sign}</div>
+                <div style="font-size:0.7rem; color:#999;">${p.degreeFormatted || p.degree}</div>
+              </div>
+            `;
           }
-        }
+        });
+        html += '</div></div>';
+      }
 
-        // For Rasi D1, add Ascendant if available
-        if (planetDataKey === 'rasiChart' && data.ascendant) {
-          signPlanets[data.ascendant.sign].push("<span class='asc-badge'>ASC</span>");
-        }
+      // Panchangam
+      if (panchangam && panchangam.tithi) {
+        html += `
+          <div style="margin-bottom:15px;">
+            <div style="font-weight:bold; color:#d97706; margin-bottom:10px; font-size:1rem;">📅 Panchangam</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <div style="background:#ecfdf5; padding:10px; border-radius:6px; border-left:4px solid #10b981;">
+                <div style="font-size:0.75rem; color:#666; margin-bottom:3px;">Tithi</div>
+                <div style="font-weight:bold; color:#047857; font-size:0.85rem;">${panchangam.tithi}</div>
+              </div>
+              <div style="background:#eff6ff; padding:10px; border-radius:6px; border-left:4px solid #3b82f6;">
+                <div style="font-size:0.75rem; color:#666; margin-bottom:3px;">Nakshatra</div>
+                <div style="font-weight:bold; color:#1e40af; font-size:0.85rem;">${panchangam.nakshatra}</div>
+              </div>
+              <div style="background:#fff7ed; padding:10px; border-radius:6px; border-left:4px solid #f59e0b;">
+                <div style="font-size:0.75rem; color:#666; margin-bottom:3px;">Yoga</div>
+                <div style="font-weight:bold; color:#b45309; font-size:0.85rem;">${panchangam.yoga}</div>
+              </div>
+              <div style="background:#faf5ff; padding:10px; border-radius:6px; border-left:4px solid #a855f7;">
+                <div style="font-size:0.75rem; color:#666; margin-bottom:3px;">Karana</div>
+                <div style="font-weight:bold; color:#6b21a8; font-size:0.85rem;">${panchangam.karana}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
 
+      // Dasha
+      if (dasha && dasha.currentLord) {
+        const remainingYears = dasha.remainingYearsInCurrentDasha ? parseFloat(dasha.remainingYearsInCurrentDasha).toFixed(2) : 'N/A';
+        html += `
+          <div style="background:linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); color:white; padding:12px; border-radius:8px;">
+            <div style="font-size:0.85rem; opacity:0.9; margin-bottom:5px;">⏳ Current Dasha</div>
+            <div style="font-size:1.1rem; font-weight:bold; margin-bottom:8px;">${dasha.currentLord}</div>
+            <div style="font-size:0.8rem; opacity:0.9;">
+              <div>Remaining: ${remainingYears} years</div>
+            </div>
+          </div>
+        `;
+      }
+
+      html += '</div>';
+      document.getElementById('birthChartContent').innerHTML = html;
+    }
+
+    window.shareChartInChat = function (chartData) {
+      if (!state.session) {
+        alert('No active chat session');
+        return;
+      }
+
+      const summary = `🔮 Birth Chart Analysis\n📅 ${document.getElementById('chartDate').value} \n⏰ ${document.getElementById('chartTime').value} \n📍 ${document.getElementById('citySearch')?.value || ''}`;
+
+      socket.emit('chat-message', {
+        toUserId: state.session.partnerId,
+        sessionId: state.session.id,
+        content: { type: 'text', text: summary },
+        messageId: Date.now()
+      });
+
+      appendMsg(summary, true);
+      alert('Chart details shared in chat!');
+    };
+
+    function renderChartResults(data) {
+      // Handle new API response format
+      const rawPlanets = data.data?.rawPlanets || data.rawPlanets || {};
+
+      const pList = document.getElementById('planetList');
+      if (pList) {
+        pList.innerHTML = '';
+
+        // Use rawPlanets from new API format
+        const planetOrder = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'];
+
+        planetOrder.forEach(planet => {
+          const info = rawPlanets[planet];
+          if (info) {
+            const div = document.createElement('div');
+            div.className = 'planet-item';
+            div.innerHTML = `
+              <div style="display:flex; justify-content:space-between; align-items:center">
+                <b>${info.nameTamil || planet}</b>
+                <span style="background:#e5e7eb; padding:2px 8px; border-radius:10px; font-size:0.75rem;">${info.signTamil || info.sign}</span>
+              </div>
+              <div style="margin-top:5px; font-size:0.85rem; color:#555;">
+                ${info.degreeFormatted || info.degree} | ${info.nakshatraTamil || info.nakshatra}
+              </div>
+            `;
+            pList.appendChild(div);
+          }
+        });
+      }
+
+      function renderSouthGrid(containerId, chartType) {
+        // Render Rasi or Navamsa chart from new API format
         const grid = document.getElementById(containerId);
-        grid.innerHTML = '';
-        // className is already set in HTML to 'south-indian-chart'
+        if (!grid) return;
 
-        // Static South Indian Mapping (Row-Major index 0-15)
-        // 0: Pisces, 1: Aries, 2: Taurus, 3: Gemini
-        // 4: Aquarius, 7: Cancer
-        // 8: Capricorn, 11: Leo
-        // 12: Sagittarius, 13: Scorpio, 14: Libra, 15: Virgo
-        // Center : 5, 6, 9, 10 -> Null/Empty
+        const houses = chartType === 'rasi' ? (data.data?.houses || data.houses || {}) : (data.data?.navamsa?.houses || data.navamsa?.houses || []);
+        const rawPlanets = data.data?.rawPlanets || data.rawPlanets || {};
+
+        grid.innerHTML = '';
+
+        const tamilSigns = {
+          'Aries': 'மேஷம்', 'Taurus': 'ரிஷபம்', 'Gemini': 'மிதுனம்',
+          'Cancer': 'கடகம்', 'Leo': 'சிம்மம்', 'Virgo': 'கன்னி',
+          'Libra': 'துலாம்', 'Scorpio': 'விருச்சிகம்', 'Sagittarius': 'தனுசு',
+          'Capricorn': 'மகரம்', 'Aquarius': 'கும்பம்', 'Pisces': 'மீனம்'
+        };
 
         const cellMap = [
           'Pisces', 'Aries', 'Taurus', 'Gemini',
@@ -2207,76 +2955,46 @@
           'Capricorn', null, null, 'Leo',
           'Sagittarius', 'Scorpio', 'Libra', 'Virgo'
         ];
-        // Tamil Sign Mapping
-        const tamilSigns = {
-          'Aries': 'மேஷம் (Mesham)',
-          'Taurus': 'ரிஷபம் (Rishabam)',
-          'Gemini': 'மிதுனம் (Mithunam)',
-          'Cancer': 'கடகம் (Katagam)',
-          'Leo': 'சிம்மம் (Simmam)',
-          'Virgo': 'கன்னி (Kanni)',
-          'Libra': 'துலாம் (Thulaam)',
-          'Scorpio': 'விருச்சிகம் (Virul)',
-          'Sagittarius': 'தனுசு (Dhanusu)',
-          'Capricorn': 'மகரம் (Makaram)',
-          'Aquarius': 'கும்பம் (Kumbam)',
-          'Pisces': 'மீனம் (Meenum)'
-        };
-
-        const tamilPlanets = {
-          'Sun': 'சூரியன்', 'Moon': 'சந்திரன்', 'Mars': 'செவ்வாய்',
-          'Mercury': 'புதன்', 'Jupiter': 'குரு', 'Venus': 'சுக்கிரன்',
-          'Saturn': 'சனி', 'Rahu': 'ராகு', 'Ketu': 'கேது', 'Ascendant': 'லக்னம்', 'ASC': 'லக்னம்'
-        };
 
         cellMap.forEach((sign, idx) => {
           const div = document.createElement('div');
           div.className = 'SouthChartBox';
 
           if (!sign) {
-            // Center box
             div.setAttribute('data-center', 'true');
-            div.style.border = 'none';
-            div.style.background = 'transparent';
-
+            div.style.cssText = 'border: none; background: transparent;';
             if (idx === 5) {
-              div.style.gridColumn = "2 / span 2";
-              div.style.gridRow = "2 / span 2";
-              div.style.display = "flex";
-              div.style.alignItems = "center";
-              div.style.justifyContent = "center";
-              div.innerHTML = '<img src="/images/ganesha.png" style="width:80%; height:auto;" alt="Pillayar">';
+              div.style.cssText = 'grid-column: 2 / span 2; grid-row: 2 / span 2; display: flex; align-items: center; justify-content: center;';
+              div.innerHTML = '<div style="color: #d97706; font-size: 2rem;">🕉️</div>';
             } else if (idx === 6 || idx === 9 || idx === 10) {
               div.style.display = 'none';
             }
-
           } else {
-            const rawPlanets = signPlanets[sign];
-
-            const codeMap = {
-              'Su': 'சூரியன்', 'Mo': 'சந்திரன்', 'Ma': 'செவ்வாய்', 'Me': 'புதன்',
-              'Ju': 'குரு', 'Ve': 'சுக்கிரன்', 'Sa': 'சனி', 'Ra': 'ராகு', 'ke': 'கேது', 'Ke': 'கேது'
-            };
-
-            const tamilContent = rawPlanets.map(p => {
-              if (p.includes('badge')) return "<span class='asc-badge'>லக்னம்</span>";
-              return codeMap[p] || tamilPlanets[p] || p;
-            }).join('<br>');
-
             const tamilName = tamilSigns[sign] || sign;
+            // Get planets in this sign from rawPlanets
+            const planetsInSign = [];
+            for (let planet in rawPlanets) {
+              const p = rawPlanets[planet];
+              if (p && p.sign === sign) {
+                planetsInSign.push(p.nameTamil?.substring(0, 2) || planet.substring(0, 2));
+              }
+            }
 
-            div.innerHTML = `<span class="s-sign-label" title="${tamilSigns[sign] || sign}" style="font-size:0.7rem; color:#d97706; font-weight:bold;">${tamilName.split(' ')[0]}</span>
-          <div class="s-planet-text" style="font-size:0.85rem; line-height:1.4;">${tamilContent}</div>`;
+            div.innerHTML = `<span class="s-sign-label" title="${tamilName}" style="font-size:0.7rem; color:#d97706; font-weight:bold;">${tamilName.split(' ')[0]}</span>
+              <div class="s-planet-text" style="font-size:0.85rem; line-height:1.4;">${planetsInSign.join('<br>') || ''}</div>`;
           }
           if (div.style.display !== 'none') grid.appendChild(div);
         });
       }
 
+      renderSouthGrid('southChart', 'rasi');
+      renderSouthGrid('navamsaChart', 'navamsa');
 
-      renderSouthGrid('southChart', 'rasiChart');
-      renderSouthGrid('navamsaChart', 'navamsaChart');
+      const shareBtn = document.getElementById('btnShareChart');
+      if (shareBtn) {
+        shareBtn.style.display = state.session && state.session.type === 'chat' ? 'block' : 'none';
+      }
 
-      // Initialize jQuery UI Tooltips
       try {
         $('.s-sign-label').tooltip({
           position: { my: "center bottom-10", at: "center top" },
@@ -2284,215 +3002,10 @@
           hide: { effect: "fade", duration: 100 }
         });
       } catch (e) { console.warn("jQuery Tooltip failed", e); }
-
-
-
-      // 4. Panchangam (Restored & Styled)
-      const pan = data.panchangam && data.panchangam.data;
-      const pContainer = document.getElementById('panchangamList');
-      if (pan && pContainer) {
-        // Tamil Translations
-        const tithis = ["பிரதமை", "துவிதியை", "த்ரிதியை", "சதுர்த்தி", "பஞ்சமி", "சஷ்டி", "சப்தமி", "அஷ்டமி", "நவமி", "தசமி", "ஏகாதசி", "துவாதசி", "திரயோதசி", "சதுர்த்தசி", "பௌர்ணமி/அமாவாசை"];
-        const getTamilTithi = (str) => {
-          const num = parseInt(str.replace(/[^0-9]/g, ''));
-          if (isNaN(num)) return str;
-          const idx = (num - 1) % 15;
-          const paksha = num <= 15 ? 'சுக்ல' : 'கிருஷ்ண'; // Shukla / Krishna
-          if (num === 15) return "பௌர்ணமி (சுக்ல)";
-          if (num === 30) return "அமாவாசை (கிருஷ்ண)";
-          return `${tithis[idx] || str} (${paksha})`;
-        };
-
-        const nakshatras = {
-          "Ashwini": "அஸ்வினி", "Bharani": "பரணி", "Krittika": "கார்த்திகை", "Rohini": "ரோகிணி", "Mrigashirsha": "மிருகசீரிடம்", "Ardra": "திருவாதிரை",
-          "Punarvasu": "புனர்பூசம்", "Pushya": "பூசம்", "Ashlesha": "ஆயில்யம்", "Magha": "மகம்", "Purva Phalguni": "பூரம்", "Uttara Phalguni": "உத்திரம்",
-          "Hasta": "ஹஸ்தம்", "Chitra": "சித்திரை", "Swati": "சுவாதி", "Vishakha": "விசாகம்", "Anuradha": "அனுஷம்", "Jyeshtha": "கேட்டை",
-          "Mula": "மூலம்", "Purva Ashadha": "பூராடம்", "Uttara Ashadha": "உத்திராடம்", "Shravana": "திருவோணம்", "Dhanishta": "அவிட்டம்", "Shatabhisha": "சதயம்",
-          "Purva Bhadrapada": "பூரட்டாதி", "Uttara Bhadrapada": "உத்திரட்டாதி", "Revati": "ரேவதி"
-        };
-
-        const yogas = ["விஷ்கம்பம்", "ப்ரீதி", "ஆயுஷ்மான்", "சௌபாக்யம்", "ஷோபனம்", "அதிகண்டம்", "சுகர்மம்", "திருதி", "சூலம்", "கண்டம்", "விருத்தி", "துருவம்", "வ்யாகாதம்", "ஹர்ஷணம்", "வஜ்ரம்", "சித்தி", "வ்யதீபாதம்", "வரியான்", "பரிகம்", "சிவம்", "சித்தம்", "சாத்யம்", "சுபம்", "சுப்பிரம்", "பிராம்மம்", "ஐந்திரம்", "வைதிருதி"];
-        const getTamilYoga = (str) => {
-          const num = parseInt(str.replace(/[^0-9]/g, ''));
-          return yogas[num - 1] || str;
-        };
-
-        // Karana Logic (1..60 mapping to 11 names)
-        const karanasMobile = ["பவம்", "பாலவம்", "கௌலவம்", "தைதுலம்", "கரசை", "வனசை", "பத்ரை"];
-        const karanasFixed = { 58: "சகுனி", 59: "சதுஷ்பாதம்", 60: "நாகவம்", 1: "கிம்ஸ்துக்னம்" };
-
-        const getTamilKarana = (str) => {
-          const num = parseInt(str.replace(/[^0-9]/g, ''));
-          if (isNaN(num)) return str;
-          if (karanasFixed[num]) return karanasFixed[num];
-          // Cycle of 7 starting from 2
-          if (num > 1 && num < 58) {
-            const idx = (num - 2) % 7;
-            return karanasMobile[idx];
-          }
-          return str;
-        };
-
-        const weekdays = { "Sunday": "ஞாயிறு", "Monday": "திங்கள்", "Tuesday": "செவ்வாய்", "Wednesday": "புதன்", "Thursday": "வியாழன்", "Friday": "வெள்ளி", "Saturday": "சனி" };
-
-        const labels = { 'Tithi': 'திதி', 'Nakshatra': 'நட்சத்திரம்', 'Yoga': 'யோகம்', 'Karana': 'கரணம்', 'Day': 'கிழமை' };
-
-        // Milk Colors (Pastel)
-        const colors = ['#ecfdf5', '#eff6ff', '#fff7ed', '#faf5ff', '#fdf2f8']; // Green, Blue, Orange, Purple, Pink
-
-        const tVal = getTamilTithi(pan.tithiName || '');
-        const nVal = nakshatras[pan.nakshatra] || pan.nakshatra || '-';
-        const yVal = getTamilYoga(pan.yoga || '');
-        const kVal = getTamilKarana(pan.karana || ''); // Use New Function
-        const dVal = weekdays[pan.vara] || pan.vara || '-';
-
-        const items = [
-          { l: labels.Tithi, v: tVal, c: colors[0] },
-          { l: labels.Nakshatra, v: nVal, c: colors[1] },
-          { l: labels.Yoga, v: yVal, c: colors[2] },
-          { l: labels.Karana, v: kVal, c: colors[3] },
-          { l: labels.Day, v: dVal, c: colors[4] }
-        ];
-
-        pContainer.className = 'panchangam-grid';
-        // Clear conflicting styles
-        pContainer.style.display = '';
-        pContainer.style.flexDirection = '';
-
-
-        pContainer.innerHTML = items.map(item => `
-          <div style="background: ${item.c};">
-            <div style="font-size:0.7rem; color:#666; font-weight:bold; margin-bottom:4px;">${item.l}</div>
-            <div style="font-size:0.85rem; color:#333; font-weight:600; line-height:1.2;">${item.v}</div>
-          </div>
-        `).join('');
-
-        // ==========================================
-        // 5) Render Planets List (Tamil)
-        // ==========================================
-        const planetList = document.getElementById('planetList');
-        if (planetList && data.planetaryPositions && data.planetaryPositions.detailed) {
-
-          const planetTam = {
-            "Sun": "சூரியன்", "Moon": "சந்திரன்", "Mars": "செவ்வாய்", "Mercury": "புதன்",
-            "Jupiter": "குரு", "Venus": "சுக்கிரன்", "Saturn": "சனி", "Rahu": "ராகு", "Ketu": "கேது",
-            "Ascendant": "லக்னம்", "Uranus": "யுரேனஸ்", "Neptune": "நெப்டியூன்", "Pluto": "புளூட்டோ"
-          };
-
-          const signsTam = {
-            "Aries": "மேஷம்", "Taurus": "ரிஷபம்", "Gemini": "மிதுனம்", "Cancer": "கடகம்",
-            "Leo": "சிம்மம்", "Virgo": "கன்னி", "Libra": "துலாம்", "Scorpio": "விருச்சிகம்",
-            "Sagittarius": "தனுசு", "Capricorn": "மகரம்", "Aquarius": "கும்பம்", "Pisces": "மீனம்"
-          };
-
-          const pOrder = ["Ascendant", "Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"];
-
-          let pHtml = '';
-          pOrder.forEach(key => {
-            const p = data.planetaryPositions.detailed[key];
-            if (!p && key !== 'Ascendant') return;
-
-            // Handle Ascendant special case if not in detailed list but in root
-            let info = p;
-            if (key === 'Ascendant' && data.ascendant) {
-              // normalize to match structure
-              info = {
-                sign: data.ascendant.sign,
-                degree: data.ascendant.degree,
-                minute: data.ascendant.minute || 0,
-                nakshatra: '-', // Ascendant nakshatra might not be calculated in simple object
-                nakshatraPada: '-'
-              };
-              // Try to find if ascendant details are computed
-              // If not, we skip Nakshatra for Ascendant for now or basic calc
-            }
-
-            if (!info) return;
-
-            const pName = planetTam[key] || key;
-            const signName = signsTam[info.sign] || info.sign;
-            const degStr = `${Math.floor(info.degree)}° ${info.minute}'`;
-            const nakName = nakshatras[info.nakshatra] || info.nakshatra || '-';
-
-            pHtml += `
-                <div class="planet-item" style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:white; margin-bottom:8px; border-radius:8px; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
-                  <div style="display:flex; align-items:center; gap:10px;">
-                    <div style="width:36px; height:36px; background:${getColorBg(key)}; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:0.8rem;">
-                      ${key.substring(0, 2)}
-                    </div>
-                    <div>
-                      <div style="font-weight:700; color:#374151;">${pName}</div>
-                      <div style="font-size:0.75rem; color:#6B7280;">${signName} | ${degStr}</div>
-                    </div>
-                  </div>
-                  <div style="text-align:right;">
-                     <div style="font-size:0.8rem; font-weight:600; color:#4B5563;">${nakName}</div>
-                     <div style="font-size:0.7rem; color:#9CA3AF;">பாதம்: ${info.nakshatraPada || 1}</div>
-                  </div>
-                </div>
-               `;
-          });
-          planetList.innerHTML = pHtml;
-        }
-
-        // ==========================================
-        // 6) Render Dasha (Tamil)
-        // ==========================================
-        const dashaList = document.getElementById('dashaList');
-        const dashaInfo = document.getElementById('currentDashaInfo');
-
-        if (data.dashaSystem) {
-          const planetTamM = {
-            "Ketu": "கேது", "Venus": "சுக்கிரன்", "Sun": "சூரியன்", "Moon": "சந்திரன்",
-            "Mars": "செவ்வாய்", "Rahu": "ராகு", "Jupiter": "குரு", "Saturn": "சனி", "Mercury": "புதன்"
-          };
-
-          // Current Dasha
-          const curr = data.dashaSystem.current;
-          if (curr && dashaInfo) {
-            const mName = planetTamM[curr.mahadasha?.lord] || curr.mahadasha?.lord || '-';
-            const bName = planetTamM[curr.bhukti?.lord] || curr.bhukti?.lord || '-';
-            const aName = planetTamM[curr.pratyantar?.lord] || curr.pratyantar?.lord || '-'; // Assuming API sends pratyantar or antaram
-            // Note: API sends 'pratyantar' key as level 3 usually.
-
-            dashaInfo.innerHTML = `
-                <div style="background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); color: white; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-                   <div style="font-size:0.75rem; opacity:0.9; text-transform:uppercase; letter-spacing:1px; margin-bottom:5px;">தற்போதைய தசை</div>
-                   <div style="font-size:1.1rem; font-weight:bold;">${mName} மகாதிசை</div>
-                   <div style="display:flex; margin-top:10px; gap:10px;">
-                      <span style="background:rgba(255,255,255,0.2); padding:4px 8px; border-radius:6px; font-size:0.8rem;">புக்தி: ${bName}</span>
-                      <span style="background:rgba(255,255,255,0.2); padding:4px 8px; border-radius:6px; font-size:0.8rem;">அந்தரம்: ${aName}</span>
-                   </div>
-                   <div style="margin-top:8px; font-size:0.75rem; opacity:0.8;">முடிவு: ${curr.mahadasha?.end || '-'}</div>
-                </div>
-              `;
-          }
-
-          // Sequence
-          if (data.dashaSystem.sequence && dashaList) {
-            dashaList.innerHTML = data.dashaSystem.sequence.map(d => {
-              const dName = planetTamM[d.lord] || d.lord;
-              return `
-                     <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee; align-items:center;">
-                        <div style="font-weight:600; color:#333;">${dName}</div>
-                        <div style="font-size:0.8rem; color:#666;">
-                           ${d.start.split('-').reverse().join('-')}  முதல்  ${d.end.split('-').reverse().join('-')}
-                        </div>
-                     </div>
-                   `;
-            }).join('');
-          }
-        }
-
-        // Helper for color
-        function getColorBg(p) {
-          const map = { 'Sun': '#ef4444', 'Moon': '#3b82f6', 'Mars': '#b91c1c', 'Mercury': '#10b981', 'Jupiter': '#f59e0b', 'Venus': '#ec4899', 'Saturn': '#374151', 'Rahu': '#1f2937', 'Ketu': '#4b5563', 'Ascendant': '#8b5cf6' };
-          return map[p] || '#6b7280';
-        }
-
-      }
     }
 
+    // Initialize
+    checkSession();
   </script>
 </body>
 

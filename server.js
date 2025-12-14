@@ -8,6 +8,11 @@ const crypto = require('crypto');
 const mongoose = require('mongoose');
 const multer = require('multer');
 
+// Polyfill for fetch (Node.js 18+ has it built-in)
+if (!global.fetch) {
+  global.fetch = require('node-fetch');
+}
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
@@ -372,6 +377,103 @@ async function endSessionRecord(sessionId) {
   } catch (e) { console.error('Wallet Error', e); }
 }
 
+// ===== City Autocomplete API =====
+app.post('/api/city-autocomplete', async (req, res) => {
+  try {
+    const { query } = req.body;
+
+    if (!query || query.trim().length < 2) {
+      return res.json({ ok: true, results: [] });
+    }
+
+    // Call Nominatim API to search for cities in India
+    const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)},India&format=json&limit=50&countrycodes=in`;
+
+    const response = await fetch(nominatimUrl, {
+      headers: { 'User-Agent': 'AstroApp/1.0' }
+    });
+
+    if (!response.ok) {
+      return res.json({ ok: true, results: [] });
+    }
+
+    const data = await response.json();
+
+    if (!data || data.length === 0) {
+      return res.json({ ok: true, results: [] });
+    }
+
+    // Process and prioritize results
+    let results = data.map(item => ({
+      name: item.name,
+      state: item.address?.state || '',
+      country: item.address?.country || 'India',
+      latitude: parseFloat(item.lat),
+      longitude: parseFloat(item.lon),
+      displayName: item.display_name
+    }));
+
+    // Prioritize Tamil Nadu cities
+    const tamilNaduCities = results.filter(r => r.state === 'Tamil Nadu');
+    const otherCities = results.filter(r => r.state !== 'Tamil Nadu');
+
+    results = [...tamilNaduCities, ...otherCities];
+
+    // Remove duplicates
+    const seen = new Set();
+    results = results.filter(r => {
+      const key = `${r.name}-${r.state}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    // Limit to top 10 results
+    results = results.slice(0, 10);
+
+    res.json({ ok: true, results });
+  } catch (error) {
+    console.error('City autocomplete error:', error);
+    res.json({ ok: false, error: 'Failed to fetch cities', results: [] });
+  }
+});
+
+// ===== Get City Timezone =====
+app.post('/api/city-timezone', async (req, res) => {
+  try {
+    const { latitude, longitude } = req.body;
+
+    if (!latitude || !longitude) {
+      return res.json({ ok: false, error: 'Latitude and longitude required' });
+    }
+
+    // Call GeoNames Timezone API
+    const geonamesUrl = `http://api.geonames.org/timezoneJSON?lat=${latitude}&lng=${longitude}&username=demo`;
+
+    const response = await fetch(geonamesUrl);
+
+    if (!response.ok) {
+      return res.json({ ok: false, error: 'Failed to fetch timezone' });
+    }
+
+    const data = await response.json();
+
+    if (data.status && data.status.value !== 0) {
+      return res.json({ ok: false, error: 'Invalid coordinates' });
+    }
+
+    res.json({
+      ok: true,
+      timezone: data.timezoneId,
+      gmtOffset: data.gmtOffset,
+      dstOffset: data.dstOffset
+    });
+  } catch (error) {
+    console.error('Timezone fetch error:', error);
+    res.json({ ok: false, error: 'Failed to fetch timezone' });
+  }
+});
+
 // ===== Socket.IO =====
 io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id);
@@ -472,7 +574,7 @@ io.on('connection', (socket) => {
   // --- Session request (chat / audio / video) ---
   socket.on('request-session', async (data, cb) => {
     try {
-      const { toUserId, type } = data || {};
+      const { toUserId, type, birthData } = data || {};
       const fromUserId = socketToUser.get(socket.id);
 
       if (!fromUserId) return cb({ ok: false, error: 'Not registered' });
@@ -504,6 +606,7 @@ io.on('connection', (socket) => {
         sessionId,
         fromUserId,
         type,
+        birthData: birthData || null
       });
 
       console.log(`Session request: ${sessionId} (${type})`);
@@ -672,6 +775,30 @@ io.on('connection', (socket) => {
       });
     } catch (err) {
       console.error('typing error', err);
+    }
+  });
+
+  // --- Client Birth Chart Data ---
+  socket.on('client-birth-chart', (data, cb) => {
+    try {
+      const { toUserId, birthData } = data || {};
+      const fromUserId = socketToUser.get(socket.id);
+      if (!fromUserId || !toUserId) return cb({ ok: false, error: 'Invalid data' });
+
+      const targetSocketId = userSockets.get(toUserId);
+      if (!targetSocketId) return cb({ ok: false, error: 'Astrologer offline' });
+
+      // Send birth chart data to astrologer
+      io.to(targetSocketId).emit('client-birth-chart', {
+        fromUserId,
+        birthData
+      });
+
+      cb({ ok: true });
+      console.log(`Birth chart sent from ${fromUserId} to ${toUserId}`);
+    } catch (err) {
+      console.error('client-birth-chart error', err);
+      cb({ ok: false, error: err.message });
     }
   });
 
