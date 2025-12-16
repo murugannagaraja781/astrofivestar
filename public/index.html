@@ -796,13 +796,43 @@
       </div>
     </div>
     <div class="content-area">
-      <div class="filter-tabs">
-        <div class="tab">All</div>
-        <div class="tab">Love</div>
-        <div class="tab">Career</div>
+      <!-- Section: Home -->
+      <div id="section-home">
+        <div style="padding:15px; margin-bottom:10px;">
+          <h2 style="margin:0; color:#1f2937;">Home Page</h2>
+        </div>
+
+        <div class="filter-tabs" id="topFilterTabs">
+          <div class="tab" onclick="filterAstros('all')">All</div>
+          <div class="tab" onclick="filterAstros('love')">Love</div>
+          <div class="tab" onclick="filterAstros('career')">Career</div>
+        </div>
+        <div id="astroList">
+          <!-- Dynamic Content -->
+        </div>
       </div>
-      <div id="astroList">
-        <!-- Dynamic Content -->
+
+      <!-- Section: Dash -->
+      <div id="section-dash" class="hidden">
+        <div
+          style="background:linear-gradient(135deg, #F59E0B 0%, #D97706 100%); padding:25px; border-radius:15px; color:white; margin-bottom:20px; text-align:center; box-shadow:0 10px 15px -3px rgba(245, 158, 11, 0.3);">
+          <div style="opacity:0.9; font-size:0.9rem; margin-bottom:5px;">Available Wallet Balance</div>
+          <div style="font-size:2.8rem; font-weight:bold; margin-bottom:15px;">₹<span id="dashWalletBalance">0</span>
+          </div>
+          <button
+            style="background:white; color:#e07e0c; border:none; padding:10px 25px; border-radius:25px; font-weight:bold; font-size:1rem; cursor:pointer; box-shadow:0 4px 6px rgba(0,0,0,0.1);"
+            onclick="alert('Recharge Gateway Coming Soon')">
+            <i class="fas fa-plus-circle"></i> Add Money
+          </button>
+        </div>
+
+        <div style="background:white; padding:20px; border-radius:15px; border:1px solid #eee;">
+          <div style="font-weight:bold; color:#374151; margin-bottom:15px; font-size:1.1rem;">Quick Actions</div>
+          <button class="cosmic-btn" onclick="document.getElementById('universalChartModal').classList.remove('hidden')"
+            style="font-size:1rem; padding:12px; border-radius:10px; width:100%; margin-bottom:10px; display:flex; justify-content:center; align-items:center; gap:10px;">
+            <i class="fas fa-calculator"></i> Get Birth Chart
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -867,7 +897,65 @@
         </button>
       </div>
     </div>
-  </div>""
+  </div>
+  </div>
+
+  <!-- Mobile Footer -->
+  <div class="doc-bottom-nav">
+    <div class="nav-item active" id="nav-home" onclick="navSwitch('home')">
+      <i class="fas fa-home"></i><span>Home</span>
+    </div>
+    <div class="nav-item" id="nav-dash" onclick="navSwitch('dash')">
+      <i class="fas fa-th-large"></i><span>Dash</span>
+    </div>
+    <div class="nav-item" id="nav-call" onclick="navSwitch('call')">
+      <i class="fas fa-phone-alt"></i><span>Call</span>
+    </div>
+    <div class="nav-item" id="nav-chat" onclick="navSwitch('chat')">
+      <i class="fas fa-comment-dots"></i><span>Chat</span>
+    </div>
+    <div class="nav-item" id="nav-profile" onclick="navSwitch('profile')">
+      <i class="fas fa-user-circle"></i><span>Profile</span>
+    </div>
+  </div>
+  </div>
+
+  <style>
+    .doc-bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: white;
+      border-top: 1px solid #eee;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0;
+      z-index: 1000;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #999;
+      font-size: 0.75rem;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .nav-item.active {
+      color: #d97706;
+      font-weight: bold;
+    }
+
+    .nav-item i {
+      font-size: 1.2rem;
+      margin-bottom: 4px;
+    }
+  </style>""
 
   <!-- Screen: Astrologer Dashboard -->
   <div id="screen-astro" class="dashboard-container hidden">
@@ -1241,16 +1329,40 @@
           Photo</button>
       </div>
 
-      <label style="display:block; margin-bottom:5px; font-size:0.9rem; color:#666;">Call Price (₹/min)</label>
-      <input id="editPrice" type="number" class="cosmic-input"
-        style="background:#f9f9f9; color:black; border:1px solid #ddd;">
+      <div id="clientProfileFields">
+        <label style="display:block; margin-bottom:5px; font-size:0.9rem; color:#666;">Date of Birth</label>
+        <input id="profileDob" type="date" class="cosmic-input"
+          style="background:#f9f9f9; color:black; border:1px solid #ddd; width:100%;">
 
-      <label style="display:block; margin-bottom:5px; margin-top:15px; font-size:0.9rem; color:#666;">Experience
-        (Years)</label>
-      <input id="editExp" type="number" class="cosmic-input"
-        style="background:#f9f9f9; color:black; border:1px solid #ddd;">
+        <label style="display:block; margin-bottom:5px; margin-top:10px; font-size:0.9rem; color:#666;">Time of
+          Birth</label>
+        <input id="profileTime" type="time" class="cosmic-input"
+          style="background:#f9f9f9; color:black; border:1px solid #ddd; width:100%;">
 
-      <button class="cosmic-btn" onclick="saveProfile()">Save Changes</button>
+        <label style="display:block; margin-bottom:5px; margin-top:10px; font-size:0.9rem; color:#666;">Place of
+          Birth</label>
+        <input id="profileCity" type="text" class="cosmic-input" placeholder="City"
+          style="background:#f9f9f9; color:black; border:1px solid #ddd; width:100%;">
+      </div>
+
+      <div id="astroProfileFields" style="display:none;">
+        <label style="display:block; margin-bottom:5px; margin-top:15px; font-size:0.9rem; color:#666;">Call Price
+          (₹/min)</label>
+        <input id="editPrice" type="number" class="cosmic-input"
+          style="background:#f9f9f9; color:black; border:1px solid #ddd;">
+
+        <label style="display:block; margin-bottom:5px; margin-top:15px; font-size:0.9rem; color:#666;">Experience
+          (Years)</label>
+        <input id="editExp" type="number" class="cosmic-input"
+          style="background:#f9f9f9; color:black; border:1px solid #ddd;">
+      </div>
+
+      <button class="cosmic-btn" onclick="saveProfile()" style="margin-top:20px;">Save Changes</button>
+
+      <button onclick="clearSession()"
+        style="width:100%; padding:15px; margin-top:15px; background:#fee2e2; color:#b91c1c; border:none; border-radius:12px; font-weight:bold; cursor:pointer;">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
     </div>
   </div>
 
@@ -1683,26 +1795,167 @@
     };
 
     // Client Dashboard Logic
+    state.astroList = [];
+
     function loadClientDash(user) {
       sClient.classList.remove('hidden');
       document.getElementById('clientWallet').innerText = user.walletBalance || 0;
+      if (document.getElementById('dashWalletBalance')) {
+        document.getElementById('dashWalletBalance').innerText = user.walletBalance || 0;
+      }
 
+      // Home Header
+      if (document.getElementById('homeUserName')) {
+        document.getElementById('homeUserName').innerText = user.name.split(' ')[0];
+        updateHomeTime();
+        setInterval(updateHomeTime, 60000);
+      }
+
+      // Initial State
+      navSwitch('home');
       fetchAstrologers();
 
       socket.on('astrologer-update', (list) => {
-        renderAstroList(list);
+        state.astroList = list;
+        const active = document.querySelector('.nav-item.active');
+        if (active) {
+          if (active.id === 'nav-call') navSwitch('call');
+          else if (active.id === 'nav-chat') navSwitch('chat');
+          else if (active.id === 'nav-home') navSwitch('home');
+        } else {
+          renderAstroList(list);
+        }
       });
 
       socket.on('wallet-update', (data) => {
         document.getElementById('clientWallet').innerText = data.balance;
+        if (document.getElementById('dashWalletBalance')) {
+          document.getElementById('dashWalletBalance').innerText = data.balance;
+        }
         state.me.walletBalance = data.balance;
         saveSession(state.me);
       });
     }
 
+    function updateHomeTime() {
+      const now = new Date();
+      const timeEl = document.getElementById('homeTimeDisplay');
+      const dateEl = document.getElementById('homeDateDisplay');
+      if (timeEl) timeEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      if (dateEl) dateEl.innerText = now.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
+    }
+
+    window.navSwitch = function (tab) {
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      const btn = document.getElementById('nav-' + tab);
+      if (btn) btn.classList.add('active');
+
+      const sectHome = document.getElementById('section-home');
+      const sectDash = document.getElementById('section-dash');
+
+      if (tab === 'home') {
+        if (sectHome) sectHome.classList.remove('hidden');
+        if (sectDash) sectDash.classList.add('hidden');
+        if (document.getElementById('topFilterTabs')) document.getElementById('topFilterTabs').classList.remove('hidden');
+        renderAstroList(state.astroList);
+      }
+      else if (tab === 'dash') {
+        if (sectHome) sectHome.classList.add('hidden');
+        if (sectDash) sectDash.classList.remove('hidden');
+      }
+      else if (tab === 'call') {
+        if (sectHome) sectHome.classList.remove('hidden');
+        if (sectDash) sectDash.classList.add('hidden');
+        if (document.getElementById('topFilterTabs')) document.getElementById('topFilterTabs').classList.add('hidden');
+
+        const online = state.astroList.filter(a => a.isAudioOnline);
+        const offline = state.astroList.filter(a => !a.isAudioOnline);
+        renderAstroList([...online, ...offline]);
+      }
+      else if (tab === 'chat') {
+        if (sectHome) sectHome.classList.remove('hidden');
+        if (sectDash) sectDash.classList.add('hidden');
+        if (document.getElementById('topFilterTabs')) document.getElementById('topFilterTabs').classList.add('hidden');
+
+        const online = state.astroList.filter(a => a.isChatOnline);
+        const offline = state.astroList.filter(a => !a.isChatOnline);
+        renderAstroList([...online, ...offline]);
+      }
+      else if (tab === 'profile') {
+        // Reset active to Previous or keep Profile active?
+        // User wants "Profile clik time update progile..." implying opening profile
+        showProfile();
+      }
+    };
+
+    window.filterAstros = function (type) {
+      // Simple mock filter
+      renderAstroList(state.astroList);
+    };
+
+    window.showProfile = function () {
+      document.getElementById('screen-profile').classList.remove('hidden');
+
+      const user = state.me;
+      if (!user) return;
+
+      const img = document.getElementById('editAvatar');
+      if (img) img.src = user.image || `https://ui-avatars.com/api/?name=${user.name}`;
+
+      // Fields
+      if (user.birthDetails) {
+        if (document.getElementById('profileDob')) document.getElementById('profileDob').value = user.birthDetails.dob || '';
+        if (document.getElementById('profileTime')) document.getElementById('profileTime').value = user.birthDetails.tob || '';
+        if (document.getElementById('profileCity')) document.getElementById('profileCity').value = user.birthDetails.pob || '';
+      }
+
+      const astroFields = document.getElementById('astroProfileFields');
+      if (user.role === 'astrologer') {
+        astroFields.style.display = 'block';
+        document.getElementById('editPrice').value = user.price || '';
+        document.getElementById('editExp').value = user.experience || '';
+      } else {
+        astroFields.style.display = 'none';
+      }
+    };
+
+    window.saveProfile = function () {
+      const update = {};
+
+      if (state.me.role === 'astrologer') {
+        update.price = document.getElementById('editPrice').value;
+        update.experience = document.getElementById('editExp').value;
+      }
+
+      update.birthDetails = {
+        dob: document.getElementById('profileDob').value,
+        tob: document.getElementById('profileTime').value,
+        pob: document.getElementById('profileCity').value
+      };
+
+      socket.emit('update-profile', update, (res) => {
+        if (res.ok) {
+          state.me = res.user;
+          saveSession(state.me);
+          alert('Profile Updated');
+          document.getElementById('screen-profile').classList.add('hidden');
+          // Refresh dash if needed (name/image)
+          if (state.me.role === 'astrologer') loadAstroDash(state.me);
+          else loadClientDash(state.me);
+        } else {
+          alert('Failed: ' + res.error);
+        }
+      });
+    };
+
     function fetchAstrologers() {
       socket.emit('get-astrologers', (res) => {
-        renderAstroList(res.astrologers);
+        if (res.astrologers) {
+          state.astroList = res.astrologers;
+          renderAstroList(state.astroList);
+        } else {
+          renderAstroList([]);
+        }
       });
     }
 
@@ -3028,11 +3281,21 @@
                 for (let planet in rawPlanets) {
                   const p = rawPlanets[planet];
                   if (p && p.sign === sign) {
-                    // Format: Symbol Name Degree
+                    // Format: Symbol Name Degree (DMS)
                     const symbol = planetSymbols[planet] || '';
                     const name = p.nameTamil || planet;
-                    const deg = p.degreeFormatted || (p.degree ? p.degree.toFixed(2) : '');
-                    planetsInSign.push(`<div style="font-size:0.7rem;">${symbol} ${name}<br><span style="font-size:0.6rem; color:#666;">${deg}</span></div>`);
+
+                    const toDMS = (d) => {
+                      if (!d && d !== 0) return '';
+                      const deg = Math.floor(d);
+                      const minFloat = (d - deg) * 60;
+                      const min = Math.floor(minFloat);
+                      const sec = Math.round((minFloat - min) * 60);
+                      return `${deg}° ${min}' ${sec}"`;
+                    };
+
+                    const deg = p.degreeFormatted || (p.degree !== undefined ? toDMS(p.degree) : '');
+                    planetsInSign.push(`<div style="font-size:0.75rem; line-height:1.2;">${symbol} <b>${name}</b><br><span style="font-size:0.65rem; color:#555;">${deg}</span></div>`);
                   }
                 }
                 // Check Lagna (Rasi only)

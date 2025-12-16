@@ -98,7 +98,14 @@ const UserSchema = new mongoose.Schema({
   price: { type: Number, default: 20 },
   walletBalance: { type: Number, default: 369 },
   experience: { type: Number, default: 0 },
-  image: { type: String, default: '' }
+  image: { type: String, default: '' },
+  birthDetails: {
+    dob: String,
+    tob: String,
+    pob: String,
+    lat: Number,
+    lon: Number
+  }
 });
 const User = mongoose.model('User', UserSchema);
 
@@ -557,6 +564,9 @@ io.on('connection', (socket) => {
         if (data.price) user.price = parseInt(data.price);
         if (data.experience) user.experience = parseInt(data.experience);
         if (data.image) user.image = data.image; // URL
+        if (data.birthDetails) {
+          user.birthDetails = { ...user.birthDetails, ...data.birthDetails };
+        }
 
         await user.save();
 
