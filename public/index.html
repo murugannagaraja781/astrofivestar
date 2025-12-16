@@ -832,6 +832,477 @@
       max-height: 100%;
       position: relative;
     }
+
+    /* ===== ADMIN DASHBOARD STYLES ===== */
+    .admin-content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      padding-bottom: 100px;
+      background: #f8fafc;
+      width: 100%;
+    }
+
+    .admin-tab-section {
+      display: none;
+      animation: fadeIn 0.3s ease-in;
+      width: 100%;
+    }
+
+    .admin-tab-section.active {
+      display: block;
+      width: 100%;
+    }
+
+    .admin-tab-section h2 {
+      width: 100%;
+    }
+
+    .admin-tab-section>div {
+      width: 100%;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .stat-card-modern {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      border: 1px solid #f0f0f0;
+      transition: all 0.3s ease;
+    }
+
+    .stat-card-modern:hover {
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .admin-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid #e5e7eb;
+      display: none;
+      justify-content: space-around;
+      padding: 12px 0;
+      z-index: 100;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+      max-width: 480px;
+      margin: 0 auto;
+      width: 100%;
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+    }
+
+    .admin-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      color: #9ca3af;
+      font-size: 0.75rem;
+      cursor: pointer;
+      flex: 1;
+      transition: all 0.3s ease;
+      padding: 8px 0;
+    }
+
+    .admin-nav-item i {
+      font-size: 1.3rem;
+    }
+
+    .admin-nav-item.active {
+      color: #1e3a8a;
+      font-weight: 600;
+    }
+
+    .admin-nav-item.active i {
+      font-size: 1.5rem;
+    }
+
+    /* ===== ADMIN FOOTER ===== */
+    .admin-footer {
+      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 0.85rem;
+      border-radius: 16px;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+
+    .admin-footer.show {
+      display: block;
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+
+    .admin-footer-content {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .admin-footer-section {
+      display: flex;
+      justify-content: space-around;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .admin-footer-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      opacity: 0.9;
+      transition: opacity 0.3s;
+    }
+
+    .admin-footer-item:hover {
+      opacity: 1;
+    }
+
+    .admin-footer-item i {
+      font-size: 1.2rem;
+    }
+
+    .admin-footer-divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.2);
+      margin: 8px 0;
+    }
+
+    .admin-footer-bottom {
+      font-size: 0.75rem;
+      opacity: 0.8;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 10px;
+      margin-top: 10px;
+    }
+
+    /* ===== RESPONSIVE DESIGN ===== */
+    @media (max-width: 768px) {
+      .dashboard-container {
+        max-width: 100%;
+      }
+
+      .admin-content-area {
+        padding: 15px;
+        padding-bottom: 120px;
+      }
+
+      .stat-card-modern {
+        padding: 16px;
+      }
+
+      .admin-nav {
+        padding: 10px 0;
+      }
+
+      .admin-nav-item span {
+        font-size: 0.7rem;
+      }
+
+      .admin-nav-item i {
+        font-size: 1.2rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+
+      /* Dashboard grid responsive */
+      .admin-tab-section>div>div[style*="grid"] {
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
+        gap: 10px !important;
+        padding: 0 5px !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .admin-content-area {
+        padding: 12px;
+        padding-bottom: 130px;
+      }
+
+      .stat-card-modern {
+        padding: 12px;
+        min-height: auto;
+      }
+
+      /* Dashboard grid on mobile - single column */
+      .admin-tab-section>div>div[style*="grid"] {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+      }
+
+      .admin-nav {
+        padding: 8px 0;
+      }
+
+      .admin-nav-item {
+        gap: 4px;
+      }
+
+      .admin-nav-item span {
+        font-size: 0.65rem;
+      }
+
+      .admin-nav-item i {
+        font-size: 1.1rem;
+      }
+
+      .admin-footer {
+        padding: 15px;
+      }
+
+      .admin-footer-section {
+        gap: 10px;
+      }
+
+      .admin-footer-item {
+        font-size: 0.75rem;
+      }
+
+      .admin-footer-item i {
+        font-size: 1rem;
+      }
+    }
+
+    /* ===== ADMIN CARDS ===== */
+    .admin-user-card {
+      background: white;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      border: 1px solid #f0f0f0;
+      transition: all 0.3s ease;
+    }
+
+    .admin-user-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .admin-user-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .admin-user-name {
+      font-weight: 600;
+      color: #1f2937;
+      font-size: 0.95rem;
+    }
+
+    .admin-user-role {
+      background: #f3f4f6;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      color: #6b7280;
+      font-weight: 500;
+    }
+
+    .admin-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .btn-admin {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-admin:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-block {
+      background: #ef4444;
+    }
+
+    .btn-wallet {
+      background: #22c55e;
+    }
+
+    .btn-role {
+      background: #3b82f6;
+    }
+
+    .btn-delete {
+      background: #dc2626;
+    }
+
+    /* ===== LEDGER TABLE ===== */
+    .admin-ledger-table {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      border: 1px solid #f0f0f0;
+    }
+
+    .admin-ledger-table table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .admin-ledger-table thead {
+      background: #f9fafb;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    .admin-ledger-table th {
+      padding: 12px 15px;
+      text-align: left;
+      color: #6b7280;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .admin-ledger-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #f0f0f0;
+      color: #374151;
+    }
+
+    .admin-ledger-table tbody tr:hover {
+      background: #f9fafb;
+    }
+
+    /* ===== WITHDRAWAL SECTION ===== */
+    .withdrawal-card {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 15px;
+      border: 1px solid #fcd34d;
+    }
+
+    .withdrawal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .withdrawal-amount {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #92400e;
+    }
+
+    .withdrawal-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-approve {
+      background: #22c55e;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .btn-reject {
+      background: #ef4444;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    /* ===== RESPONSIVE TABLE ===== */
+    @media (max-width: 768px) {
+      table {
+        font-size: 0.85rem;
+      }
+
+      table thead {
+        display: none;
+      }
+
+      table tbody tr {
+        display: block;
+        margin-bottom: 15px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        overflow: hidden;
+        background: white;
+      }
+
+      table tbody td {
+        display: block;
+        padding: 12px 15px;
+        text-align: right;
+        border-bottom: 1px solid #f0f0f0;
+        position: relative;
+        padding-left: 50%;
+      }
+
+      table tbody td:before {
+        content: attr(data-label);
+        position: absolute;
+        left: 15px;
+        font-weight: 700;
+        color: #374151;
+        text-align: left;
+      }
+
+      table tbody td:last-child {
+        border-bottom: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      table {
+        font-size: 0.8rem;
+      }
+
+      table tbody td {
+        padding: 10px 12px;
+        padding-left: 45%;
+      }
+
+      table tbody td:before {
+        left: 12px;
+        font-size: 0.75rem;
+      }
+    }
   </style>
 </head>
 
@@ -1046,7 +1517,7 @@
       font-size: 1.2rem;
       margin-bottom: 4px;
     }
-  </style>""
+  </style>
 
   <!-- Screen: Astrologer Dashboard -->
   <div id="screen-astro" class="dashboard-container hidden">
@@ -1084,6 +1555,29 @@
       <div class="emergency-banner">
         <div style="font-weight: bold; margin-bottom: 5px;">Online for Emergency!</div>
         <div style="font-size: 0.8rem; opacity: 0.9;">Boost your earnings with emergency sessions.</div>
+      </div>
+
+      <!-- Astro Wallet Card -->
+      <div class="progress-card"
+        style="margin-bottom: 0px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; border: none;">
+        <div>
+          <div style="font-weight: bold; font-size: 1.1rem;">Wallet Balance</div>
+          <div style="font-size: 1.8rem; font-weight: bold; margin-top: 5px;">₹<span id="astroWalletDisplay">0</span>
+          </div>
+          <div style="font-size: 0.8rem; opacity: 0.9; margin-top:5px;">
+            Total Earnings: ₹<span id="astroLifetimeDisplay">0</span>
+          </div>
+          <div style="font-size: 0.75rem; opacity: 0.8; margin-top:2px;">Min. ₹500 to Withdraw</div>
+        </div>
+        <div>
+          <button id="btnAstroWithdraw" onclick="astroRequestWithdrawal()"
+            style="background: white; color: #059669; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; font-size: 0.8rem; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            Withdraw
+          </button>
+        </div>
+      </div>
+      <div id="astroPendingWithdrawals" style="margin: 10px 15px; font-size: 0.8rem; color: #666; display: none;">
+        <!-- Pending status here -->
       </div>
 
       <div class="progress-card">
@@ -1323,32 +1817,673 @@
 
   <!-- Screen: Super Admin Dashboard -->
   <div id="screen-admin" class="dashboard-container hidden">
-    <div class="app-header" style="background:#1e3a8a; color:white;">
-      <div style="font-weight: bold; font-size: 1.2rem;">Super Admin</div>
-      <div>
-        <i class="fas fa-sign-out-alt" style="margin-left: 10px; cursor: pointer;" onclick="clearSession()"></i>
+    <div class="app-header"
+      style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); color:white; box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);">
+      <div style="font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
+        <i class="fas fa-shield-alt"></i> Super Admin
+      </div>
+      <div style="display: flex; gap: 15px; align-items: center;">
+        <i class="fas fa-bell" style="cursor: pointer; opacity: 0.8;"></i>
+        <button onclick="clearSession()"
+          style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem;">
+          <i class="fas fa-power-off"></i> Logout
+        </button>
       </div>
     </div>
-    <div class="content-area">
-      <div style="display:flex; gap:10px; margin-bottom:15px;">
-        <div
-          style="flex:1; background:linear-gradient(135deg, #3b82f6, #2563eb); padding:15px; border-radius:12px; color:white;">
-          <div style="font-size:0.8rem; opacity:0.8;">Total Users</div>
-          <div style="font-size:1.5rem; font-weight:bold;" id="adminTotalUsers">0</div>
+    <!-- Content Area (Scrollable) -->
+    <div class="admin-content-area">
+
+      <!-- Tab 1: Dashboard (Home) -->
+
+      <div id="admin-sect-home" class="admin-tab-section active">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+          <h2 class="dashboard-title">
+            <i class="fas fa-chart-line"></i> Dashboard Overview
+          </h2>
+          <div class="date-selector">
+            <span class="date-text">Today</span>
+            <i class="fas fa-chevron-down"></i>
+          </div>
         </div>
-        <div
-          style="flex:1; background:linear-gradient(135deg, #10b981, #059669); padding:15px; border-radius:12px; color:white;">
-          <div style="font-size:0.8rem; opacity:0.8;">Active Now</div>
-          <div style="font-size:1.5rem; font-weight:bold;" id="adminActiveUsers">0</div>
+
+        <!-- Stats Cards Grid -->
+        <div class="stats-grid">
+          <!-- Total Revenue Card -->
+          <div class="stat-card revenue-card">
+            <div class="card-header">
+              <div class="card-icon revenue-icon">
+                <i class="fas fa-rupee-sign"></i>
+              </div>
+              <div class="trend-indicator positive">
+                <i class="fas fa-arrow-up"></i>
+                <span>12%</span>
+              </div>
+            </div>
+            <div class="card-content">
+              <div class="stat-label">Total Revenue</div>
+              <div id="quickRev" class="stat-value">₹0</div>
+              <div class="stat-subtext">
+                <i class="fas fa-calendar-alt"></i>
+                <span>This month</span>
+              </div>
+            </div>
+            <div class="card-wave"></div>
+          </div>
+
+          <!-- Net Profit Card -->
+          <div class="stat-card profit-card">
+            <div class="card-header">
+              <div class="card-icon profit-icon">
+                <i class="fas fa-chart-line"></i>
+              </div>
+              <div class="trend-indicator positive">
+                <i class="fas fa-arrow-up"></i>
+                <span>8%</span>
+              </div>
+            </div>
+            <div class="card-content">
+              <div class="stat-label">Net Profit</div>
+              <div id="quickProfit" class="stat-value">₹0</div>
+              <div class="stat-subtext">
+                <i class="fas fa-percentage"></i>
+                <span>After expenses</span>
+              </div>
+            </div>
+            <div class="card-wave"></div>
+          </div>
+
+          <!-- Astro Payout Card -->
+          <div class="stat-card payout-card">
+            <div class="card-header">
+              <div class="card-icon payout-icon">
+                <i class="fas fa-wallet"></i>
+              </div>
+              <div class="trend-indicator negative">
+                <i class="fas fa-arrow-down"></i>
+                <span>3%</span>
+              </div>
+            </div>
+            <div class="card-content">
+              <div class="stat-label">Astro Payout</div>
+              <div id="quickPayout" class="stat-value">₹0</div>
+              <div class="stat-subtext">
+                <i class="fas fa-users"></i>
+                <span>To astrologers</span>
+              </div>
+            </div>
+            <div class="card-wave"></div>
+          </div>
+
+          <!-- Activity Card -->
+          <div class="stat-card activity-card">
+            <div class="card-header">
+              <div class="card-icon activity-icon">
+                <i class="fas fa-clock"></i>
+              </div>
+              <div class="trend-indicator positive">
+                <i class="fas fa-arrow-up"></i>
+                <span>15%</span>
+              </div>
+            </div>
+            <div class="card-content">
+              <div class="stat-label">Mins Billed</div>
+              <div id="quickMins" class="stat-value">0</div>
+              <div class="stat-subtext">
+                <i class="fas fa-hourglass-half"></i>
+                <span>Total minutes</span>
+              </div>
+            </div>
+            <div class="card-wave"></div>
+          </div>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="chart-container">
+          <div class="chart-header">
+            <h3>Revenue Overview</h3>
+            <div class="chart-legend">
+              <span class="legend-item">
+                <span class="legend-dot revenue-dot"></span>
+                Revenue
+              </span>
+              <span class="legend-item">
+                <span class="legend-dot profit-dot"></span>
+                Profit
+              </span>
+            </div>
+          </div>
+          <div class="chart-placeholder">
+            <canvas id="revenueChart"></canvas>
+            <div class="no-data">
+              <i class="fas fa-chart-bar"></i>
+              <p>Chart data will appear here</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <h3 style="margin:10px 0;">User Management</h3>
-      <div id="adminUserList">
-        <!-- Dynamic User Cards -->
+      <style>
+        /* Base Styles */
+        .dashboard-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 24px;
+          padding: 0;
+          width: 100%;
+        }
+
+        .dashboard-title {
+          margin: 0;
+          color: #1F2937;
+          font-size: 1.5rem;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .dashboard-title i {
+          color: #1e3a8a;
+        }
+
+        .date-selector {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 16px;
+          background: #fff;
+          border: 1px solid #E5E7EB;
+          border-radius: 20px;
+          cursor: pointer;
+          font-size: 0.9rem;
+          color: #6B7280;
+          transition: all 0.3s ease;
+        }
+
+        .date-selector:hover {
+          border-color: #1e3a8a;
+          color: #1e3a8a;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 20px;
+          padding: 0;
+          margin-bottom: 30px;
+          width: 100%;
+        }
+
+        /* Stat Cards */
+        .stat-card {
+          background: #fff;
+          border-radius: 20px;
+          padding: 24px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+          position: relative;
+          overflow: hidden;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 20px;
+        }
+
+        .card-icon {
+          width: 56px;
+          height: 56px;
+          border-radius: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.5rem;
+        }
+
+        .revenue-icon {
+          background: linear-gradient(135deg, #D1FAE5, #10B981);
+          color: #047857;
+        }
+
+        .profit-icon {
+          background: linear-gradient(135deg, #DBEAFE, #3B82F6);
+          color: #1D4ED8;
+        }
+
+        .payout-icon {
+          background: linear-gradient(135deg, #FEE2E2, #EF4444);
+          color: #DC2626;
+        }
+
+        .activity-icon {
+          background: linear-gradient(135deg, #F3F4F6, #6B7280);
+          color: #4B5563;
+        }
+
+        .trend-indicator {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          padding: 4px 12px;
+          border-radius: 12px;
+          font-size: 0.85rem;
+          font-weight: 600;
+        }
+
+        .trend-indicator.positive {
+          background: #D1FAE5;
+          color: #059669;
+        }
+
+        .trend-indicator.negative {
+          background: #FEE2E2;
+          color: #DC2626;
+        }
+
+        /* Card Content */
+        .card-content {
+          position: relative;
+          z-index: 2;
+        }
+
+        .stat-label {
+          font-size: 0.9rem;
+          color: #6B7280;
+          margin-bottom: 8px;
+          font-weight: 500;
+        }
+
+        .stat-value {
+          font-size: 2.2rem;
+          font-weight: 700;
+          color: #111827;
+          margin-bottom: 12px;
+          line-height: 1;
+        }
+
+        .stat-subtext {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 0.85rem;
+          color: #9CA3AF;
+        }
+
+        .stat-subtext i {
+          font-size: 0.8rem;
+        }
+
+        /* Card Wave Decoration */
+        .card-wave {
+          position: absolute;
+          bottom: -10px;
+          right: -10px;
+          width: 120px;
+          height: 120px;
+          background: linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.1) 100%);
+          border-radius: 50%;
+          z-index: 1;
+        }
+
+        /* Chart Section */
+        .chart-container {
+          background: #fff;
+          border-radius: 20px;
+          padding: 24px;
+          margin: 0;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+          width: 100%;
+        }
+
+        .chart-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+        }
+
+        .chart-header h3 {
+          margin: 0;
+          color: #1F2937;
+          font-size: 1.2rem;
+          font-weight: 600;
+        }
+
+        .chart-legend {
+          display: flex;
+          gap: 20px;
+        }
+
+        .legend-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 0.9rem;
+          color: #6B7280;
+        }
+
+        .legend-dot {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+        }
+
+        .revenue-dot {
+          background: linear-gradient(135deg, #10B981, #059669);
+        }
+
+        .profit-dot {
+          background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+        }
+
+        .chart-placeholder {
+          height: 200px;
+          background: #F9FAFB;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+        }
+
+        .no-data {
+          text-align: center;
+          color: #9CA3AF;
+        }
+
+        .no-data i {
+          font-size: 3rem;
+          margin-bottom: 16px;
+          opacity: 0.3;
+        }
+
+        .no-data p {
+          margin: 0;
+          font-size: 1rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+          .dashboard-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+          }
+
+          .date-selector {
+            align-self: flex-start;
+          }
+
+          .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+          }
+
+          .stat-card {
+            padding: 20px;
+          }
+
+          .stat-value {
+            font-size: 1.8rem;
+          }
+
+          .card-icon {
+            width: 48px;
+            height: 48px;
+            font-size: 1.2rem;
+          }
+
+          .chart-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+          }
+
+          .chart-legend {
+            width: 100%;
+            justify-content: space-between;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .dashboard-title {
+            font-size: 1.3rem;
+          }
+
+          .stat-card {
+            padding: 16px;
+          }
+
+          .stat-value {
+            font-size: 1.6rem;
+          }
+
+          .chart-container {
+            padding: 16px;
+          }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .stat-card {
+          animation: fadeIn 0.5s ease-out;
+        }
+
+        .stat-card:nth-child(2) {
+          animation-delay: 0.1s;
+        }
+
+        .stat-card:nth-child(3) {
+          animation-delay: 0.2s;
+        }
+
+        .stat-card:nth-child(4) {
+          animation-delay: 0.3s;
+        }
+      </style>
+
+      <!-- Add Chart.js for future chart implementation -->
+      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+      <script>
+        // Initialize placeholder chart
+        document.addEventListener('DOMContentLoaded', function () {
+          const ctx = document.getElementById('revenueChart')?.getContext('2d');
+          if (ctx) {
+            new Chart(ctx, {
+              type: 'line',
+              data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                  label: 'Revenue',
+                  data: [],
+                  borderColor: '#10B981',
+                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  borderWidth: 2,
+                  tension: 0.4,
+                  fill: true
+                }, {
+                  label: 'Profit',
+                  data: [],
+                  borderColor: '#3B82F6',
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  borderWidth: 2,
+                  tension: 0.4,
+                  fill: true
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: false
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    grid: {
+                      color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                  },
+                  x: {
+                    grid: {
+                      display: false
+                    }
+                  }
+                }
+              }
+            });
+          }
+        });
+      </script>
+
+      <!-- Tab 2: Earnings (Full Ledger) -->
+      <div id="admin-sect-earnings" class="admin-tab-section">
+        <h2
+          style="margin:0 0 15px 0; color:#1F2937; font-size:1.3rem; font-weight:700; display:flex; align-items:center; gap:8px;">
+          <i class="fas fa-chart-pie" style="color:#1e3a8a;"></i> Financial Ledger
+        </h2>
+        <div
+          style="background:white; border-radius:16px; border:1px solid #e5e7eb; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+              <thead
+                style="background:linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%); border-bottom:2px solid #d1d5db;">
+                <tr>
+                  <th style="padding:16px 15px; text-align:left; color:#374151; font-weight:700; font-size:0.85rem;">
+                    Transaction Type</th>
+                  <th style="padding:16px 15px; text-align:center; color:#374151; font-weight:700; font-size:0.85rem;">
+                    Count
+                  </th>
+                  <th style="padding:16px 15px; text-align:right; color:#374151; font-weight:700; font-size:0.85rem;">
+                    Revenue</th>
+                </tr>
+              </thead>
+              <tbody id="fullLedgerBody">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Payouts (Send Money) -->
+      <div id="admin-sect-payouts" class="admin-tab-section">
+        <h2
+          style="margin:0 0 15px 0; color:#1F2937; font-size:1.3rem; font-weight:700; display:flex; align-items:center; gap:8px;">
+          <i class="fas fa-paper-plane" style="color:#1e3a8a;"></i> Astrologer Payouts
+        </h2>
+
+        <!-- Pending Withdrawals -->
+        <div id="adminWithdrawalsSection" style="margin-bottom: 20px; display: none;">
+          <div
+            style="background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border:1px solid #fcd34d; border-radius:12px; padding:15px; margin-bottom:15px;">
+            <div style="font-weight:700; color:#92400e; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+              <i class="fas fa-exclamation-circle"></i> Pending Withdrawal Requests
+            </div>
+            <div id="adminWithdrawalsList" style="display:flex; flex-direction:column; gap:10px;"></div>
+          </div>
+        </div>
+
+        <!-- List of Astrologers -->
+        <div id="adminAstroList" style="display:flex; flex-direction:column; gap:12px;">
+          <!-- Populated via JS -->
+        </div>
+      </div>
+
+      <!-- Tab 4: Users (Customer List) -->
+      <div id="admin-sect-users" class="admin-tab-section">
+        <h2
+          style="margin:0 0 15px 0; color:#1F2937; font-size:1.3rem; font-weight:700; display:flex; align-items:center; gap:8px;">
+          <i class="fas fa-users" style="color:#1e3a8a;"></i> Customer List
+        </h2>
+        <div id="adminClientList" style="display:flex; flex-direction:column; gap:12px;">
+          <!-- Populated via JS -->
+        </div>
+      </div>
+
+      <!-- Admin Footer (Static) -->
+      <div class="admin-footer">
+        <div class="admin-footer-content">
+          <div class="admin-footer-section">
+            <div class="admin-footer-item">
+              <i class="fas fa-chart-bar"></i>
+              <span>Total Users: <strong id="footerTotalUsers">...</strong></span>
+            </div>
+            <div class="admin-footer-item">
+              <i class="fas fa-wallet"></i>
+              <span>Platform Revenue: <strong id="footerRevenue">₹0</strong></span>
+            </div>
+            <div class="admin-footer-item">
+              <i class="fas fa-hourglass-half"></i>
+              <span>Active Sessions: <strong id="footerSessions">0</strong></span>
+            </div>
+          </div>
+          <div class="admin-footer-divider"></div>
+          <div class="admin-footer-section">
+            <div class="admin-footer-item">
+              <i class="fas fa-server"></i>
+              <span>System Status: <strong style="color: #86efac;">Operational</strong></span>
+            </div>
+            <div class="admin-footer-item">
+              <i class="fas fa-clock"></i>
+              <span id="footerTime">--:--</span>
+            </div>
+          </div>
+          <div class="admin-footer-bottom">
+            <div>AstroFiveStar Admin Panel v1.0</div>
+            <div style="margin-top: 4px;">© 2025 All Rights Reserved</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="admin-nav">
+      <div class="admin-nav-item active" id="anav-home" onclick="navAdmin('home')">
+        <i class="fas fa-home"></i>
+        <span>Dash</span>
+      </div>
+      <div class="admin-nav-item" id="anav-earnings" onclick="navAdmin('earnings')">
+        <i class="fas fa-chart-pie"></i>
+        <span>Earnings</span>
+      </div>
+      <div class="admin-nav-item" id="anav-payouts" onclick="navAdmin('payouts')">
+        <i class="fas fa-user-astronaut"></i>
+        <span>Astrologers</span>
+      </div>
+      <div class="admin-nav-item" id="anav-users" onclick="navAdmin('users')">
+        <i class="fas fa-users"></i>
+        <span>Users</span>
       </div>
     </div>
   </div>
+
+
 
   <!-- Screen: Admin Role Change Modal -->
   <div id="screen-admin-role-modal" class="modal-overlay hidden">
@@ -1495,7 +2630,8 @@
               <div
                 style="font-size:3rem; color:rgba(200,200,200,0.3); font-weight:300; margin-bottom:20px; letter-spacing:2px;">
                 📋</div>
-              <div style="color:rgba(150,150,150,0.4); font-size:1.1rem; font-weight:500; margin-bottom:10px;">Chat
+              <div style="color:rgba(150,150,150,0.4); font-size:1.1rem; font-weight:500; margin-bottom:10px;">
+                Chat
                 Request from Client</div>
               <div id="clientRequestContent"
                 style="color:rgba(130,130,130,0.35); font-size:0.95rem; line-height:1.6; max-width:300px;">
@@ -1599,7 +2735,8 @@
                       style="display:flex; flex-direction:column; gap:8px; font-size:0.9rem; color:#444;"></div>
                   </div>
                   <div class="navamsa-container" style="margin-top:20px;">
-                    <div style="text-align:center; margin-bottom:5px; font-weight:bold; color:#555;">Navamsa (D9)</div>
+                    <div style="text-align:center; margin-bottom:5px; font-weight:bold; color:#555;">Navamsa (D9)
+                    </div>
                     <div class="south-indian-chart" id="navamsaChart"></div>
                   </div>
                 </div>
@@ -1630,10 +2767,12 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                   <!-- Boy Details -->
                   <div class="input-card">
-                    <div style="font-weight:bold; color:#3b82f6; margin-bottom:15px; font-size:1.1rem;">🤵 Boy's Details
+                    <div style="font-weight:bold; color:#3b82f6; margin-bottom:15px; font-size:1.1rem;">🤵 Boy's
+                      Details
                     </div>
 
-                    <label style="display:block; margin-bottom:5px; font-size:0.9rem; color:#666;">Date of Birth</label>
+                    <label style="display:block; margin-bottom:5px; font-size:0.9rem; color:#666;">Date of
+                      Birth</label>
                     <input type="date" id="boyDate" class="cosmic-input"
                       style="background:#f9f9f9; color:black; border:1px solid #ddd;">
 
@@ -1659,7 +2798,8 @@
                     <div style="font-weight:bold; color:#ec4899; margin-bottom:15px; font-size:1.1rem;">👰 Girl's
                       Details</div>
 
-                    <label style="display:block; margin-bottom:5px; font-size:0.9rem; color:#666;">Date of Birth</label>
+                    <label style="display:block; margin-bottom:5px; font-size:0.9rem; color:#666;">Date of
+                      Birth</label>
                     <input type="date" id="girlDate" class="cosmic-input"
                       style="background:#f9f9f9; color:black; border:1px solid #ddd;">
 
@@ -1895,6 +3035,15 @@
         document.getElementById('dashWalletBalance').innerText = user.walletBalance || 0;
       }
 
+      // SHOW GLOBAL FOOTER (Client Nav)
+      const globalFooter = document.querySelector('.doc-bottom-nav');
+      if (globalFooter) globalFooter.style.display = 'flex';
+
+      const anav = document.querySelector('.admin-nav');
+      if (anav) anav.style.display = 'none';
+      const afoot = document.querySelector('.admin-footer');
+      if (afoot) afoot.classList.remove('show');
+
       // Home Header
       if (document.getElementById('homeUserName')) {
         document.getElementById('homeUserName').innerText = user.name.split(' ')[0];
@@ -1997,7 +3146,7 @@
       if (!user) return;
 
       const img = document.getElementById('editAvatar');
-      if (img) img.src = user.image || `https://ui-avatars.com/api/?name=${user.name}`;
+      if (img) img.src = user.image || `https://ui-avatars.com/api/?name=${user.name}&background=random`;
 
       // Fields
       if (user.birthDetails) {
@@ -2123,6 +3272,14 @@
       setupToggle('toggleChat', 'chat');
       setupToggle('toggleCall', 'audio');
       setupToggle('toggleVideo', 'video');
+
+      const anav = document.querySelector('.admin-nav');
+      if (anav) anav.style.display = 'none';
+      const afoot = document.querySelector('.admin-footer');
+      if (afoot) afoot.classList.remove('show');
+
+      const globalFooter = document.querySelector('.doc-bottom-nav');
+      if (globalFooter) globalFooter.style.display = 'none';
     }
 
     function setupToggle(id, type) {
@@ -2367,6 +3524,31 @@
       }
 
       if (state.me && state.me.role === 'astrologer') {
+        const dScore = document.getElementById('dailyScore');
+        if (dScore) dScore.innerText = `₹${state.me.walletBalance || 0}`; // Using score as wallet for now?
+
+        // Phase 15: new display
+        const wDisplay = document.getElementById('astroWalletDisplay');
+        if (wDisplay) wDisplay.innerText = state.me.walletBalance || 0;
+
+        const lDisplay = document.getElementById('astroLifetimeDisplay');
+        if (lDisplay) lDisplay.innerText = state.me.totalEarnings || 0;
+
+        // Update Withdraw Button State
+        const btnWithdraw = document.getElementById('btnAstroWithdraw');
+        if (btnWithdraw) {
+          if ((state.me.walletBalance || 0) < 500) {
+            btnWithdraw.style.opacity = '0.5';
+            btnWithdraw.style.cursor = 'not-allowed';
+          } else {
+            btnWithdraw.style.opacity = '1';
+            btnWithdraw.style.cursor = 'pointer';
+          }
+        }
+
+        // Setup chart helper
+        window.currentAstroId = state.me.userId;
+
         const btn = document.getElementById('btnChatChart');
         const headerDiv = document.getElementById('clientDetailsHeader');
         const contentDiv = document.getElementById('clientDetailsContent');
@@ -2613,77 +3795,358 @@
       }
     });
 
-    // Admin Dashboard Logic
+    // --- Admin Dashboard Logic ---
     let adminUsersCache = [];
+
+    window.navAdmin = function (tab) {
+      // 1. Update Buttons
+      document.querySelectorAll('.admin-nav-item').forEach(el => el.classList.remove('active'));
+      const btn = document.getElementById('anav-' + tab);
+      if (btn) btn.classList.add('active');
+
+      // 2. Switch Section
+      document.querySelectorAll('.admin-tab-section').forEach(el => el.classList.remove('active'));
+      const sect = document.getElementById('admin-sect-' + tab);
+      if (sect) sect.classList.add('active');
+
+      // 3. Logic dependent on tab
+      if (tab === 'home' || tab === 'earnings') {
+        loadAdminLedgerStats(); // Refresh Stats
+      } else if (tab === 'payouts') {
+        // Filter Astrologers from Cache
+        const astros = adminUsersCache.filter(u => u.role === 'astrologer');
+        renderAdminAstros(astros);
+        loadAdminWithdrawals(); // Phase 15
+      } else if (tab === 'users') {
+        // Filter Clients from Cache
+        const clients = adminUsersCache.filter(u => u.role !== 'astrologer' && u.role !== 'superadmin');
+        renderAdminClients(clients);
+      }
+    };
 
     function loadAdminDash(user) {
       sAdmin.classList.remove('hidden');
-      refreshAdminData();
-    }
 
-    function refreshAdminData() {
+      // HIDE GLOBAL FOOTER (Client Nav)
+      const globalFooter = document.querySelector('.doc-bottom-nav');
+      if (globalFooter) globalFooter.style.display = 'none';
+
+      const anav = document.querySelector('.admin-nav');
+      if (anav) anav.style.display = 'flex';
+      const afoot = document.querySelector('.admin-footer');
+      if (afoot) afoot.classList.add('show');
+
+      navAdmin('home'); // Default to home tab
+
+      // Fetch initial data
       socket.emit('get-all-users', (res) => {
         if (res.ok) {
           adminUsersCache = res.users;
-          renderAdminUsers(res.users);
-          updateAdminStats(res.users);
-        } else {
-          alert('Failed to load users');
+          // Don't render yet until tab is clicked or initialized
+        }
+      });
+      loadAdminLedgerStats();
+
+      // Update footer time
+      updateAdminFooterTime();
+      setInterval(updateAdminFooterTime, 60000);
+    }
+
+    function updateAdminFooterTime() {
+      const now = new Date();
+      const timeEl = document.getElementById('footerTime');
+      if (timeEl) {
+        timeEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+    }
+
+    function loadAdminLedgerStats() {
+      socket.emit('admin-get-ledger-stats', {}, (res) => {
+        if (res.ok) {
+          setText('quickRev', '₹' + (res.stats.totalRevenue || 0));
+          setText('quickProfit', '₹' + (res.stats.adminProfit || 0));
+          setText('quickPayout', '₹' + (res.stats.astroPayout || 0));
+          setText('quickMins', Math.round((res.stats.totalDuration || 0) / 60));
+
+          setText('footerTotalUsers', res.stats.totalUsers || 0);
+          setText('footerRevenue', '₹' + (res.stats.totalRevenue || 0));
+          setText('footerSessions', res.stats.activeSessions || 0);
+
+          // Update Chart if exists
+          const chartInstance = Chart.getChart("revenueChart");
+          if (chartInstance) {
+            // Simple mock historical data for visual effect, anchored to real total
+            const total = res.stats.totalRevenue || 0;
+            const profit = res.stats.adminProfit || 0;
+
+            // Distribute total over last 6 months (mock distribution)
+            const spread = [0.1, 0.15, 0.1, 0.2, 0.25, 0.2];
+            const revData = spread.map(x => Math.round(x * total));
+            const profData = spread.map(x => Math.round(x * profit));
+
+            chartInstance.data.datasets[0].data = revData;
+            chartInstance.data.datasets[1].data = profData;
+            chartInstance.update();
+          }
+
+          if (res.fullLedger) {
+            const tbody = document.getElementById('fullLedgerBody');
+            tbody.innerHTML = '';
+            // Aggregate by type
+            const agg = {};
+            res.fullLedger.forEach(l => {
+              if (!agg[l.type]) agg[l.type] = { count: 0, amount: 0 };
+              agg[l.type].count++;
+              agg[l.type].amount += (l.amount || 0);
+            });
+
+            Object.keys(agg).forEach(k => {
+              const row = document.createElement('tr');
+              row.innerHTML = `
+                  <td style="padding:16px 15px; border-bottom:1px solid #e5e7eb;">${k.toUpperCase().replace('_', ' ')}</td>
+                  <td style="padding:16px 15px; text-align:center; border-bottom:1px solid #e5e7eb;">${agg[k].count}</td>
+                  <td style="padding:16px 15px; text-align:right; font-weight:700; color:#059669; border-bottom:1px solid #e5e7eb;">₹${agg[k].amount}</td>
+                `;
+              tbody.appendChild(row);
+            });
+          } else {
+            const tbody = document.getElementById('fullLedgerBody');
+            if (tbody) {
+              tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#999;">No Data</td></tr>';
+            }
+          }
         }
       });
     }
 
-    function updateAdminStats(users) {
-      document.getElementById('adminTotalUsers').textContent = users.length;
-      const active = users.filter(u => u.isOnline).length;
-      document.getElementById('adminActiveUsers').textContent = active;
+    function formatReason(r) {
+      if (r === 'first_60') return '<span style="color:#DC2626; font-weight:600;">First Min</span>';
+      if (r === 'first_60_partial') return '<span style="color:#DC2626;">First Min (Partial)</span>';
+      if (r === 'rounded') return '<span style="color:#F59E0B;">Rounding</span>';
+      if (r?.startsWith('slab_')) return `<span style="color:#059669;">Slab ${r.split('_')[1]}</span>`;
+      return r;
     }
 
-    function renderAdminUsers(users) {
-      const list = document.getElementById('adminUserList');
-      list.innerHTML = '';
+    function setText(id, val) {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = val;
+    }
 
-      users.forEach(u => {
+    // Render Astrologers for Payout Tab
+    function renderAdminAstros(list) {
+      const container = document.getElementById('adminAstroList');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (list.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:30px; color:#9ca3af;"><i class="fas fa-inbox" style="font-size:2rem; margin-bottom:10px; display:block;"></i>No astrologers found</div>';
+        return;
+      }
+
+      // Sort: Newest First, then Offline Astrologers
+      list.sort((a, b) => {
+        // First sort by newest (by _id)
+        if (a._id && b._id) {
+          const idCompare = b._id.localeCompare(a._id);
+          if (idCompare !== 0) return idCompare;
+        }
+        // Then sort offline astrologers to bottom
+        const aOnline = a.isOnline ? 1 : 0;
+        const bOnline = b.isOnline ? 1 : 0;
+        return bOnline - aOnline;
+      });
+
+      list.forEach(u => {
         const div = document.createElement('div');
-        div.className = 'admin-card';
+        div.className = 'admin-user-card';
+        const onlineStatus = u.isOnline ? '<span style="color:#22c55e; font-weight:600;">🟢 Online</span>' : '<span style="color:#9ca3af; font-weight:600;">⚫ Offline</span>';
+
         div.innerHTML = `
-          <div class="admin-user-header">
-            <div style="font-weight:bold;">
-              ${u.name} <span class="user-pill">${u.role}</span>
-              ${u.isBanned ? '<span class="user-pill" style="background:#fee2e2; color:#b91c1c;">Banned</span>' : ''}
+            <div class="admin-user-header">
+              <div>
+                <div class="admin-user-name">${u.name}</div>
+                <div style="font-size:0.8rem; color:#9ca3af; margin-top:2px;">${u.phone} • ID: ${u.userId.slice(0, 6)}...</div>
+                <div style="font-size:0.75rem; margin-top:4px;">${onlineStatus}</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-weight:700; color:#059669; font-size:1.1rem;">₹${u.walletBalance || 0}</div>
+                <div class="admin-user-role" style="background:#fef3c7; color:#d97706; margin-top:4px;">Astrologer</div>
+              </div>
             </div>
-            <div style="font-size:0.8rem;">₹${u.walletBalance}</div>
-          </div>
-          <div style="font-size:0.8rem; color:#666;">
-            Phone: ${u.phone || 'N/A'}<br>
-            ID: ${u.userId.slice(0, 8)}...
-          </div>
-          <div class="admin-actions">
-            <button class="btn-admin btn-wallet" onclick="adminWallet('${u.userId}')">Add ₹</button>
-            <button class="btn-admin btn-role" onclick="adminRole('${u.userId}', '${u.role}')">Role</button>
-            <button class="btn-admin btn-block" onclick="adminBan('${u.userId}', ${!u.isBanned})">
-              ${u.isBanned ? 'Unblock' : 'Block'}
-            </button>
-          </div>
-        `;
-        list.appendChild(div);
+            <div class="admin-actions">
+               <button class="btn-admin btn-wallet" onclick="adminWallet('${u.userId}')" title="Manage Wallet">
+                 <i class="fas fa-wallet"></i> Wallet
+               </button>
+               <button class="btn-admin btn-role" onclick="adminRole('${u.userId}', '${u.role}')" title="Change Role">
+                 <i class="fas fa-user-tag"></i> Role
+               </button>
+               <button class="btn-admin btn-role" onclick="adminEditUser('${u.userId}', '${u.name}')" title="Edit Profile">
+                 <i class="fas fa-edit"></i> Edit
+               </button>
+               <button class="btn-admin btn-block" onclick="adminBan('${u.userId}', ${!u.isBanned})" title="${u.isBanned ? 'Unblock User' : 'Block User'}">
+                 <i class="fas fa-ban"></i> ${u.isBanned ? 'Unblock' : 'Block'}
+               </button>
+            </div>
+          `;
+        container.appendChild(div);
+      });
+    }
+
+    // Render Clients for Users Tab
+    function renderAdminClients(list) {
+      const container = document.getElementById('adminClientList');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (list.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:30px; color:#9ca3af;"><i class="fas fa-inbox" style="font-size:2rem; margin-bottom:10px; display:block;"></i>No customers found</div>';
+        return;
+      }
+
+      // Sort Newest First
+      list.sort((a, b) => {
+        if (a._id && b._id) return b._id.localeCompare(a._id);
+        return 0;
+      });
+
+      list.forEach(u => {
+        const div = document.createElement('div');
+        div.className = 'admin-user-card';
+        const roleColor = u.role === 'astrologer' ? '#fef3c7' : '#dbeafe';
+        const roleTextColor = u.role === 'astrologer' ? '#d97706' : '#2563eb';
+        div.innerHTML = `
+           <div class="admin-user-header">
+             <div>
+               <div class="admin-user-name">${u.name}</div>
+               <div style="font-size:0.8rem; color:#9ca3af; margin-top:2px;">${u.phone} • ID: ${u.userId.slice(0, 6)}...</div>
+             </div>
+             <div style="text-align:right;">
+               <div style="font-weight:700; color:#059669; font-size:1.1rem;">₹${u.walletBalance || 0}</div>
+               <div class="admin-user-role" style="background:${roleColor}; color:${roleTextColor}; margin-top:4px; text-transform:capitalize;">${u.role}</div>
+             </div>
+           </div>
+           <div class="admin-actions">
+              <button class="btn-admin btn-wallet" onclick="adminWallet('${u.userId}')">
+                <i class="fas fa-plus"></i> Add Money
+              </button>
+              <button class="btn-admin btn-role" onclick="adminRole('${u.userId}', '${u.role}')">
+                <i class="fas fa-user-tag"></i> Role
+              </button>
+              <button class="btn-admin btn-role" onclick="adminEditUser('${u.userId}', '${u.name}')">
+                <i class="fas fa-edit"></i> Edit
+              </button>
+              <button class="btn-admin btn-block" onclick="adminBan('${u.userId}', ${!u.isBanned})">
+                <i class="fas fa-ban"></i> ${u.isBanned ? 'Unblock' : 'Block'}
+              </button>
+            </div>
+           `;
+        container.appendChild(div);
       });
     }
 
     window.adminWallet = (uid) => {
       const amt = prompt("Enter amount to ADD (e.g., 100):");
-      if (amt && !isNaN(amt)) {
-        socket.emit('admin-add-wallet', { userId: uid, amount: amt }, (res) => {
-          if (res.ok) { alert('Wallet Updated'); refreshAdminData(); }
-          else alert('Failed');
+      if (amt) {
+        socket.emit('admin-add-money', { userId: uid, amount: parseInt(amt) }, (res) => {
+          alert(res.msg || (res.ok ? 'Success' : 'Failed'));
+          loadAdminDash(); // Refresh
         });
       }
     };
 
+    // --- Phase 15: Withdrawal Logic ---
+
+    // Astrologer Request
+    window.astroRequestWithdrawal = () => {
+      // We can get current balance from UI or cache
+      const balance = parseInt(document.getElementById('astroWalletDisplay')?.innerText || '0');
+      if (balance < 500) {
+        alert("Minimum wallet balance of ₹500 is required to request withdrawal.");
+        return;
+      }
+
+      const amt = prompt(`Enter amount to withdraw(Max ₹${balance}): `, balance);
+      if (!amt) return;
+
+      const amount = parseInt(amt);
+      if (isNaN(amount) || amount <= 0) {
+        alert("Invalid amount");
+        return;
+      }
+      if (amount > balance) {
+        alert("Amount exceeds wallet balance");
+        return;
+      }
+
+      // Confirm
+      if (!confirm(`Request withdrawal of ₹${amount}?`)) return;
+
+      socket.emit('astro-request-withdrawal', { amount }, (res) => {
+        alert(res.msg);
+        if (res.ok) {
+          // Update UI if needed, but balance doesn't change yet
+        }
+      });
+    };
+
+    // Admin: Load Pending Withdrawals
+    function loadAdminWithdrawals() {
+      socket.emit('admin-get-withdrawals', {}, (res) => {
+        const container = document.getElementById('adminWithdrawalsList');
+        const section = document.getElementById('adminWithdrawalsSection');
+        if (!container || !section) return;
+
+        if (res.ok && res.withdrawals && res.withdrawals.length > 0) {
+          section.style.display = 'block';
+          container.innerHTML = '';
+          res.withdrawals.forEach(w => {
+            const div = document.createElement('div');
+            div.className = 'admin-card';
+            div.style.borderLeft = '4px solid #DC2626';
+            div.innerHTML = `
+              < div style = "display:flex; justify-content:space-between; align-items:center;" >
+                        <div>
+                           <div style="font-weight:bold; color:#111;">${w.astroName}</div>
+                           <div style="font-size:0.8rem; color:#666;">${w.astroPhone}</div>
+                           <div style="font-size:0.75rem; color:#999;">${new Date(w.requestedAt).toLocaleDateString()}</div>
+                        </div>
+                        <div style="text-align:right;">
+                           <div style="font-size:1.2rem; font-weight:bold; color:#DC2626;">₹${w.amount}</div>
+                           <button onclick="adminApproveWithdrawal('${w._id}')"
+                             style="margin-top:5px; background: #059669; color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">
+                             Approve
+                           </button>
+                        </div>
+                      </div >
+              `;
+            container.appendChild(div);
+          });
+        } else {
+          section.style.display = 'none';
+        }
+      });
+    }
+
+    window.adminApproveWithdrawal = (wid) => {
+      if (!confirm("Approve this withdrawal? Funds will be deducted from Astrologer's wallet now.")) return;
+      socket.emit('admin-approve-withdrawal', { withdrawalId: wid }, (res) => {
+        if (res.ok) {
+          alert("Withdrawal Approved & Funds Deducted.");
+          loadAdminWithdrawals(); // Refresh list
+          navAdmin('payouts'); // Refresh astro list too
+        } else {
+          alert("Error: " + (res.msg || 'Failed'));
+        }
+      });
+    };
+
+    // Hook into Admin Nav
+    const originalNavAdmin = window.navAdmin;
+
+
     let roleChangeTargetId = null;
 
     window.adminRole = (uid, currentRole) => {
-      roleChangeTargetId = uid;
       document.getElementById('adminRoleSelect').value = currentRole;
       document.getElementById('screen-admin-role-modal').classList.remove('hidden');
     };
@@ -2711,6 +4174,20 @@
         });
       }
     };
+
+    function adminEditUser(targetId, currentName) {
+      const newName = prompt('Enter new display name:', currentName);
+      if (!newName || newName === currentName) return;
+
+      socket.emit('admin-edit-user', { targetUserId: targetId, updates: { name: newName } }, (res) => {
+        if (res.ok) {
+          alert('Name Updated');
+          loadAdminDash(state.me);
+        } else {
+          alert('Failed: ' + (res.error || 'Unknown'));
+        }
+      });
+    }
 
     socket.on('force-logout', () => {
       alert('Your account has been suspended by Admin.');

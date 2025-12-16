@@ -97,6 +97,7 @@ const UserSchema = new mongoose.Schema({
   skills: [String],
   price: { type: Number, default: 20 },
   walletBalance: { type: Number, default: 369 },
+  totalEarnings: { type: Number, default: 0 }, // Phase 16: Lifetime Earnings
   experience: { type: Number, default: 0 },
   image: { type: String, default: '' },
   birthDetails: {
@@ -110,7 +111,18 @@ const UserSchema = new mongoose.Schema({
 const User = mongoose.model('User', UserSchema);
 
 const SessionSchema = new mongoose.Schema({
-  sessionId: String,
+  sessionId: { type: String, unique: true },
+
+  // Phase 0: Core Billing Fields
+  clientId: String,
+  astrologerId: String,
+  clientConnectedAt: Number, // Timestamp
+  astrologerConnectedAt: Number, // Timestamp
+  actualBillingStart: Number, // Timestamp
+  sessionEndAt: Number, // Timestamp
+  status: { type: String, enum: ['active', 'ended'], default: 'active' },
+
+  // Legacy/Compatibility Fields
   fromUserId: String,
   toUserId: String,
   type: String,
@@ -119,6 +131,42 @@ const SessionSchema = new mongoose.Schema({
   duration: Number
 });
 const Session = mongoose.model('Session', SessionSchema);
+
+const PairMonthSchema = new mongoose.Schema({
+  pairId: { type: String, required: true, index: true }, // client_id + "_" + astrologer_id
+  clientId: String,
+  astrologerId: String,
+  yearMonth: { type: String, required: true }, // "YYYY-MM"
+  currentSlab: { type: Number, default: 0 },
+  slabLockedAt: { type: Number, default: 0 }, // seconds
+  resetAt: Date
+});
+// Compound index for unique pair in a month
+PairMonthSchema.index({ pairId: 1, yearMonth: 1 }, { unique: true });
+const PairMonth = mongoose.model('PairMonth', PairMonthSchema);
+
+const BillingLedgerSchema = new mongoose.Schema({
+  billingId: { type: String, unique: true },
+  sessionId: { type: String, required: true, index: true },
+  minuteIndex: { type: Number, required: true },
+  chargedToClient: Number,
+  creditedToAstrologer: Number,
+  adminAmount: Number,
+  reason: { type: String, enum: ['first_60', 'slab', 'rounded', 'payout_withdrawal'] },
+  createdAt: { type: Date, default: Date.now }
+});
+const BillingLedger = mongoose.model('BillingLedger', BillingLedgerSchema);
+
+// Phase 15: Withdrawal Schema
+const WithdrawalSchema = new mongoose.Schema({
+  astroId: String,
+  amount: Number,
+  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+  requestedAt: { type: Date, default: Date.now },
+  processedAt: Date
+});
+const Withdrawal = mongoose.model('Withdrawal', WithdrawalSchema);
+
 
 const ChatMessageSchema = new mongoose.Schema({
   sessionId: String,
@@ -300,8 +348,10 @@ app.post('/api/verify-otp', async (req, res) => {
     if (!user) {
       // Create new client
       const userId = crypto.randomUUID();
+      // Secure Name Generation (No phone parts)
+      const randomSuffix = crypto.randomBytes(2).toString('hex'); // 4 chars e.g. 'a1b2'
       user = await User.create({
-        userId, phone, name: `User ${phone.slice(-4)}`, role: 'client'
+        userId, phone, name: `User_${randomSuffix}`, role: 'client'
       });
     }
 
@@ -345,43 +395,135 @@ async function endSessionRecord(sessionId) {
   activeSessions.delete(sessionId);
 
   const endTime = Date.now();
-  const durationMs = endTime - s.startedAt;
-  const durationMin = Math.ceil(durationMs / 60000); // Charged per minute
+  // Phase 1/2: Use tracked billable seconds if available
+  const billableSeconds = s.elapsedBillableSeconds || 0;
 
   // Update Session in DB
-  await Session.updateOne({ sessionId }, { endTime, duration: durationMs });
+  await Session.updateOne({ sessionId }, {
+    endTime,
+    duration: billableSeconds * 1000
+  });
 
-  // Wallet Logic
+  // Update PairMonth Cumulative Seconds (Phase 4)
+  if (s.pairMonthId) {
+    await PairMonth.updateOne(
+      { _id: s.pairMonthId },
+      { $inc: { slabLockedAt: billableSeconds } }
+    );
+  }
+
+  // Phase 3: Early Exit Handling (< 60s)
+  if (billableSeconds > 0 && billableSeconds < 60) {
+    console.log(`Session ${sessionId}: Early exit at ${billableSeconds}s. Charging pro-rata.`);
+    await processBillingCharge(sessionId, billableSeconds, 1, 'early_exit');
+  }
+
+  // Note: If billableSeconds >= 60, the minute ticks would have handled the charges.
+  // We do NOT run the old legacy billing logic here.
+}
+
+// --- Phase 3: Billing Helper ---
+const SLAB_RATES = {
+  1: 0.30, // 30% to Astro
+  2: 0.35, // 35%
+  3: 0.40, // 40%
+  4: 0.50  // 50%
+};
+
+async function processBillingCharge(sessionId, durationSeconds, minuteIndex, type) {
   try {
-    const [u1, u2] = s.users;
-    // Identify Client/Astro. usually we assume one is client one is astro?
-    // Or we fetch roles.
-    const user1 = await User.findOne({ userId: u1 });
-    const user2 = await User.findOne({ userId: u2 });
+    const session = await Session.findOne({ sessionId });
+    if (!session) return;
 
-    if (!user1 || !user2) return;
+    // Fetch Astrologer Price
+    const astro = await User.findOne({ userId: session.astrologerId });
+    if (!astro) return;
 
-    const client = user1.role === 'client' ? user1 : user2;
-    const astro = user1.role === 'astrologer' ? user1 : user2;
+    const client = await User.findOne({ userId: session.clientId });
+    if (!client) return;
 
-    if (client.role === 'client' && astro.role === 'astrologer') {
-      const cost = durationMin * astro.price;
-      if (client.walletBalance >= cost) {
-        client.walletBalance -= cost;
-        astro.walletBalance += cost;
-        await client.save();
-        await astro.save();
-        console.log(`Wallet: Deducted ₹${cost} from ${client.name} for ${durationMin} mins.`);
+    const pricePerMin = astro.price || 0;
 
-        // Notify Clients of new balance
-        const s1 = userSockets.get(client.userId);
-        if (s1) io.to(s1).emit('wallet-update', { balance: client.walletBalance });
+    let amountToCharge = 0;
+    let adminShare = 0;
+    let astroShare = 0;
+    let reason = '';
 
-        const s2 = userSockets.get(astro.userId);
-        if (s2) io.to(s2).emit('wallet-update', { balance: astro.walletBalance });
-      }
+    // Logic: First 60 Seconds (Admin Only)
+    // If type == 'first_60_full' (called at 60s tick)
+    // If type == 'early_exit' (called at endSession if < 60s)
+
+    if (type === 'first_60_full') {
+      amountToCharge = pricePerMin;
+      adminShare = amountToCharge;
+      astroShare = 0;
+      reason = 'first_60';
+    } else if (type === 'early_exit') {
+      // Pro-rata: (Price / 60) * seconds
+      amountToCharge = (pricePerMin / 60) * durationSeconds;
+      adminShare = amountToCharge; // 100% to Admin
+      astroShare = 0;
+      reason = 'first_60_partial';
+    } else if (type === 'slab') {
+      // Phase 5: Standard Minute Billing
+      const currentSlab = activeSessions.get(sessionId)?.currentSlab || 3; // Default to 3 if missing
+      const rate = SLAB_RATES[currentSlab] || 0.30;
+
+      amountToCharge = pricePerMin;
+      astroShare = amountToCharge * rate;
+      adminShare = amountToCharge - astroShare;
+      reason = `slab_${currentSlab}`;
+    } else {
+      // Unknown
+      return;
     }
-  } catch (e) { console.error('Wallet Error', e); }
+
+    // Deduct from Client
+    if (client.walletBalance >= amountToCharge) {
+      client.walletBalance -= amountToCharge;
+      await client.save();
+
+      // Credit Astrologer (if > 0)
+      if (astroShare > 0) {
+        astro.walletBalance += astroShare;
+        astro.totalEarnings = (astro.totalEarnings || 0) + astroShare; // Phase 16
+        await astro.save();
+      }
+
+      // Admin Share is just recorded in Ledger, or we could credit a SuperAdmin wallet.
+      // Task says: "Deduct from client, credit 0 to astro, rest to Admin"
+
+      // Create Ledger Entry
+      await BillingLedger.create({
+        billingId: crypto.randomUUID(),
+        sessionId,
+        minuteIndex,
+        chargedToClient: amountToCharge,
+        creditedToAstrologer: astroShare,
+        adminAmount: adminShare,
+        reason
+      });
+
+      console.log(`Billing: ${reason} | Charge: ${amountToCharge} | Admin: ${adminShare} | Astro: ${astroShare}`);
+
+      // Notify Wallets
+      const s1 = userSockets.get(client.userId);
+      if (s1) io.to(s1).emit('wallet-update', { balance: client.walletBalance });
+
+      const s2 = userSockets.get(astro.userId);
+      if (s2) io.to(s2).emit('wallet-update', { balance: astro.walletBalance });
+
+    } else {
+      console.log(`Billing Failed: Insufficient funds for ${client.name}`);
+      // Handle forced termination?
+      io.to(userSockets.get(session.clientId)).emit('session-ended', { reason: 'insufficient_funds' });
+      io.to(userSockets.get(session.astrologerId)).emit('session-ended', { reason: 'insufficient_funds' });
+      // Call endSessionRecord? Be careful of recursion.
+    }
+
+  } catch (e) {
+    console.error('Billing Error:', e);
+  }
 }
 
 // ===== City Autocomplete API =====
@@ -604,11 +746,33 @@ io.on('connection', (socket) => {
       const sessionId = crypto.randomUUID();
 
       // Store in DB
+      // Resolve roles (Assuming User model has role)
+      const fromUser = await User.findOne({ userId: fromUserId });
+      const toUser = await User.findOne({ userId: toUserId });
+
+      let clientId = null;
+      let astrologerId = null;
+
+      if (fromUser && fromUser.role === 'client') clientId = fromUserId;
+      if (fromUser && fromUser.role === 'astrologer') astrologerId = fromUserId;
+      if (toUser && toUser.role === 'client') clientId = toUserId;
+      if (toUser && toUser.role === 'astrologer') astrologerId = toUserId;
+
       await Session.create({
-        sessionId, fromUserId, toUserId, type, startTime: Date.now()
+        sessionId, fromUserId, toUserId, type, startTime: Date.now(),
+        clientId, astrologerId
       });
 
-      activeSessions.set(sessionId, { type, users: [fromUserId, toUserId], startedAt: Date.now() });
+      activeSessions.set(sessionId, {
+        type,
+        users: [fromUserId, toUserId],
+        startedAt: Date.now(),
+        clientId,
+        astrologerId,
+        elapsedBillableSeconds: 0,
+        lastBilledMinute: 0,
+        actualBillingStart: null // Will be set by handleUserConnection
+      });
       userActiveSession.set(fromUserId, sessionId);
       userActiveSession.set(toUserId, sessionId);
 
@@ -798,10 +962,176 @@ io.on('connection', (socket) => {
         fromUserId,
         isTyping: !!isTyping,
       });
+    } catch (err) { console.error('typing error', err); }
+  });
+
+  // --- Phase 1: Connection & Billing Start ---
+  socket.on('session-connect', async (data) => {
+    try {
+      const { sessionId } = data || {};
+      const userId = socketToUser.get(socket.id);
+
+      if (!userId || !sessionId) return;
+
+      console.log(`Session Connect: User ${userId} joined Session ${sessionId}`);
+
+      await handleUserConnection(sessionId, userId);
+
     } catch (err) {
-      console.error('typing error', err);
+      console.error('session-connect error:', err);
     }
   });
+
+  async function handleUserConnection(sessionId, userId) {
+    const session = await Session.findOne({ sessionId });
+    if (!session) return;
+
+    // Determine which timestamp to update
+    const now = Date.now();
+    let updated = false;
+
+    if (userId === session.clientId) {
+      if (!session.clientConnectedAt) {
+        session.clientConnectedAt = now;
+        updated = true;
+        console.log(`Session ${sessionId}: Client connected at ${now}`);
+      }
+    } else if (userId === session.astrologerId) {
+      if (!session.astrologerConnectedAt) {
+        session.astrologerConnectedAt = now;
+        updated = true;
+        console.log(`Session ${sessionId}: Astrologer connected at ${now}`);
+      }
+    }
+
+    if (updated) {
+      await session.save();
+    }
+
+    // Check if billing can start
+    if (session.clientConnectedAt && session.astrologerConnectedAt && !session.actualBillingStart) {
+      const maxTime = Math.max(session.clientConnectedAt, session.astrologerConnectedAt);
+      const billingStart = maxTime + 2000; // 2 seconds buffer
+
+      session.actualBillingStart = billingStart;
+      await session.save();
+
+      // Update in-memory map for the ticker
+      const activeSession = activeSessions.get(sessionId);
+      if (activeSession) {
+        activeSession.actualBillingStart = billingStart;
+
+        // --- Phase 4: Init Pair Slab ---
+        try {
+          const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+          const pairId = `${session.clientId}_${session.astrologerId}`;
+
+          let pairRec = await PairMonth.findOne({ pairId, yearMonth: currentMonth });
+          if (!pairRec) {
+            console.log(`Creating PairMonth for ${pairId} (Starting Slab 3)`);
+            pairRec = await PairMonth.create({
+              pairId,
+              clientId: session.clientId,
+              astrologerId: session.astrologerId,
+              yearMonth: currentMonth,
+              currentSlab: 3, // Default Slab 3
+              slabLockedAt: 0
+            });
+          }
+
+          activeSession.pairMonthId = pairRec._id;
+          activeSession.currentSlab = pairRec.currentSlab;
+          activeSession.initialPairSeconds = pairRec.slabLockedAt || 0;
+          console.log(`Session ${sessionId} initialized with Slab ${activeSession.currentSlab}, InitialSecs: ${activeSession.initialPairSeconds}`);
+        } catch (e) {
+          console.error('PairMonth Init Error', e);
+        }
+      }
+
+      console.log(`Session ${sessionId}: Billing starts at ${billingStart} (Buffer applied)`);
+
+      // Notify both parties
+      io.to(userSockets.get(session.clientId)).emit('billing-started', { startTime: billingStart });
+      io.to(userSockets.get(session.astrologerId)).emit('billing-started', { startTime: billingStart });
+    }
+  }
+
+  // --- Phase 2: Session Timer Engine ---
+  setInterval(tickSessions, 1000);
+
+  // Phase 4 Helper
+  function getSlabBySeconds(seconds) {
+    if (seconds <= 300) return 1;
+    if (seconds <= 600) return 2;
+    if (seconds <= 900) return 3;
+    if (seconds <= 1200) return 4;
+    return 4; // Max slab 4+
+  }
+
+  function tickSessions() {
+    const now = Date.now();
+    for (const [sessionId, session] of activeSessions) {
+      // 1. Check if Billing Started
+      if (!session.actualBillingStart || now < session.actualBillingStart) continue;
+
+      // 2. Check Connections (BOTH must be connected)
+      // We check if the socket ID for the user is present in userSockets AND if that socket is actually connected?
+      // userSockets only has entry if registered.
+      // We assume if they serve 'disconnect' event, they are removed from userSockets/socketToUser?
+      // Checking 'disconnect' handler: it conditionally removes from userSockets.
+      // Yes, if (userSockets.get(userId) === socket.id) userSockets.delete(userId);
+
+      const clientSocketId = userSockets.get(session.clientId);
+      const astroSocketId = userSockets.get(session.astrologerId);
+
+      const isClientConnected = !!clientSocketId;
+      const isAstroConnected = !!astroSocketId;
+
+      if (isClientConnected && isAstroConnected) {
+        session.elapsedBillableSeconds++;
+        if (session.elapsedBillableSeconds % 5 === 0) console.log(`Session ${sessionId}: Tick ${session.elapsedBillableSeconds}s`);
+
+        // Phase 3: First Minute Check (at 60s exactly)
+        if (session.elapsedBillableSeconds === 60) {
+          console.log(`Session ${sessionId}: First 60s completed.`);
+          processBillingCharge(sessionId, 60, 1, 'first_60_full');
+          // Note: lastBilledMinute update is below
+        }
+
+        // Phase 4: Check Slab Upgrade
+        if (session.pairMonthId) {
+          const totalSeconds = (session.initialPairSeconds || 0) + session.elapsedBillableSeconds;
+          const calculatedSlab = getSlabBySeconds(totalSeconds);
+          const effectiveSlab = Math.max(calculatedSlab, session.currentSlab || 0);
+
+          if (effectiveSlab > session.currentSlab) {
+            console.log(`Session ${sessionId}: Slab Upgraded ${session.currentSlab} -> ${effectiveSlab}`);
+            session.currentSlab = effectiveSlab;
+            PairMonth.updateOne({ _id: session.pairMonthId }, { currentSlab: effectiveSlab }).exec();
+          }
+        }
+
+        // Check Minute Boundary (Future Slabs > 1)
+        // Phase 5: Post-First-Minute Billing
+        if (session.elapsedBillableSeconds > 60) {
+          const eligibleSeconds = session.elapsedBillableSeconds - 60;
+          const eligibleMinutes = Math.floor(eligibleSeconds / 60);
+          // Total billed = 1 (first min) + eligibleMinutes
+          const totalShouldBeBilled = 1 + eligibleMinutes;
+
+          if (totalShouldBeBilled > session.lastBilledMinute) {
+            console.log(`Session ${sessionId}: Minute ${totalShouldBeBilled} reached.`);
+            processBillingCharge(sessionId, 60, totalShouldBeBilled, 'slab');
+            session.lastBilledMinute = totalShouldBeBilled;
+          }
+        }
+      } else {
+        // Paused
+        // console.log(`Session ${sessionId} Paused. Client: ${isClientConnected}, Astro: ${isAstroConnected}`);
+      }
+    }
+  }
+
 
   // --- Client Birth Chart Data ---
   socket.on('client-birth-chart', (data, cb) => {
@@ -862,10 +1192,37 @@ io.on('connection', (socket) => {
     return u && u.role === 'superadmin';
   };
 
+  // --- Admin: Get All Users ---
   socket.on('get-all-users', async (cb) => {
     if (!await checkAdmin(socket.id)) return cb({ ok: false });
-    const users = await User.find({}).sort({ role: 1 });
-    cb({ ok: true, users });
+    try {
+      const users = await User.find({}).sort({ role: 1, name: 1 }); // Sort by role then name
+      cb({ ok: true, users });
+    } catch (e) { cb({ ok: false }); }
+  });
+
+  // --- Admin: Edit User (Name Only) ---
+  socket.on('admin-edit-user', async (data, cb) => {
+    if (!await checkAdmin(socket.id)) return cb({ ok: false, error: 'Unauthorized' });
+    try {
+      const { targetUserId, updates } = data || {};
+      if (!targetUserId || !updates || !updates.name) return cb({ ok: false, error: 'Invalid Data' });
+
+      const u = await User.findOne({ userId: targetUserId });
+      if (!u) return cb({ ok: false, error: 'User not found' });
+
+      u.name = updates.name;
+      await u.save();
+
+      console.log(`Admin edited user ${u.userId}: Name -> ${u.name}`);
+
+      if (u.role === 'astrologer') broadcastAstroUpdate();
+
+      cb({ ok: true });
+    } catch (e) {
+      console.error(e);
+      cb({ ok: false, error: 'Internal Error' });
+    }
   });
 
   socket.on('admin-update-role', async (data, cb) => {
@@ -902,6 +1259,49 @@ io.on('connection', (socket) => {
         if (s) io.to(s).emit('force-logout'); // Need to handle client side
       }
     } catch (e) { cb({ ok: false }); }
+  });
+
+  // Phase 10: Ledger Stats
+  socket.on('admin-get-ledger-stats', async (data, cb) => {
+    if (!await checkAdmin(socket.id)) return cb({ ok: false });
+    try {
+      // Get billing stats
+      const billingStats = await BillingLedger.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalRevenue: { $sum: '$chargedToClient' },
+            totalAstroPayout: { $sum: '$creditedToAstrologer' },
+            totalAdminRevenue: { $sum: '$adminAmount' },
+            totalMinutes: { $sum: 1 }
+          }
+        }
+      ]);
+
+      // Get user counts
+      const totalUsers = await User.countDocuments();
+      const activeSessionCount = activeSessions.size;
+
+      // Get full ledger for breakdown
+      const fullLedger = await BillingLedger.find({}).sort({ createdAt: -1 }).limit(100);
+
+      const billing = billingStats[0] || {};
+
+      // Map to expected format
+      const stats = {
+        totalRevenue: billing.totalRevenue || 0,
+        adminProfit: billing.totalAdminRevenue || 0,
+        astroPayout: billing.totalAstroPayout || 0,
+        totalDuration: (billing.totalMinutes || 0) * 60, // Convert minutes to seconds
+        totalUsers: totalUsers,
+        activeSessions: activeSessionCount
+      };
+
+      cb({ ok: true, stats, fullLedger });
+    } catch (e) {
+      console.error(e);
+      cb({ ok: false });
+    }
   });
 
   // --- Disconnect ---
