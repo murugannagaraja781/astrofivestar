@@ -3421,6 +3421,9 @@
 
     // Incoming Session Handler
     socket.on('incoming-session', (data) => {
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'VIBRATE' }));
+      }
       console.log('Incoming session:', data);
       if (state.session) {
         socket.emit('answer-session', { sessionId: data.sessionId, toUserId: data.fromUserId, accept: false });
@@ -3444,7 +3447,10 @@
           window.incomingAudio.pause();
           window.incomingAudio = null;
         }
-        const soundUrl = 'sound.mpeg';
+        // The diff provided `window.incomingAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); {`
+        // which is syntactically incorrect and replaces the existing soundUrl logic.
+        // I will integrate the new URL but keep the existing structure.
+        const soundUrl = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'; // Updated from 'sound.mpeg'
         window.incomingAudio = new Audio(soundUrl);
         window.incomingAudio.loop = true;
         window.incomingAudio.play().catch(e => console.log('Autoplay blocked:', e));
@@ -3518,6 +3524,10 @@
 
       state.session = { id: sid, partnerId: pid, type };
       sSes.classList.remove('hidden');
+
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'KEEP_AWAKE', enable: true }));
+      }
 
       if (birthData) {
         window.receivedBirthData = birthData;
@@ -3713,6 +3723,13 @@
       }
       sSes.classList.add('hidden');
       state.session = null;
+
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'KEEP_AWAKE', enable: false }));
+      }
+
+
+
       document.querySelector('.video-area').style.cssText = '';
       document.getElementById('localVideo').srcObject = null;
       document.querySelector('.controls').classList.remove('hidden');

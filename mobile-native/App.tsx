@@ -9,8 +9,10 @@ import {
   View,
   ActivityIndicator,
   Text,
+  Vibration,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
+import KeepAwake from 'react-native-keep-awake';
 
 interface WebViewPermissionRequest {
   grant: (resources: string[]) => void;
@@ -20,6 +22,7 @@ interface WebViewPermissionRequest {
 
 function App(): React.JSX.Element {
   const [hasPermissions, setHasPermissions] = useState(false);
+  const [keepScreenAwake, setKeepScreenAwake] = useState(false);
 
   useEffect(() => {
     const requestPermissions = async () => {
@@ -88,7 +91,23 @@ function App(): React.JSX.Element {
         onPermissionRequest={(request: WebViewPermissionRequest) => {
           request.grant(request.resources);
         }}
+        onMessage={(event) => {
+          try {
+            // Handle messages from Web
+            const data = JSON.parse(event.nativeEvent.data);
+            if (data.type === 'VIBRATE') {
+              // Vibrate 1s, pause 0.5s, Vibrate 1s
+              Vibration.vibrate([0, 1000, 500, 1000]);
+            }
+            if (data.type === 'KEEP_AWAKE') {
+              setKeepScreenAwake(!!data.enable);
+            }
+          } catch (e) {
+            console.log('WebView Message Error', e);
+          }
+        }}
       />
+      {keepScreenAwake && <KeepAwake />}
     </SafeAreaView>
   );
 }
