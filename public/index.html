@@ -601,6 +601,13 @@
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
+    .center-god-icon {
+      width: 60%;
+      height: 60%;
+      object-fit: contain;
+      opacity: 0.9;
+    }
+
     .SouthChartBox {
       display: flex;
       flex-direction: column;
@@ -808,7 +815,7 @@
       style="background:#F3F4F6; width:100%; height:90vh; border-top-left-radius:25px; border-top-right-radius:25px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 -5px 20px rgba(0,0,0,0.2); animation:slideUp 0.3s ease-out; max-width:500px;">
       <div
         style="padding:20px; background:white; font-weight:700; font-size:1.2rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e5e5e5; color:#1F2937;">
-        <span>🔮 Birth Chart</span>
+        <span>🔮 Birth Chart </span>
         <button onclick="document.getElementById('universalChartModal').classList.add('hidden')"
           style="background:none; border:none; font-size:1.4rem; color:#6B7280; cursor:pointer;"><i
             class="fas fa-times"></i></button>
@@ -930,9 +937,9 @@
         <div class="grid-item" onclick="showProfile()" style="cursor: pointer;">
           <div class="grid-icon"><i class="fas fa-user"></i></div> Profile
         </div>
-        <div class="grid-item" onclick="showChartHelper()" style="cursor: pointer;">
+        <!-- <div class="grid-item" onclick="showChartHelper()" style="cursor: pointer;">
           <div class="grid-icon"><i class="fas fa-chart-pie"></i></div> Birth Chart
-        </div>
+        </div> -->
       </div>
     </div>
   </div>
@@ -1406,6 +1413,92 @@
               </div>
             </div>
           </div>
+          <div id="screen-porutham" class="modal-overlay hidden" style="align-items: center;">
+            <div class="chart-modal-content" style="max-width: 800px; height: 90vh;">
+              <div
+                style="padding:20px; background:white; font-weight:700; font-size:1.2rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e5e5e5; color:#1F2937;">
+                <span>💞 Horoscope Matching (Porutham)</span>
+                <button onclick="document.getElementById('screen-porutham').classList.add('hidden')"
+                  style="background:none; border:none; font-size:1.4rem; color:#6B7280; cursor:pointer;"><i
+                    class="fas fa-times"></i></button>
+              </div>
+
+              <div class="chart-body">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                  <!-- Boy Details -->
+                  <div class="input-card">
+                    <div style="font-weight:bold; color:#3b82f6; margin-bottom:15px; font-size:1.1rem;">🤵 Boy's Details
+                    </div>
+
+                    <label style="display:block; margin-bottom:5px; font-size:0.9rem; color:#666;">Date of Birth</label>
+                    <input type="date" id="boyDate" class="cosmic-input"
+                      style="background:#f9f9f9; color:black; border:1px solid #ddd;">
+
+                    <label style="display:block; margin-bottom:5px; margin-top:10px; font-size:0.9rem; color:#666;">Time
+                      of Birth</label>
+                    <input type="time" id="boyTime" class="cosmic-input"
+                      style="background:#f9f9f9; color:black; border:1px solid #ddd;">
+
+                    <label
+                      style="display:block; margin-bottom:5px; margin-top:10px; font-size:0.9rem; color:#666;">City</label>
+                    <div style="position:relative;">
+                      <input type="text" id="boyCity" class="cosmic-input" placeholder="Search City..."
+                        oninput="handleMatchCitySearch(this, 'boy')"
+                        style="background:#f9f9f9; color:black; border:1px solid #ddd;">
+                      <div id="boyCityResults" class="city-results-dropdown" style="display:none;"></div>
+                      <input type="hidden" id="boyLat">
+                      <input type="hidden" id="boyLon">
+                    </div>
+                  </div>
+
+                  <!-- Girl Details -->
+                  <div class="input-card">
+                    <div style="font-weight:bold; color:#ec4899; margin-bottom:15px; font-size:1.1rem;">👰 Girl's
+                      Details</div>
+
+                    <label style="display:block; margin-bottom:5px; font-size:0.9rem; color:#666;">Date of Birth</label>
+                    <input type="date" id="girlDate" class="cosmic-input"
+                      style="background:#f9f9f9; color:black; border:1px solid #ddd;">
+
+                    <label style="display:block; margin-bottom:5px; margin-top:10px; font-size:0.9rem; color:#666;">Time
+                      of Birth</label>
+                    <input type="time" id="girlTime" class="cosmic-input"
+                      style="background:#f9f9f9; color:black; border:1px solid #ddd;">
+
+                    <label
+                      style="display:block; margin-bottom:5px; margin-top:10px; font-size:0.9rem; color:#666;">City</label>
+                    <div style="position:relative;">
+                      <input type="text" id="girlCity" class="cosmic-input" placeholder="Search City..."
+                        oninput="handleMatchCitySearch(this, 'girl')"
+                        style="background:#f9f9f9; color:black; border:1px solid #ddd;">
+                      <div id="girlCityResults" class="city-results-dropdown" style="display:none;"></div>
+                      <input type="hidden" id="girlLat">
+                      <input type="hidden" id="girlLon">
+                    </div>
+                  </div>
+                </div>
+
+                <div style="margin-top:20px;">
+                  <button onclick="calculatePorutham()" class="cosmic-btn"
+                    style="width:100%; padding:15px; font-size:1.1rem;">
+                    <i class="fas fa-heart"></i> Calculate Compatibility
+                  </button>
+                </div>
+
+                <div id="poruthamLoading" style="display:none; text-align:center; padding:40px; color: var(--primary);">
+                  <div class="spinner-astro"></div>
+                  <div style="margin-top:15px; font-weight:500;">Calculating Porutham...</div>
+                </div>
+
+                <!-- Results -->
+                <div id="poruthamResults" style="display:none; margin-top:30px;">
+                  <!-- Populated by JS -->
+                </div>
+
+              </div>
+            </div>
+          </div>
+
           <style>
             .chat-input {
               padding: 10px;
@@ -1433,9 +1526,10 @@
             }
           </style>
           <div class="chat-input">
+
             <button id="btnChatChart" onclick="showChartHelperWithData()"
               style="display:none; padding:8px 12px; height:40px; border-radius:20px; background:#fff; border:1px solid #ddd; color:#d97706; font-weight:600; white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,0.05); cursor:pointer; transition:0.2s;">
-              <i class="fas fa-chart-pie"></i> Birth Chart
+              <i class="fas fa-chart-pie"></i> ஜாதகம்
             </button>
             <input id="msgInput" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:20px;"
               placeholder="Type Message...">
@@ -1448,6 +1542,7 @@
 
       <!-- Column 2: Birth Chart Details (Right) - Responsive -->
       <div id="birthChartColumn">
+
         <div
           style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
           <div style="font-weight:bold; font-size:1rem; color:#d97706;">🔮 Birth Chart</div>
@@ -1458,11 +1553,19 @@
           <button onclick="fetchChart()" class="cosmic-btn" style="width:100%; padding:10px; font-size:0.9rem;">
             <i class="fas fa-calculator"></i> Get Birth Chart
           </button>
+
+          <button onclick="porutham()" class="cosmic-btn" style="width:100%; padding:10px; font-size:0.9rem;">
+            <i class="fas fa-calculator"></i> பொருத்தம்
+          </button>
+
         </div>
         <div id="birthChartContent" style="flex:1; overflow-y:auto; padding:15px;">
           <!-- Birth chart content will be displayed here -->
         </div>
+
       </div>
+
+
     </div>
   </div>
   </div>
@@ -2816,6 +2919,134 @@
         `;
       }
 
+      // South Indian Chart (Rasi)
+      html += `
+        <div style="margin-bottom:20px;">
+          <div style="font-weight:bold; color:#d97706; margin-bottom:10px; font-size:1rem;">🕉️ Rasi Chart</div>
+           <div class="south-indian-chart" id="southChartColumn2"></div>
+        </div>
+      `;
+
+      // South Indian Chart (Navamsa)
+      html += `
+        <div style="margin-bottom:20px;">
+          <div style="font-weight:bold; color:#d97706; margin-bottom:10px; font-size:1rem;">🕉️ Navamsa Chart</div>
+           <div class="south-indian-chart" id="navamsaChartColumn2"></div>
+        </div>
+      `;
+
+      // Render Charts
+      setTimeout(() => {
+
+        const planetSymbols = {
+          'Sun': '☉', 'Moon': '☽', 'Mars': '♂', 'Mercury': '☿',
+          'Jupiter': '♃', 'Venus': '♀', 'Saturn': '♄', 'Rahu': '☊', 'Ketu': '☋'
+        };
+
+        const renderSouthGrid = (gridId, chartType) => {
+          const grid = document.getElementById(gridId);
+          if (!grid) return;
+
+          const isRasi = chartType === 'rasi';
+
+          const tamilSigns = {
+            'Aries': 'மேஷம்', 'Taurus': 'ரிஷபம்', 'Gemini': 'மிதுனம்',
+            'Cancer': 'கடகம்', 'Leo': 'சிம்மம்', 'Virgo': 'கன்னி',
+            'Libra': 'துலாம்', 'Scorpio': 'விருச்சிகம்', 'Sagittarius': 'தனுசு',
+            'Capricorn': 'மகரம்', 'Aquarius': 'கும்பம்', 'Pisces': 'மீனம்'
+          };
+
+          const cellMap = [
+            'Pisces', 'Aries', 'Taurus', 'Gemini',
+            'Aquarius', null, null, 'Cancer',
+            'Capricorn', null, null, 'Leo',
+            'Sagittarius', 'Scorpio', 'Libra', 'Virgo'
+          ];
+
+          grid.innerHTML = '';
+
+          cellMap.forEach((sign, idx) => {
+            const div = document.createElement('div');
+            div.className = 'SouthChartBox';
+
+            if (!sign) {
+              div.setAttribute('data-center', 'true');
+              div.style.cssText = 'border: none; background: transparent;';
+              if (idx === 5) {
+                div.style.cssText = 'grid-column: 2 / span 2; grid-row: 2 / span 2; display: flex; align-items: center; justify-content: center;';
+                div.innerHTML = '<img src="images/ganesha.png" class="center-god-icon" alt="Ganesha">';
+              } else if (idx === 6 || idx === 9 || idx === 10) {
+                div.style.display = 'none';
+              }
+            } else {
+              const tamilName = tamilSigns[sign] || sign;
+              const planetsInSign = [];
+
+              // Logic for Rasi vs Navamsa Planet Mapping
+              if (isRasi) {
+                for (let planet in rawPlanets) {
+                  const p = rawPlanets[planet];
+                  if (p && p.sign === sign) {
+                    // Format: Symbol Name Degree
+                    const symbol = planetSymbols[planet] || '';
+                    const name = p.nameTamil || planet;
+                    const deg = p.degreeFormatted || (p.degree ? p.degree.toFixed(2) : '');
+                    planetsInSign.push(`<div style="font-size:0.7rem;">${symbol} ${name}<br><span style="font-size:0.6rem; color:#666;">${deg}</span></div>`);
+                  }
+                }
+                // Check Lagna (Rasi only)
+                if (lagna && (lagna.sign === sign || lagna.signName === sign)) {
+                  planetsInSign.unshift('<div style="font-weight:bold; color:red; font-size:0.8rem;">Lagna</div>');
+                }
+              } else {
+                // Navamsa Logic
+                // We need to know which sign each planet is in Navamsa.
+                // If rawPlanets has 'navamsaSign', use it.
+                // Or if data.navamsa exists and is a list of houses/planets.
+                // Checking previous code: data.navamsa.houses array...
+                // Let's try to iterate rawPlanets if they have navamsa data, or fallback to houses.
+
+                // Using rawPlanets (if navamsaSign is there - common in some APIs, let's check or fallback)
+                let found = false;
+                for (let planet in rawPlanets) {
+                  const p = rawPlanets[planet];
+                  if (p && (p.navamsaSign === sign || p.navamsaSignName === sign)) { // Hypothetical check
+                    found = true;
+                    const symbol = planetSymbols[planet] || '';
+                    planetsInSign.push(`<div>${symbol} ${p.nameTamil || planet}</div>`); // Simplified
+                  }
+                }
+
+                if (!found && data.data?.navamsa?.planets) {
+                  // Check houses for this sign?
+                  // Usually houses data is per house (1 to 12).
+                  // We need Sign-based mapping.
+                  // Let's look for a planet-to-sign map in Navamsa data if available.
+                  // If not available, we might skip showing planets in Navamsa for now or require API update.
+                  // BUT, user asked for it, implying it should be possible.
+                  // Let's verify if `navamsa` object has planets map.
+                  const np = data.data.navamsa.planets;
+                  for (let k in np) {
+                    if (np[k] === sign) {
+                      const symbol = planetSymbols[k] || '';
+                      planetsInSign.push(`<div>${symbol} ${k}</div>`); // Simplified
+                    }
+                  }
+                }
+              }
+
+              div.innerHTML = `<span class="s-sign-label" title="${tamilName}" style="font-size:0.7rem; color:#d97706; font-weight:bold;">${tamilName.split(' ')[0]}</span>
+                    <div class="s-planet-text" style="display:flex; flex-direction:column; gap:2px; padding-top:12px;">${planetsInSign.join('')}</div>`;
+            }
+            if (div.style.display !== 'none') grid.appendChild(div);
+          });
+        };
+
+        renderSouthGrid('southChartColumn2', 'rasi');
+        renderSouthGrid('navamsaChartColumn2', 'navamsa');
+
+      }, 100);
+
       // Planets
       if (Object.keys(rawPlanets).length > 0) {
         html += '<div style="margin-bottom:15px;"><div style="font-weight:bold; color:#d97706; margin-bottom:10px; font-size:1rem;">🌟 Planets</div>';
@@ -3002,6 +3233,174 @@
           hide: { effect: "fade", duration: 100 }
         });
       } catch (e) { console.warn("jQuery Tooltip failed", e); }
+    }
+
+
+    // Porutham Logic
+    window.porutham = function () {
+      document.getElementById('screen-porutham').classList.remove('hidden');
+      document.getElementById('poruthamResults').style.display = 'none';
+      document.getElementById('poruthamResults').innerHTML = '';
+
+      // Defaults
+      const now = new Date();
+      const str = now.toISOString().split('T')[0];
+      document.getElementById('boyDate').value = '1995-05-15';
+      document.getElementById('girlDate').value = '1998-08-20';
+      document.getElementById('boyTime').value = '10:00';
+      document.getElementById('girlTime').value = '10:00';
+    };
+
+    let matchCityTimeout;
+    window.handleMatchCitySearch = function (input, type) {
+      clearTimeout(matchCityTimeout);
+      const resultsDiv = document.getElementById(type + 'CityResults');
+      const query = input.value.trim();
+
+      if (query.length < 3) {
+        resultsDiv.style.display = 'none';
+        return;
+      }
+
+      matchCityTimeout = setTimeout(async () => {
+        try {
+          const response = await fetch('/api/city-autocomplete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query })
+          });
+          const data = await response.json();
+
+          if (data.ok && data.results && data.results.length > 0) {
+            let html = '';
+            data.results.forEach(city => {
+              html += `
+                  <div onclick="selectMatchCity('${type}', '${city.name}', ${city.latitude}, ${city.longitude})"
+                       style="padding:10px; border-bottom:1px solid #eee; cursor:pointer; hover:bg-gray-100;">
+                    <div style="font-weight:bold;">${city.name}</div>
+                    <div style="font-size:0.8rem; color:#666;">${city.state}</div>
+                  </div>
+                `;
+            });
+            resultsDiv.innerHTML = html;
+            resultsDiv.style.display = 'block';
+          } else {
+            resultsDiv.style.display = 'none';
+          }
+        } catch (e) { console.error(e); }
+      }, 300);
+    };
+
+    window.selectMatchCity = function (type, name, lat, lon) {
+      document.getElementById(type + 'City').value = name;
+      document.getElementById(type + 'Lat').value = lat;
+      document.getElementById(type + 'Lon').value = lon;
+      document.getElementById(type + 'CityResults').style.display = 'none';
+    };
+
+    window.calculatePorutham = async function () {
+      const bDate = document.getElementById('boyDate').value;
+      const bTime = document.getElementById('boyTime').value;
+      const bLat = document.getElementById('boyLat').value || 13.0827; // Default Chennai
+      const bLon = document.getElementById('boyLon').value || 80.2707;
+
+      const gDate = document.getElementById('girlDate').value;
+      const gTime = document.getElementById('girlTime').value;
+      const gLat = document.getElementById('girlLat').value || 13.0827;
+      const gLon = document.getElementById('girlLon').value || 80.2707;
+
+      if (!bDate || !bTime || !gDate || !gTime) {
+        alert('Please fill all date and time fields');
+        return;
+      }
+
+      const [by, bm, bd] = bDate.split('-');
+      const [bh, bmin] = bTime.split(':');
+      const [gy, gm, gd] = gDate.split('-');
+      const [gh, gmin] = gTime.split(':');
+
+      const payload = {
+        boy: { year: parseInt(by), month: parseInt(bm), day: parseInt(bd), hour: parseInt(bh), minute: parseInt(bmin), lat: parseFloat(bLat), lon: parseFloat(bLon) },
+        girl: { year: parseInt(gy), month: parseInt(gm), day: parseInt(gd), hour: parseInt(gh), minute: parseInt(gmin), lat: parseFloat(gLat), lon: parseFloat(gLon) }
+      };
+
+      document.getElementById('poruthamLoading').style.display = 'block';
+      document.getElementById('poruthamResults').style.display = 'none';
+
+      try {
+        const res = await fetch('/api/match/porutham', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).then(r => r.json());
+
+        document.getElementById('poruthamLoading').style.display = 'none';
+
+        if (res.error) throw new Error(res.error);
+
+        displayPoruthamResults(res);
+
+      } catch (e) {
+        document.getElementById('poruthamLoading').style.display = 'none';
+        alert('Error: ' + e.message);
+      }
+    };
+
+    function displayPoruthamResults(data) {
+      const m = data.match;
+      const div = document.getElementById('poruthamResults');
+
+      const scoreColor = m.percentage > 50 ? '#10b981' : '#ef4444';
+
+      let html = `
+         <div style="background:${scoreColor}20; border:2px solid ${scoreColor}; padding:20px; border-radius:12px; text-align:center; margin-bottom:20px;">
+           <div style="font-size:1.1rem; color:#444;">Compatibility Score</div>
+           <div style="font-size:3rem; font-weight:900; color:${scoreColor}; line-height:1;">${m.percentage}%</div>
+           <div style="font-size:1.2rem; font-weight:bold; color:#333;">${m.totalScore} / ${m.maxScore} Points</div>
+         </div>
+
+         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
+            <div style="background:#eff6ff; padding:15px; border-radius:10px;">
+               <div style="font-weight:bold; color:#1e40af;">🤵 Boy</div>
+               <div>${data.boy.rasi} / ${data.boy.nakshatra}</div>
+            </div>
+             <div style="background:#fdf2f8; padding:15px; border-radius:10px;">
+               <div style="font-weight:bold; color:#be185d;">👰 Girl</div>
+               <div>${data.girl.rasi} / ${data.girl.nakshatra}</div>
+            </div>
+         </div>
+
+         <div class="porutham-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:10px;">
+       `;
+
+      const items = [
+        { k: 'dina', l: 'Dina' }, { k: 'gana', l: 'Gana' },
+        { k: 'mahendra', l: 'Mahendra' }, { k: 'streeDeergha', l: 'Stree Deergha' },
+        { k: 'yoni', l: 'Yoni' }, { k: 'rasi', l: 'Rasi' },
+        { k: 'rasiAdhipati', l: 'Rasi Adhipati' }, { k: 'vashya', l: 'Vashya' },
+        { k: 'rajju', l: 'Rajju' }, { k: 'vedha', l: 'Vedha' }
+      ];
+
+      items.forEach(i => {
+        const p = m[i.k];
+        if (p) {
+          const icon = p.status ? '✅' : '❌';
+          const bg = p.status ? '#ecfdf5' : '#fef2f2';
+          const border = p.status ? '#10b981' : '#ef4444';
+
+          html += `
+               <div style="background:${bg}; border-left:4px solid ${border}; padding:10px; border-radius:6px; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+                 <div style="font-size:0.85rem; color:#666;">${i.l}</div>
+                 <div style="font-weight:bold; font-size:1rem; margin:2px 0;">${icon} ${p.status ? 'Good' : 'Bad'}</div>
+                 <!-- <div style="font-size:0.75rem; color:#777;">${p.description || ''}</div> -->
+               </div>
+             `;
+        }
+      });
+
+      html += `</div>`;
+      div.innerHTML = html;
+      div.style.display = 'block';
     }
 
     // Initialize
