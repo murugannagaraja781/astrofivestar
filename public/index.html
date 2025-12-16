@@ -744,6 +744,75 @@
       background: white;
     }
 
+    /* Horoscope UI */
+    .zodiac-scroller {
+      display: flex;
+      overflow-x: auto;
+      gap: 12px;
+      padding: 10px 0;
+      scrollbar-width: none;
+      /* Firefox */
+      margin-bottom: 15px;
+    }
+
+    .zodiac-scroller::-webkit-scrollbar {
+      display: none;
+      /* Chrome/Safari */
+    }
+
+    .zodiac-item {
+      flex: 0 0 auto;
+      width: 70px;
+      text-align: center;
+      padding: 10px 5px;
+      border-radius: 12px;
+      background: white;
+      border: 1px solid #eee;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .zodiac-item.active {
+      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+      color: white;
+      border-color: #D97706;
+      transform: scale(1.05);
+      box-shadow: 0 4px 6px rgba(245, 158, 11, 0.3);
+    }
+
+    .zodiac-icon {
+      font-size: 1.4rem;
+      font-weight: bold;
+      margin-bottom: 5px;
+      display: block;
+      color: #D97706;
+    }
+
+    .zodiac-name {
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .horoscope-card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid #f3f4f6;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .horoscope-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #F59E0B, #ec4899);
+    }
 
     #messagesList {
       flex: 1;
@@ -798,8 +867,36 @@
     <div class="content-area">
       <!-- Section: Home -->
       <div id="section-home">
-        <div style="padding:15px; margin-bottom:10px;">
-          <h2 style="margin:0; color:#1f2937;">Home Page</h2>
+
+
+        <!-- Horoscope Section -->
+        <div id="dailyHoroscopeSection" style="margin-bottom: 20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3 style="margin:0; font-size:1.1rem; color:#374151;">தினசரி ராசிபலன்</h3>
+            <span id="horoscopeDate"
+              style="font-size:0.8rem; color:#6b7280; background:#f3f4f6; padding:2px 8px; border-radius:10px;">Today</span>
+          </div>
+
+          <div class="zodiac-scroller" id="zodiacScroller">
+            <!-- Dynamic Zodiac Signs -->
+          </div>
+
+          <div class="horoscope-card" id="horoscopeDisplay">
+            <div id="horoscopeLoading" style="text-align:center; padding:20px; color:#d97706;">
+              <i class="fas fa-circle-notch fa-spin"></i> Loading...
+            </div>
+            <div id="horoscopeContent" class="hidden">
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                <div id="activeSignIcon"
+                  style="font-size:1.5rem; background:#fff7ed; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                  ♈</div>
+                <div style="font-weight:bold; font-size:1.1rem; color:#1f2937;" id="activeSignName">Aries</div>
+              </div>
+              <p id="horoscopeText" style="font-size:0.95rem; line-height:1.6; color:#4b5563; margin:0;">
+                Select a sign to see your daily prediction.
+              </p>
+            </div>
+          </div>
         </div>
 
         <div class="filter-tabs" id="topFilterTabs">
@@ -826,13 +923,7 @@
           </button>
         </div>
 
-        <div style="background:white; padding:20px; border-radius:15px; border:1px solid #eee;">
-          <div style="font-weight:bold; color:#374151; margin-bottom:15px; font-size:1.1rem;">Quick Actions</div>
-          <button class="cosmic-btn" onclick="document.getElementById('universalChartModal').classList.remove('hidden')"
-            style="font-size:1rem; padding:12px; border-radius:10px; width:100%; margin-bottom:10px; display:flex; justify-content:center; align-items:center; gap:10px;">
-            <i class="fas fa-calculator"></i> Get Birth Chart
-          </button>
-        </div>
+
       </div>
     </div>
   </div>
@@ -1852,6 +1943,12 @@
 
       const sectHome = document.getElementById('section-home');
       const sectDash = document.getElementById('section-dash');
+      const horoSection = document.getElementById('dailyHoroscopeSection');
+
+      if (horoSection) {
+        // Only show Horoscope on Home tab
+        horoSection.style.display = (tab === 'home') ? 'block' : 'none';
+      }
 
       if (tab === 'home') {
         if (sectHome) sectHome.classList.remove('hidden');
@@ -3649,6 +3746,114 @@
         alert('Error: ' + e.message);
       }
     };
+
+    // --- Daily Horoscope Logic ---
+    const zodiacSigns = [
+      { name: 'மேஷம்', icon: '🐏', api: 'aries' },
+      { name: 'ரிஷபம்', icon: '🐂', api: 'taurus' },
+      { name: 'மிதுனம்', icon: '👯', api: 'gemini' },
+      { name: 'கடகம்', icon: '🦀', api: 'cancer' },
+      { name: 'சிம்மம்', icon: '🦁', api: 'leo' },
+      { name: 'கன்னி', icon: '👧', api: 'virgo' },
+      { name: 'துலாம்', icon: '⚖️', api: 'libra' },
+      { name: 'விருச்சிகம்', icon: '🦂', api: 'scorpio' },
+      { name: 'தனுசு', icon: '🏹', api: 'sagittarius' },
+      { name: 'மகரம்', icon: '🐐', api: 'capricorn' },
+      { name: 'கும்பம்', icon: '🏺', api: 'aquarius' },
+      { name: 'மீனம்', icon: '🐟', api: 'pisces' }
+    ];
+
+    function renderZodiacScroller() {
+      const container = document.getElementById('zodiacScroller');
+      if (!container) return;
+      container.innerHTML = '';
+
+      zodiacSigns.forEach((sign, idx) => {
+        const div = document.createElement('div');
+        div.className = `zodiac-item ${idx === 0 ? 'active' : ''}`;
+        div.onclick = () => {
+          document.querySelectorAll('.zodiac-item').forEach(el => el.classList.remove('active'));
+          div.classList.add('active');
+          fetchHoroscope(sign);
+        };
+        div.innerHTML = `
+             <span class="zodiac-icon">${sign.icon}</span>
+             <div class="zodiac-name">${sign.name}</div>
+          `;
+        container.appendChild(div);
+      });
+    }
+
+    let horoscopeCache = {}; // Simple cache
+    // Tamil Fallback Data
+    const fallbackHoroscopeData = {
+      'aries': { date: 'இன்று', horoscope_data: 'இன்று உங்களுக்கு நற்பலன்கள் கிடைக்கும்.\nஉங்கள் முயற்சிகளில் வெற்றி கிட்டும்.\nஅதிர்ஷ்ட நிறம்: சிவப்பு (Red)' },
+      'taurus': { date: 'இன்று', horoscope_data: 'பொருளாதார வரவு சிறப்பாக இருக்கும்.\nகுடும்பத்தில் மகிழ்ச்சி நிலவும்.\nஅதிர்ஷ்ட நிறம்: வெள்ளை (White)' },
+      'gemini': { date: 'இன்று', horoscope_data: 'நண்பர்களின் உதவி கிடைக்கும்.\nபுதிய முயற்சிகள் கைக்கூடும்.\nஅதிர்ஷ்ட நிறம்: பச்சை (Green)' },
+      'cancer': { date: 'இன்று', horoscope_data: 'மனதில் நிம்மதி பிறக்கும்.\nதொழிலில் முன்னேற்றம் உண்டு.\nஅதிர்ஷ்ட நிறம்: பால் வெள்ளை (Cream)' },
+      'leo': { date: 'இன்று', horoscope_data: 'உத்தியோகத்தில் மதிப்பு கூடும்.\nஅரசு வழியில் ஆதாயம் உண்டு.\nஅதிர்ஷ்ட நிறம்: ஆரஞ்சு (Orange)' },
+      'virgo': { date: 'இன்று', horoscope_data: 'வியாபாரத்தில் லாவம் பெருகும்.\nஉறவினர்கள் வருகை இருக்கும்.\nஅதிர்ஷ்ட நிறம்: பச்சை (Green)' },
+      'libra': { date: 'இன்று', horoscope_data: 'கணவன் மனைவி ஒற்றுமை பலப்படும்.\nபயணங்களால் நன்மை உண்டாகும்.\nஅதிர்ஷ்ட நிறம்: நீலம் (Blue)' },
+      'scorpio': { date: 'இன்று', horoscope_data: 'சந்திராஷ்டமம் என்பதால் கவனம் தேவை.\nவீண் விவாதங்களை தவிர்க்கவும்.\nஅதிர்ஷ்ட நிறம்: சிவப்பு (Red)' },
+      'sagittarius': { date: 'இன்று', horoscope_data: 'குரு அருள் பரிபூரணமாக உள்ளது.\nஆன்மீக சிந்தனை மேலோங்கும்.\nஅதிர்ஷ்ட நிறம்: மஞ்சள் (Yellow)' },
+      'capricorn': { date: 'இன்று', horoscope_data: 'உழைப்புக்கேற்ற ஊதியம் கிடைக்கும்.\nநிலுவையில் உள்ள பணிகள் முடியும்.\nஅதிர்ஷ்ட நிறம்: நீலம் (Blue)' },
+      'aquarius': { date: 'இன்று', horoscope_data: 'எதிர்பாராத தனவரவு உண்டாகும்.\nநண்பர்களால் ஆதாயம் உண்டு.\nஅதிர்ஷ்ட நிறம்: நீலம் (Blue)' },
+      'pisces': { date: 'இன்று', horoscope_data: 'சுப விரயங்கள் ஏற்படும்.\nகுடும்பத்துடன் இறைவழிபாடு செய்வீர்கள்.\nஅதிர்ஷ்ட நிறம்: மஞ்சள் (Yellow)' }
+    };
+
+    async function fetchHoroscope(signObj) {
+      const loading = document.getElementById('horoscopeLoading');
+      const content = document.getElementById('horoscopeContent');
+      const dateEl = document.getElementById('horoscopeDate');
+
+      if (loading) loading.style.display = 'block';
+      if (content) content.classList.add('hidden');
+
+      // Update active header immediately
+      document.getElementById('activeSignIcon').innerText = signObj.icon;
+      document.getElementById('activeSignName').innerText = signObj.name;
+
+      // Check cache
+      const today = new Date().toDateString();
+      const cacheKey = `${signObj.api}-${today}`;
+
+      if (horoscopeCache[cacheKey]) {
+        displayHoroscope(horoscopeCache[cacheKey]);
+        return;
+      }
+
+      try {
+        const res = await fetch(`https://horoscope-app-api.vercel.app/api/v1/get-horoscope/daily?sign=${signObj.api}&day=today`)
+          .then(r => r.json());
+
+        if (res.data) {
+          horoscopeCache[cacheKey] = res.data;
+          displayHoroscope(res.data);
+        } else {
+          throw new Error("No data");
+        }
+      } catch (e) {
+        console.warn('API Failed, using fallback', e);
+        // Use Fallback
+        const fallback = fallbackHoroscopeData[signObj.api] || fallbackHoroscopeData['aries'];
+        displayHoroscope(fallback);
+      }
+    }
+
+    function displayHoroscope(data) {
+      const loading = document.getElementById('horoscopeLoading');
+      const content = document.getElementById('horoscopeContent');
+
+      if (loading) loading.style.display = 'none';
+      if (content) content.classList.remove('hidden');
+
+      document.getElementById('horoscopeDate').innerText = data.date;
+      document.getElementById('horoscopeText').innerText = data.horoscope_data;
+    }
+
+    // Initialize Horoscope
+    renderZodiacScroller();
+    fetchHoroscope(zodiacSigns[0]); // Load Aries by default
 
     function displayPoruthamResults(data) {
       const m = data.match;
