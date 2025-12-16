@@ -2187,10 +2187,25 @@
     }
 
     // Chat Logic
-    const appendMsg = (txt, isMe) => {
+    const appendMsg = (txt, isMe, messageId, timestamp = Date.now()) => {
+      const t = new Date(timestamp);
+      const timeStr = t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const mid = messageId || Date.now();
+
       const div = document.createElement('div');
-      div.style.cssText = 'max-width: 80%; padding: 8px 12px; border-radius: 12px; margin-bottom: 8px; font-size: 0.9rem; align-self: ' + (isMe ? 'flex-end' : 'flex-start') + '; background: ' + (isMe ? '#FFD700' : 'white') + '; border: ' + (isMe ? 'none' : '1px solid #eee') + '; color: black; margin-left: ' + (isMe ? 'auto' : '0') + ';';
-      div.textContent = txt;
+      div.id = 'msg-' + mid;
+      div.style.cssText = 'max-width: 80%; padding: 8px 12px; border-radius: 12px; margin-bottom: 8px; font-size: 0.9rem; align-self: ' + (isMe ? 'flex-end' : 'flex-start') + '; background: ' + (isMe ? '#FFD700' : 'white') + '; border: ' + (isMe ? 'none' : '1px solid #eee') + '; color: black; margin-left: ' + (isMe ? 'auto' : '0') + '; display:flex; flex-direction:column; min-width:100px;';
+
+      // Ticks for ME
+      const tickHtml = isMe ? `<span class="msg-tick" id="tick-${mid}" style="margin-left:5px; font-size:0.7rem; color:#777;">✓</span>` : '';
+
+      div.innerHTML = `
+    <div style="word-wrap:break-word;">${txt}</div>
+    <div style="display:flex; justify-content:flex-end; align-items:center; margin-top:2px;">
+       <span style="font-size:0.65rem; color:#666; margin-right:2px;">${timeStr}</span>
+       ${tickHtml}
+    </div>
+  `;
       document.getElementById('messagesList').appendChild(div);
       document.getElementById('messagesList').scrollTop = document.getElementById('messagesList').scrollHeight;
     };
@@ -2204,21 +2219,47 @@
         requestDetailsDiv.style.display = 'none';
       }
 
+      const mid = Date.now();
       socket.emit('chat-message', {
         toUserId: state.session.partnerId, sessionId: state.session.id,
-        content: { type: 'text', text: txt }, messageId: Date.now()
+        content: { type: 'text', text: txt }, messageId: mid, timestamp: mid
       });
-      appendMsg(txt, true);
+      appendMsg(txt, true, mid, mid);
       document.getElementById('msgInput').value = '';
     };
 
+    // Chat Message Handler
     socket.on('chat-message', d => {
       if (state.session && d.fromUserId === state.session.partnerId) {
         const requestDetailsDiv = document.getElementById('clientRequestDetails');
         if (requestDetailsDiv) {
           requestDetailsDiv.style.display = 'none';
         }
-        appendMsg(d.content.text || 'Message', false);
+
+        // Emit delivered immediately
+        if (d.messageId) {
+          socket.emit('message-delivered', { toUserId: d.fromUserId, messageId: d.messageId });
+
+          // Simulate Read after 1s (or if window focused)
+          setTimeout(() => {
+            socket.emit('message-read', { toUserId: d.fromUserId, messageId: d.messageId });
+          }, 1000);
+        }
+
+        appendMsg(d.content.text || 'Message', false, d.messageId, d.timestamp);
+      }
+    });
+
+    // Message Status Handler (Ticks)
+    socket.on('message-status', d => {
+      const tick = document.getElementById('tick-' + d.messageId);
+      if (tick) {
+        if (d.status === 'sent') tick.innerText = '✓'; // Single Grey
+        if (d.status === 'delivered') tick.innerText = '✓✓'; // Double Grey
+        if (d.status === 'read' || d.status === 'seen') {
+          tick.innerText = '✓✓';
+          tick.style.color = '#3b82f6'; // Blue
+        }
       }
     });
 

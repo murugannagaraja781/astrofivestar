@@ -740,7 +740,7 @@ io.on('connection', (socket) => {
     } catch (e) { console.error(e); cb({ ok: false }); }
   });
 
-  // --- Receiver: delivered/seen ack ---
+  // --- Receiver: delivered ack ---
   socket.on('message-delivered', (data) => {
     try {
       const { toUserId, messageId } = data || {};
@@ -752,11 +752,26 @@ io.on('connection', (socket) => {
 
       io.to(targetSocketId).emit('message-status', {
         messageId,
-        status: 'seen',
+        status: 'delivered',
       });
-    } catch (err) {
-      console.error('message-delivered error', err);
-    }
+    } catch (err) { console.error(err); }
+  });
+
+  // --- Receiver: read ack ---
+  socket.on('message-read', (data) => {
+    try {
+      const { toUserId, messageId } = data || {};
+      const fromUserId = socketToUser.get(socket.id);
+      if (!fromUserId || !toUserId || !messageId) return;
+
+      const targetSocketId = userSockets.get(toUserId);
+      if (!targetSocketId) return;
+
+      io.to(targetSocketId).emit('message-status', {
+        messageId,
+        status: 'read',
+      });
+    } catch (err) { console.error(err); }
   });
 
   // --- Typing indicator ---
