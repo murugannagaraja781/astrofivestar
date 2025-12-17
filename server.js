@@ -664,6 +664,10 @@ io.on('connection', (socket) => {
         if (user.role === 'astrologer') {
           broadcastAstroUpdate();
         }
+        // If superadmin, join room
+        if (user.role === 'superadmin') {
+          socket.join('superadmin');
+        }
       });
     } catch (err) {
       console.error('register error', err);
@@ -1366,6 +1370,86 @@ io.on('connection', (socket) => {
       cb({ ok: false });
     }
   });
+
+  // --- Withdrawal Logic ---
+  socket.on('request-withdrawal', async (data, cb) => {
+    const userId = socketToUser.get(socket.id);
+    if (!userId) return;
+    try {
+      const amount = parseInt(data.amount);
+      if (!amount || amount < 100) return cb({ ok: false, error: 'Minimum limit 100' });
+
+      // Check Balance
+      const u = await User.findOne({ userId });
+      if (!u || u.walletBalance < amount) return cb({ ok: false, error: 'Insufficient Balance' });
+
+      const w = await Withdrawal.create({
+        astroId: userId,
+        amount,
+        status: 'pending',
+        requestedAt: Date.now()
+      });
+
+      // Notify Super Admins
+      io.to('superadmin').emit('admin-notification', {
+        type: 'withdrawal_request',
+        text: `💰 New Withdrawal Request: ${u.name} requested ₹${amount}`,
+        data: { withdrawalId: w._id, astroName: u.name, amount }
+      });
+
+      cb({ ok: true });
+    } catch (e) {
+      console.error(e);
+      cb({ ok: false, error: 'Error' });
+    }
+  });
+
+  socket.on('approve-withdrawal', async (data, cb) => {
+    try {
+      const { withdrawalId } = data;
+      const w = await Withdrawal.findById(withdrawalId);
+      if (!w || w.status !== 'pending') return cb({ ok: false, error: 'Invalid Request' });
+
+      const u = await User.findOne({ userId: w.astroId });
+      if (!u) return cb({ ok: false, error: 'User not found' });
+
+      if (u.walletBalance < w.amount) return cb({ ok: false, error: 'User Insufficient Balance' });
+
+      // Deduct
+      u.walletBalance -= w.amount;
+      await u.save();
+
+      // Update Request
+      w.status = 'approved';
+      w.processedAt = Date.now();
+      await w.save();
+
+      // Notify Astro
+      const sId = userSockets.get(u.userId);
+      if (sId) {
+        io.to(sId).emit('wallet-update', { balance: u.walletBalance });
+        io.to(sId).emit('app-notification', { text: `✅ Your withdrawal of ₹${w.amount} is approved!` });
+      }
+
+      cb({ ok: true, balance: u.walletBalance });
+    } catch (e) {
+      console.error(e);
+      cb({ ok: false, error: 'Error' });
+    }
+  });
+
+  socket.on('get-withdrawals', async (cb) => {
+    try {
+      const list = await Withdrawal.find().sort({ requestedAt: -1 }).limit(50);
+      const enriched = [];
+      for (const w of list) {
+        const u = await User.findOne({ userId: w.astroId });
+        enriched.push({ ...w.toObject(), astroName: u ? u.name : 'Unknown' });
+      }
+      cb({ ok: true, list: enriched });
+    } catch (e) { cb({ ok: false, list: [] }); }
+  });
+  // --- End Withdrawal Logic ---
 
   // --- Disconnect ---
   socket.on('disconnect', async () => {
