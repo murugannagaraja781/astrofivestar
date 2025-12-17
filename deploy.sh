@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================
-# 🚀 Rise Astro - Auto Deployment Script
+# 🚀 Astro 5 Star - Auto Deployment Script
 # ==========================================
 # Run this script on your Ubuntu VPS (fresh install recommended)
 # Usage: sudo bash deploy.sh

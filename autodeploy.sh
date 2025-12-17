@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ====================================================
-# 🚀 Rise Astro - FULL AUTO DEPLOYMENT (GitHub -> Live)
+# 🚀 Astro 5 Star - FULL AUTO DEPLOYMENT (GitHub -> Live)
 # ====================================================
 # Usage: sudo bash autodeploy.sh
 

@@ -1329,7 +1329,7 @@
   <!-- Screen: Client Dashboard -->
   <div id="screen-client" class="dashboard-container hidden">
     <div class="app-header">
-      <div style="font-weight: bold; font-size: 1.2rem;">Rise Astro</div>
+      <div style="font-weight: bold; font-size: 1.2rem;">Astro 5 Star</div>
       <div>
         <i class="fas fa-wallet"></i> ₹<span id="clientWallet">369</span>
         <i class="fas fa-sign-out-alt" style="margin-left: 10px; cursor: pointer;" onclick="clearSession()"></i>
@@ -1618,7 +1618,7 @@
   </div>
 
   <!-- Screen: Client Birth Chart Form Modal -->
-  <div id="screen-client-birth-chart" class="modal-overlay hidden" style="align-items: center;">
+  <div id="screen-client-birth-chart" class="modal-overlay hidden" style="align-items: center; z-index: 99999;">
     <div class="chart-modal-content" style="height: auto; max-height: 90vh; max-width: 500px;">
       <div class="chart-header">
         <span>📊 Send Your Birth Details</span>
@@ -1627,8 +1627,31 @@
       </div>
 
       <div class="chart-body" style="padding: 20px;">
-        <div class="input-card">
+        <div class="input-card" style="padding: 15px;">
+          <!-- Name & Phone -->
           <div class="input-row">
+            <div style="flex:1">
+              <label>Name</label>
+              <input type="text" id="clientChartName" class="app-input" placeholder="Your Name">
+            </div>
+          </div>
+          <div class="input-row" style="margin-top:10px;">
+            <div style="flex:1">
+              <label>Phone Number</label>
+              <input type="tel" id="clientChartPhone" class="app-input" placeholder="+91 99XXXXXX90" readonly
+                style="background:#f0f0f0;">
+            </div>
+          </div>
+
+          <!-- Gender -->
+          <div style="margin-top:15px; display:flex; gap:20px; align-items:center;">
+            <label style="margin:0; font-weight:500;">Gender:</label>
+            <label><input type="radio" name="clientGender" value="Male" checked> Male</label>
+            <label><input type="radio" name="clientGender" value="Female"> Female</label>
+          </div>
+
+          <!-- DOB & Time -->
+          <div class="input-row" style="margin-top:10px;">
             <div style="flex:1">
               <label>Date of Birth</label>
               <input type="date" id="clientChartDate" class="app-input">
@@ -1638,39 +1661,91 @@
               <input type="time" id="clientChartTime" class="app-input">
             </div>
           </div>
+          <div style="margin-top:5px;">
+            <label><input type="checkbox" id="clientNoTime"> Don't know time</label>
+          </div>
 
+          <!-- City -->
           <div class="input-row" style="margin-top:15px; position:relative;">
             <div style="flex:1">
-              <label>City / Place</label>
+              <label>Place of Birth</label>
               <div style="position:relative;">
-                <input type="text" id="clientCitySearch" class="app-input" placeholder="Type City Name..."
-                  autocomplete="off" oninput="handleCityInput(this.value)">
+                <input type="text" id="clientCitySearch" class="app-input" placeholder="Enter City" autocomplete="off"
+                  oninput="handleCityInput(this.value)">
                 <div id="clientCityResults"
                   style="display:none; position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #ddd; z-index:9999; max-height:200px; overflow-y:auto; border-radius:6px; box-shadow:0 4px 15px rgba(0,0,0,0.2); margin-top:5px;">
                 </div>
               </div>
             </div>
           </div>
+          <!-- Hidden Lat/Lon/Tz for Logic -->
+          <input type="hidden" id="clientChartLat">
+          <input type="hidden" id="clientChartLon">
+          <input type="hidden" id="clientChartTz" value="5.5">
 
-          <div class="input-row" style="margin-top:10px;">
-            <div style="flex:1; display:flex; gap:10px;">
-              <div style="flex:1">
-                <label style="font-size:0.75rem; color:#666;">Latitude</label>
-                <input type="text" id="clientChartLat" class="app-input" placeholder="e.g., 13.0827">
-              </div>
-              <div style="flex:1">
-                <label style="font-size:0.75rem; color:#666;">Longitude</label>
-                <input type="text" id="clientChartLon" class="app-input" placeholder="e.g., 80.2707">
-              </div>
-            </div>
-          </div>
-
+          <!-- Extra Fields -->
           <div class="input-row" style="margin-top:10px;">
             <div style="flex:1">
-              <label>Timezone (IST = 5.5)</label>
-              <input type="number" id="clientChartTz" class="app-input" value="5.5" step="0.5">
+              <label>Marital Status (Optional)</label>
+              <select id="clientMarital" class="app-input">
+                <option value="Single">Single</option>
+                <option value="Married">Married</option>
+                <option value="Divorced">Divorced</option>
+                <option value="Widowed">Widowed</option>
+              </select>
+            </div>
+            <div style="flex:1">
+              <label>Occupation (Optional)</label>
+              <input type="text" id="clientOccupation" class="app-input" placeholder="e.g. Engineer">
             </div>
           </div>
+
+          <!-- Topic -->
+          <div class="input-row" style="margin-top:10px;">
+            <div style="flex:1">
+              <label>Topic of Concern</label>
+              <select id="clientTopic" class="app-input">
+                <option value="Career">Career / Job</option>
+                <option value="Marriage">Marriage / Relationship</option>
+                <option value="Health">Health</option>
+                <option value="Education">Education</option>
+                <option value="Finance">Finance / Wealth</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Partner Details Toggle -->
+          <div style="margin-top:15px; padding-top:10px; border-top:1px solid #eee;">
+            <label><input type="checkbox" id="togglePartnerDetails"
+                onchange="document.getElementById('partnerFields').style.display = this.checked ? 'block' : 'none'">
+              Enter Partner's Details</label>
+          </div>
+
+          <div id="partnerFields"
+            style="display:none; margin-top:10px; padding:10px; background:#f9f9f9; border-radius:8px;">
+            <div class="input-row">
+              <div style="flex:1">
+                <label>Partner Name</label>
+                <input type="text" id="partnerName" class="app-input">
+              </div>
+              <div style="flex:1">
+                <label>Partner DOB</label>
+                <input type="date" id="partnerDob" class="app-input">
+              </div>
+            </div>
+            <div class="input-row" style="margin-top:10px;">
+              <div style="flex:1">
+                <label>Partner Time</label>
+                <input type="time" id="partnerTob" class="app-input">
+              </div>
+              <div style="flex:1">
+                <label>Partner Place</label>
+                <input type="text" id="partnerPob" class="app-input">
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <button class="cosmic-btn" onclick="sendChatWithBirthChart()" style="margin-top:20px;">
@@ -2878,6 +2953,10 @@
               style="display:none; padding:8px 12px; height:40px; border-radius:20px; background:#fff; border:1px solid #ddd; color:#d97706; font-weight:600; white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,0.05); cursor:pointer; transition:0.2s;">
               <i class="fas fa-chart-pie"></i> ஜாதகம்
             </button>
+            <button id="btnEditInfo" onclick="openEditIntakeForm()"
+              style="display:none; margin-right:5px; padding:0 10px; height:40px; border-radius:20px; background:#f3f4f6; border:none; color:#555; font-size:0.8rem; cursor:pointer;">
+              <i class="fas fa-edit"></i> Edit Info
+            </button>
             <input id="msgInput" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:20px;"
               placeholder="Type Message...">
             <button id="btnSend"
@@ -2968,7 +3047,11 @@
           sLogin.classList.add('hidden');
           if (session.role === 'astrologer') loadAstroDash(session);
           else if (session.role === 'superadmin') loadAdminDash(session);
-          else loadClientDash(session);
+          else {
+            // Preserve intakeDetails if available in session but missing in DB/socket logic
+            if (session.intakeDetails) state.me.intakeDetails = session.intakeDetails;
+            loadClientDash(session);
+          }
         });
 
       } catch (e) { console.error('Session Error', e); }
@@ -3020,7 +3103,9 @@
             loadAstroDash(res);
           } else if (res.role === 'superadmin') {
             loadAdminDash(res);
-          } else {
+
+            // Restore intake details if sent from server
+            if (res.intakeDetails) state.me.intakeDetails = res.intakeDetails;
             loadClientDash(res);
           }
         });
@@ -3586,6 +3671,11 @@
       } else {
         const btn = document.getElementById('btnChatChart');
         if (btn) btn.style.display = 'none';
+
+        // Show Edit Info for Client
+        const btnEdit = document.getElementById('btnEditInfo');
+        if (btnEdit) btnEdit.style.display = 'block';
+
         const headerDiv = document.getElementById('clientDetailsHeader');
         if (headerDiv) headerDiv.style.display = 'none';
       }
@@ -4418,12 +4508,105 @@
 
     window.showChatWithBirthChart = function (astroId) {
       window.selectedAstroId = astroId;
+
+      // Smart Check: If we already have intake details, skip the form!
+      if (state.me && state.me.intakeDetails && state.me.intakeDetails.topic) {
+        // We have details. Construct birthData for the request directly.
+        // NOTE: We need birthData (lat/lon etc) which are in state.me.birthDetails
+        const bd = state.me.birthDetails;
+        const id = state.me.intakeDetails;
+
+        if (bd && bd.dob && bd.lat) {
+          // Parse DOB/Time
+          const [y, m, d] = bd.dob.split('-').map(Number);
+          const [h, min] = bd.tob.split(':').map(Number);
+
+          const birthData = {
+            name: state.me.name,
+            gender: id.gender,
+            marital: id.marital,
+            occupation: id.occupation,
+            topic: id.topic,
+            partner: id.partner,
+            year: y, month: m, day: d,
+            hour: h, minute: min,
+            latitude: bd.lat,
+            longitude: bd.lon,
+            city: bd.pob,
+            timezone: 5.5 // Default
+          };
+
+          // Direct Request
+          socket.emit('request-session', { toUserId: astroId, type: 'chat', birthData }, (res) => {
+            if (res.ok) initSession(res.sessionId, astroId, 'chat', true, null);
+            else alert('Request failed: ' + res.error);
+          });
+          return;
+        }
+      }
+
+      // If no details, show the form
       document.getElementById('screen-client-birth-chart').classList.remove('hidden');
 
       const now = new Date();
       document.getElementById('clientChartDate').value = now.toISOString().split('T')[0];
       document.getElementById('clientChartTime').value = now.toTimeString().slice(0, 5);
-      document.getElementById('clientChartTz').value = '5.5';
+
+      if (state.me) {
+        document.getElementById('clientChartName').value = state.me.name || '';
+        document.getElementById('clientChartPhone').value = state.me.phone || '';
+        // Pre-fill if partial data exists
+        if (state.me.birthDetails && state.me.birthDetails.pob) {
+          if (state.me.birthDetails.dob) document.getElementById('clientChartDate').value = state.me.birthDetails.dob;
+          if (state.me.birthDetails.tob) document.getElementById('clientChartTime').value = state.me.birthDetails.tob;
+          if (state.me.birthDetails.pob) document.getElementById('clientCitySearch').value = state.me.birthDetails.pob;
+          if (state.me.birthDetails.lat) document.getElementById('clientChartLat').value = state.me.birthDetails.lat;
+          if (state.me.birthDetails.lon) document.getElementById('clientChartLon').value = state.me.birthDetails.lon;
+        } else {
+          // Default to Chennai
+          document.getElementById('clientCitySearch').value = 'Chennai';
+          document.getElementById('clientChartLat').value = '13.0827';
+          document.getElementById('clientChartLon').value = '80.2707';
+        }
+      }
+    };
+
+    window.openEditIntakeForm = function () {
+      document.getElementById('screen-client-birth-chart').classList.remove('hidden');
+
+      // Pre-fill everything we know
+      if (state.me) {
+        document.getElementById('clientChartName').value = state.me.name || '';
+        document.getElementById('clientChartPhone').value = state.me.phone || '';
+
+        if (state.me.birthDetails) {
+          const bd = state.me.birthDetails;
+          if (bd.dob) document.getElementById('clientChartDate').value = bd.dob;
+          if (bd.tob) document.getElementById('clientChartTime').value = bd.tob;
+          if (bd.pob) document.getElementById('clientCitySearch').value = bd.pob;
+          if (bd.lat) document.getElementById('clientChartLat').value = bd.lat;
+          if (bd.lon) document.getElementById('clientChartLon').value = bd.lon;
+        }
+        if (state.me.intakeDetails) {
+          const id = state.me.intakeDetails;
+          if (id.gender) {
+            const r = document.querySelector(`input[name="clientGender"][value="${id.gender}"]`);
+            if (r) r.checked = true;
+          }
+          if (id.marital) document.getElementById('clientMarital').value = id.marital;
+          if (id.occupation) document.getElementById('clientOccupation').value = id.occupation;
+          if (id.topic) document.getElementById('clientTopic').value = id.topic;
+
+          if (id.partner && id.partner.name) {
+            document.getElementById('togglePartnerDetails').checked = true;
+            document.getElementById('partnerFields').style.display = 'block';
+            document.getElementById('partnerName').value = id.partner.name;
+            document.getElementById('partnerDob').value = id.partner.dob;
+            document.getElementById('partnerTob').value = id.partner.tob;
+            document.getElementById('partnerPob').value = id.partner.pob;
+          }
+        }
+      }
     };
 
     window.sendChatWithBirthChart = function () {
@@ -4439,40 +4622,112 @@
         return;
       }
 
+
+
+      // New Fields
+      const name = document.getElementById('clientChartName').value;
+      const gender = document.querySelector('input[name="clientGender"]:checked').value;
+      const marital = document.getElementById('clientMarital').value;
+      const occupation = document.getElementById('clientOccupation').value;
+      const topic = document.getElementById('clientTopic').value;
+
+      // Partner
+      let partner = null;
+      if (document.getElementById('togglePartnerDetails').checked) {
+        partner = {
+          name: document.getElementById('partnerName').value,
+          dob: document.getElementById('partnerDob').value,
+          tob: document.getElementById('partnerTob').value,
+          pob: document.getElementById('partnerPob').value
+        };
+      }
+
       const [y, m, d] = date.split('-');
       const [h, min] = time.split(':');
 
       const birthData = {
+        name, gender, marital, occupation, topic, partner,
         year: parseInt(y),
         month: parseInt(m),
         day: parseInt(d),
         hour: parseInt(h),
         minute: parseInt(min),
-        latitude: parseFloat(lat),
-        longitude: parseFloat(lon),
-        timezone: parseFloat(tz),
+        latitude: parseFloat(lat || 0), // Optional if not searching city properly?
+        longitude: parseFloat(lon || 0),
+        timezone: parseFloat(tz || 5.5),
         city: city
       };
 
       document.getElementById('screen-client-birth-chart').classList.add('hidden');
 
-      socket.emit('request-session', {
-        toUserId: window.selectedAstroId,
-        type: 'chat',
-        birthData: birthData
-      }, (res) => {
-        if (res.ok) {
-          initSession(res.sessionId, window.selectedAstroId, 'chat', true, null);
-        } else {
-          alert('Request failed: ' + res.error);
+      // 1. Save data (Always update DB)
+      socket.emit('save-intake-details', birthData);
+
+      // Update Local State
+      if (state.me) {
+        state.me.name = name;
+        state.me.birthDetails = {
+          dob: `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
+          tob: `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`,
+          pob: city, lat: parseFloat(lat), lon: parseFloat(lon)
+        };
+        state.me.intakeDetails = { gender, marital, occupation, topic, partner };
+        saveSession(state.me);
+      }
+
+      // 2. Decide: New Request OR Update Existing?
+      // If we are definitely in a session (screen visible + session obj exists)
+      const isInSession = state.session && !document.getElementById('screen-session').classList.contains('hidden');
+
+      if (isInSession) {
+        // Just notify user (and maybe partner via chat system msg later)
+        alert("Details Updated Successfully!");
+        // Optionally emit a chat message saying "I updated my details"
+      } else {
+        // Not in session -> Start New Request
+        // Ensure we have a target astro
+        if (!window.selectedAstroId) {
+          // Fallback: If no astro selected, just save and exit
+          alert("Details Saved!");
+          return;
         }
-      });
+
+        socket.emit('request-session', {
+          toUserId: window.selectedAstroId,
+          type: 'chat',
+          birthData: birthData
+        }, (res) => {
+          if (res.ok) {
+            initSession(res.sessionId, window.selectedAstroId, 'chat', true, null);
+          } else {
+            alert('Request failed: ' + res.error);
+          }
+        });
+      }
     };
 
     socket.on('client-birth-chart', (data) => {
       if (state.me && state.me.role === 'astrologer') {
         window.receivedBirthData = data.birthData;
-        alert(`📊 Birth chart received from client!\n\nDate: ${data.birthData.day}/${data.birthData.month}/${data.birthData.year}\nTime: ${data.birthData.hour}:${String(data.birthData.minute).padStart(2, '0')}\nLocation: ${data.birthData.city}`);
+        const bd = data.birthData;
+
+        // --- LIVE UI UPDATE ---
+        const contentDiv = document.getElementById('clientDetailsContent');
+        const headerDiv = document.getElementById('clientDetailsHeader');
+        if (contentDiv && headerDiv) {
+          let pTextShort = bd.partner && bd.partner.name ? ` | ❤️ ${bd.partner.name}` : '';
+          contentDiv.innerHTML = `
+              <div>👤 <b>${bd.name}</b> (${bd.gender}) | 🗣 ${bd.topic}</div>
+              <div>📅 DOB: ${bd.day}/${bd.month}/${bd.year} (${bd.hour}:${String(bd.minute).padStart(2, '0')})</div>
+              <div>📍 ${bd.city} | 💍 ${bd.marital}${pTextShort}</div>
+            `;
+          headerDiv.style.display = 'block';
+        }
+
+        let pText = "";
+        if (bd.partner && bd.partner.name) pText = `\n❤️ Partner: ${bd.partner.name} (${bd.partner.dob})`;
+
+        alert(`📊 DETAILS UPDATED:\n\n👤 ${bd.name} (${bd.gender})\n🏠 ${bd.city}\n💍 ${bd.marital}\n🗣 Topic: ${bd.topic}${pText}`);
       }
     });
 
@@ -5178,13 +5433,89 @@
       document.getElementById('poruthamResults').style.display = 'none';
       document.getElementById('poruthamResults').innerHTML = '';
 
-      // Defaults
-      const now = new Date();
-      const str = now.toISOString().split('T')[0];
-      document.getElementById('boyDate').value = '1995-05-15';
-      document.getElementById('girlDate').value = '1998-08-20';
-      document.getElementById('boyTime').value = '10:00';
-      document.getElementById('girlTime').value = '10:00';
+      // --- Auto Fill Logic ---
+      let client = null;
+      let partner = null;
+      let gender = 'Male'; // Default
+
+      // Scenario 1: Astrologer Viewing Client Data
+      if (window.receivedBirthData) {
+        const bd = window.receivedBirthData;
+        gender = bd.gender || 'Male';
+
+        client = {
+          date: `${bd.year}-${String(bd.month).padStart(2, '0')}-${String(bd.day).padStart(2, '0')}`,
+          time: `${String(bd.hour).padStart(2, '0')}:${String(bd.minute).padStart(2, '0')}`,
+          city: bd.city, lat: bd.latitude, lon: bd.longitude
+        };
+
+        if (bd.partner && bd.partner.name) {
+          partner = {
+            date: bd.partner.dob,
+            time: bd.partner.tob,
+            city: bd.partner.pob,
+            lat: 0, lon: 0 // We might not have lat/lon for partner yet
+          };
+        }
+      }
+      // Scenario 2: Client Viewing their own data
+      else if (state.me && state.me.intakeDetails && state.me.birthDetails) {
+        gender = state.me.intakeDetails.gender || 'Male';
+        const bd = state.me.birthDetails;
+        const id = state.me.intakeDetails;
+
+        client = {
+          date: bd.dob,
+          time: bd.tob,
+          city: bd.pob, lat: bd.lat, lon: bd.lon
+        };
+        if (id.partner && id.partner.name) {
+          partner = {
+            date: id.partner.dob,
+            time: id.partner.tob,
+            city: id.partner.pob,
+            lat: 0, lon: 0
+          };
+        }
+      }
+
+      // Assign to Boy/Girl
+      if (client) {
+        if (gender === 'Male') {
+          // Client is Boy
+          if (client.date) document.getElementById('boyDate').value = client.date;
+          if (client.time) document.getElementById('boyTime').value = client.time;
+          if (client.city) document.getElementById('boyCity').value = client.city;
+          if (client.lat) document.getElementById('boyLat').value = client.lat;
+          if (client.lon) document.getElementById('boyLon').value = client.lon;
+
+          if (partner) {
+            if (partner.date) document.getElementById('girlDate').value = partner.date;
+            if (partner.time) document.getElementById('girlTime').value = partner.time;
+            if (partner.city) document.getElementById('girlCity').value = partner.city;
+            // Partner lat/lon would need search, assumed manual for now
+          }
+        } else {
+          // Client is Girl
+          if (client.date) document.getElementById('girlDate').value = client.date;
+          if (client.time) document.getElementById('girlTime').value = client.time;
+          if (client.city) document.getElementById('girlCity').value = client.city;
+          if (client.lat) document.getElementById('girlLat').value = client.lat;
+          if (client.lon) document.getElementById('girlLon').value = client.lon;
+
+          if (partner) {
+            if (partner.date) document.getElementById('boyDate').value = partner.date;
+            if (partner.time) document.getElementById('boyTime').value = partner.time;
+            if (partner.city) document.getElementById('boyCity').value = partner.city;
+          }
+        }
+      } else {
+        // Defaults if no data
+        document.getElementById('boyDate').value = '1995-05-15';
+        document.getElementById('girlDate').value = '1998-08-20';
+        document.getElementById('boyTime').value = '10:00';
+        document.getElementById('girlTime').value = '10:00';
+      }
     };
 
     let matchCityTimeout;

@@ -106,6 +106,19 @@ const UserSchema = new mongoose.Schema({
     pob: String,
     lat: Number,
     lon: Number
+  },
+  // Phase Extra: Persistent Intake Form Details
+  intakeDetails: {
+    gender: String,
+    marital: String,
+    occupation: String,
+    topic: String,
+    partner: {
+      name: String,
+      dob: String,
+      tob: String,
+      pob: String
+    }
   }
 });
 const User = mongoose.model('User', UserSchema);
@@ -789,6 +802,56 @@ io.on('connection', (socket) => {
       console.error('request-session error', err);
       cb({ ok: false, error: 'Internal error' });
     }
+  });
+
+  // --- Save Intake Details ---
+  socket.on('save-intake-details', async (data, cb) => {
+    const userId = socketToUser.get(socket.id);
+    if (!userId) return;
+    try {
+      // Data contains the full birthData object from frontend
+      // We extract what we need for persistent storage
+      const u = await User.findOne({ userId });
+      if (u) {
+        // Update regular birth details
+        u.birthDetails = {
+          dob: `${data.year}-${String(data.month).padStart(2, '0')}-${String(data.day).padStart(2, '0')}`,
+          tob: `${String(data.hour).padStart(2, '0')}:${String(data.minute).padStart(2, '0')}`,
+          pob: data.city,
+          lat: data.latitude,
+          lon: data.longitude
+        };
+        u.name = data.name; // Update name if changed
+
+        // Update Intake Details
+        u.intakeDetails = {
+          gender: data.gender,
+          marital: data.marital,
+          occupation: data.occupation,
+          topic: data.topic,
+          partner: data.partner
+        };
+        await u.save();
+        if (typeof cb === 'function') cb({ ok: true });
+
+        // --- REAL-TIME UPDATE TO PARTNER ---
+        // If user is in a session, send the updated details to the other person (Astrologer) immediately.
+        const sessionId = userActiveSession.get(userId);
+        if (sessionId) {
+          const partnerId = getOtherUserIdFromSession(sessionId, userId);
+          if (partnerId) {
+            const partnerSocket = userSockets.get(partnerId);
+            if (partnerSocket) {
+              io.to(partnerSocket).emit('client-birth-chart', {
+                sessionId,
+                fromUserId: userId,
+                birthData: data
+              });
+            }
+          }
+        }
+      }
+    } catch (e) { console.error(e); }
   });
 
   // --- Answer session ---

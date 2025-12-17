@@ -1,6 +1,6 @@
 # Deployment Guide with NGINX (VPS/Ubuntu) 🌐
 
-This guide explains how to host your "Rise Astro" app on a Linux VPS (Ubuntu) using **NGINX** as a reverse proxy and **PM2** to keep the app running.
+This guide explains how to host your "Astro 5 Star" app on a Linux VPS (Ubuntu) using **NGINX** as a reverse proxy and **PM2** to keep the app running.
 
 ## 1. Prerequisites
 - A VPS (DigitalOcean Droplet, AWS EC2, etc.) running Ubuntu.

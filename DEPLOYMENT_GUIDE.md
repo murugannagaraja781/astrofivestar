@@ -1,4 +1,4 @@
-# How to Deploy "Rise Astro" to the Internet 🚀
+# How to Deploy "Astro 5 Star" to the Internet 🚀
 
 To make this website "Real Live" and accessible to everyone, you need to deploy it to a cloud hosting provider. Since you are using **Node.js** and **MongoDB**, **Render.com** or **Railway.app** are the best and easiest options.
 

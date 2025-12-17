@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==========================================
-# 🔧 Rise Astro - NGINX Fixer (Redirect Loop)
+# 🔧 Astro 5 Star - NGINX Fixer (Redirect Loop)
 # ==========================================
 
 GREEN='\033[0;32m'
