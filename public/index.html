@@ -2868,6 +2868,10 @@
               overflow-y: auto;
             }
           </style>
+          <div id="typingIndicator"
+            style="display:none; padding: 5px 15px; font-size: 0.8rem; color: #888; font-style: italic; background: #fff; position: sticky; bottom: 60px; z-index: 15;">
+            Typing...
+          </div>
           <div class="chat-input">
 
             <button id="btnChatChart" onclick="showChartHelperWithData()"
@@ -3666,6 +3670,9 @@
         });
 
         p.on('stream', s => {
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'VIBRATE' }));
+          }
           const loader = document.getElementById('connectionStatus');
           if (loader) loader.classList.add('hidden');
 
@@ -3681,6 +3688,13 @@
 
         p.on('error', err => {
           console.error('Peer Error', err);
+        });
+
+        p.on('data', data => {
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'VIBRATE' }));
+          }
+          console.log('WebRTC Data:', data);
         });
 
         state.peer = p;
@@ -3779,6 +3793,9 @@
 
     // Chat Message Handler
     socket.on('chat-message', d => {
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'VIBRATE' }));
+      }
       if (state.session && d.fromUserId === state.session.partnerId) {
         const requestDetailsDiv = document.getElementById('clientRequestDetails');
         if (requestDetailsDiv) {
@@ -3796,6 +3813,30 @@
         }
 
         appendMsg(d.content.text || 'Message', false, d.messageId, d.timestamp);
+      }
+    });
+
+    // Typing Logic
+    let typingTimeout = null;
+    document.getElementById('msgInput').addEventListener('input', () => {
+      if (!state.session) return;
+      socket.emit('typing', { toUserId: state.session.partnerId, isTyping: true });
+
+      if (typingTimeout) clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(() => {
+        socket.emit('typing', { toUserId: state.session.partnerId, isTyping: false });
+      }, 2000);
+    });
+
+    socket.on('typing', (data) => {
+      const el = document.getElementById('typingIndicator');
+      if (state.session && data.fromUserId === state.session.partnerId && el) {
+        if (data.isTyping) {
+          el.innerText = 'Typing...';
+          el.style.display = 'block';
+        } else {
+          el.style.display = 'none';
+        }
       }
     });
 

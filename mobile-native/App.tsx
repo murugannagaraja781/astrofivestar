@@ -15,6 +15,7 @@ import { WebView } from 'react-native-webview';
 import KeepAwake from 'react-native-keep-awake';
 import NetInfo from '@react-native-community/netinfo';
 import RNBootSplash from 'react-native-bootsplash';
+import notifee, { AndroidImportance } from '@notifee/react-native';
 import OfflineNotice from './components/OfflineNotice';
 
 interface WebViewPermissionRequest {
@@ -64,6 +65,34 @@ function App(): React.JSX.Element {
     };
 
     requestPermissions();
+
+    // Start Foreground Service to keep app alive
+    const startForegroundService = async () => {
+      // Create a channel
+      const channelId = await notifee.createChannel({
+        id: 'persistent_service',
+        name: 'Background Service',
+        importance: AndroidImportance.HIGH,
+      });
+
+      // Display a notification
+      await notifee.displayNotification({
+        title: 'Astro 5 Star is Running',
+        body: 'Maintaining active connection for consultations.',
+        android: {
+          channelId,
+          asForegroundService: true, // This is the KEY for keeping it alive
+          ongoing: true,
+          pressAction: {
+            id: 'default',
+          },
+        },
+      });
+    };
+
+    // Only start if we have permissions (or check if user logged in)
+    // For now, we start it early to ensure connection stability
+    startForegroundService();
 
     // Network connectivity listener
     const unsubscribe = NetInfo.addEventListener(state => {
