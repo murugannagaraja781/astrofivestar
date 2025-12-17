@@ -99,6 +99,8 @@ const UserSchema = new mongoose.Schema({
   walletBalance: { type: Number, default: 369 },
   totalEarnings: { type: Number, default: 0 }, // Phase 16: Lifetime Earnings
   experience: { type: Number, default: 0 },
+  isVerified: { type: Boolean, default: false }, // Blue Tick
+  isDocumentVerified: { type: Boolean, default: false }, // Document Badge
   image: { type: String, default: '' },
   birthDetails: {
     dob: String,
