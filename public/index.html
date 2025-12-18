@@ -1735,7 +1735,7 @@
           </div>
           <button
             style="background:white; color:#e07e0c; border:none; padding:10px 25px; border-radius:25px; font-weight:bold; font-size:1rem; cursor:pointer; box-shadow:0 4px 6px rgba(0,0,0,0.1);"
-            onclick="alert('Recharge Gateway Coming Soon')">
+            onclick="initiateRecharge()">
             <i class="fas fa-plus-circle"></i> Add Money
           </button>
         </div>
@@ -6351,6 +6351,33 @@
         // Play a subtle sound if desired? No, keep it visual for now.
       } else {
         console.log("Alert:", message);
+      }
+    };
+
+    window.initiateRecharge = async function (amountStr) {
+      if (!amountStr) {
+        amountStr = prompt("Enter amount to recharge (₹):", "100");
+      }
+      const amount = parseFloat(amountStr);
+      if (!amount || amount <= 0) return alert("Invalid amount");
+
+      if (!state.me || !state.me.userId) return alert("Please login first");
+
+      try {
+        const res = await fetch('/api/payment/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount, userId: state.me.userId })
+        }).then(r => r.json());
+
+        if (res.ok && res.paymentUrl) {
+          window.location.href = res.paymentUrl; // Redirect to PhonePe
+        } else {
+          alert("Recharge Error: " + (res.error || 'Unknown'));
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Failed to initiate payment");
       }
     };
 

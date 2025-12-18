@@ -182,6 +182,16 @@ const WithdrawalSchema = new mongoose.Schema({
 });
 const Withdrawal = mongoose.model('Withdrawal', WithdrawalSchema);
 
+const PaymentSchema = new mongoose.Schema({
+  transactionId: { type: String, unique: true },
+  userId: String,
+  amount: Number, // in Rupees
+  status: { type: String, enum: ['pending', 'success', 'failed'], default: 'pending' },
+  createdAt: { type: Date, default: Date.now },
+  providerRefId: String
+});
+const Payment = mongoose.model('Payment', PaymentSchema);
+
 
 const ChatMessageSchema = new mongoose.Schema({
   sessionId: String,
