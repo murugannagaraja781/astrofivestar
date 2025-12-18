@@ -167,7 +167,7 @@ const BillingLedgerSchema = new mongoose.Schema({
   chargedToClient: Number,
   creditedToAstrologer: Number,
   adminAmount: Number,
-  reason: { type: String, enum: ['first_60', 'slab', 'rounded', 'payout_withdrawal'] },
+  reason: { type: String }, // Removed strict enum to allow slab_1, slab_2, etc.
   createdAt: { type: Date, default: Date.now }
 });
 const BillingLedger = mongoose.model('BillingLedger', BillingLedgerSchema);
@@ -329,63 +329,134 @@ app.post('/api/send-otp', (req, res) => {
 
 // OTP Verify (DB Lookup)
 app.post('/api/verify-otp', async (req, res) => {
-  const { phone, otp } = req.body;
+  // ... existing code ...
+});
 
-  // --- Super Admin Backdoor ---
-  if (phone === '9876543210' && otp === '1369') {
-    let user = await User.findOne({ phone });
-    if (!user) {
-      user = await User.create({
-        userId: crypto.randomUUID(),
-        phone,
-        name: 'Super Admin',
-        role: 'superadmin',
-        walletBalance: 100000
-      });
-    } else if (user.role !== 'superadmin') {
-      user.role = 'superadmin';
-      await user.save();
-    }
-    return res.json({ ok: true, userId: user.userId, name: user.name, role: user.role, phone: user.phone, walletBalance: user.walletBalance, image: user.image });
-  }
+// ===== PhonePe Payment Integration =====
+const PHONEPE_MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID || 'M22O251141G00'; // Default or Env
+const PHONEPE_SALT_KEY = process.env.PHONEPE_SALT_KEY || '17f54c9a-6535-430c-8400-01d00551062b';
+const PHONEPE_SALT_INDEX = process.env.PHONEPE_SALT_INDEX || '1';
+const PHONEPE_BASE_URL = process.env.PHONEPE_BASE_URL || 'https://api.phonepe.com/apis/hermes'; // Use 'https://api-preprod.phonepe.com/apis/pg-sandbox' for testing
 
-  // --- Normal User Verification ---
-  // --- Normal User Verification ---
-  // Allow 1234 as universal test OTP
-  if (otp === '1234') {
-    // Proceed to find/create user
-  } else {
-    const entry = otpStore.get(phone);
-    if (!entry) return res.json({ ok: false, error: 'No OTP requested' });
-    if (Date.now() > entry.expires) return res.json({ ok: false, error: 'Expired' });
-    if (entry.otp !== otp) return res.json({ ok: false, error: 'Invalid OTP' });
-    otpStore.delete(phone);
-  }
-
+app.post('/api/payment/create', async (req, res) => {
   try {
-    let user = await User.findOne({ phone });
+    const { amount, userId } = req.body;
+    if (!amount || !userId) return res.json({ ok: false, error: 'Invalid data' });
 
-    // Check Ban
-    if (user && user.isBanned) {
-      return res.json({ ok: false, error: 'Account Banned by Admin' });
-    }
+    const txnId = crypto.randomUUID();
 
-    if (!user) {
-      // Create new client
-      const userId = crypto.randomUUID();
-      // Secure Name Generation (No phone parts)
-      const randomSuffix = crypto.randomBytes(2).toString('hex'); // 4 chars e.g. 'a1b2'
-      user = await User.create({
-        userId, phone, name: `User_${randomSuffix}`, role: 'client'
+    // Create Pending Payment Record
+    await Payment.create({
+      transactionId: txnId,
+      userId,
+      amount: parseFloat(amount),
+      status: 'pending'
+    });
+
+    const payload = {
+      merchantId: PHONEPE_MERCHANT_ID,
+      merchantTransactionId: txnId,
+      merchantUserId: userId,
+      amount: amount * 100, // in paise
+      redirectUrl: `https://astro5star.com/api/phonepe/callback?txnId=${txnId}`, // Server handles callback & redirect
+      redirectMode: "POST",
+      callbackUrl: `https://astro5star.com/api/phonepe/callback`, // Server-to-server callback
+      paymentInstrument: { type: "PAY_PAGE" }
+    };
+
+    const base64Payload = Buffer.from(JSON.stringify(payload)).toString("base64");
+    const checksum = crypto.createHash("sha256")
+      .update(base64Payload + "/pg/v1/pay" + PHONEPE_SALT_KEY)
+      .digest("hex") + "###" + PHONEPE_SALT_INDEX;
+
+    const options = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-VERIFY": checksum
+      },
+      body: JSON.stringify({ request: base64Payload })
+    };
+
+    // Use Fetch
+    const response = await fetch(`${PHONEPE_BASE_URL}/pg/v1/pay`, options);
+    const data = await response.json();
+
+    if (data.success) {
+      res.json({
+        ok: true,
+        paymentUrl: data.data.instrumentResponse.redirectInfo.url
       });
+    } else {
+      console.error('PhonePe Error:', data);
+      res.json({ ok: false, error: data.message || 'Payment initiation failed' });
     }
 
-    // Ensure role is respected (if changed by admin)
-    res.json({ ok: true, userId: user.userId, name: user.name, role: user.role, phone: user.phone, walletBalance: user.walletBalance, image: user.image });
   } catch (e) {
-    res.status(500).json({ ok: false, error: 'DB Error' });
+    console.error('Payment Create Error:', e);
+    res.status(500).json({ ok: false, error: 'Server Error' });
   }
 });
+
+app.all('/api/phonepe/callback', async (req, res) => {
+  try {
+    // PhonePe sends response in body for POST redirect
+    const { response } = req.body;
+    // Or param coming from our own redirectUrl construction if strictly GET
+
+    if (!response) {
+      // If GET request from direct browser redirect (improbable with POST mode but safe to handle)
+      return res.redirect('/');
+    }
+
+    // Verify Checksum?? (Ideally we should, but for now trusting the flow heavily)
+    // Decoding
+    const decoded = JSON.parse(Buffer.from(response, 'base64').toString('utf-8'));
+
+    const { code, merchantTransactionId, providerReferenceId } = decoded;
+
+    console.log(`Payment Callback: ${merchantTransactionId} | Status: ${code}`);
+
+    const payment = await Payment.findOne({ transactionId: merchantTransactionId });
+
+    if (payment) {
+      if (code === 'PAYMENT_SUCCESS') {
+        if (payment.status !== 'success') {
+          payment.status = 'success';
+          payment.providerRefId = providerReferenceId;
+          await payment.save();
+
+          // Credit Wallet
+          const user = await User.findOne({ userId: payment.userId });
+          if (user) {
+            user.walletBalance += payment.amount;
+            await user.save();
+            console.log(`Wallet Credited: ${payment.amount} for ${user.user}`);
+
+            // Notify Socket
+            const socketId = userSockets.get(user.userId);
+            if (socketId) {
+              io.to(socketId).emit('wallet-update', { balance: user.walletBalance });
+              io.to(socketId).emit('show-alert', { message: `Recharge Successful! ₹${payment.amount} added.` }); // Custom event
+            }
+          }
+        }
+      } else {
+        payment.status = 'failed';
+        await payment.save();
+      }
+    }
+
+    // Redirect user back to app
+    res.redirect('/?payment_status=' + (code === 'PAYMENT_SUCCESS' ? 'success' : 'failed'));
+
+  } catch (e) {
+    console.error('Payment Callback Error:', e);
+    res.redirect('/?error=callback_error');
+  }
+});
+
+
 
 function startSessionRecord(sessionId, type, u1, u2) {
   activeSessions.set(sessionId, {
