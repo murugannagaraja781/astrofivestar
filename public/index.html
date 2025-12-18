@@ -3378,19 +3378,11 @@
     function checkSession() {
       try {
         const saved = localStorage.getItem(SESSION_KEY);
-        if (!saved) {
-          // No session -> Guest Mode
-          sLogin.classList.add('hidden');
-          loadClientDash(null); // Load as Guest
-          return;
-        }
+        if (!saved) return;
 
         const session = JSON.parse(saved);
         if (Date.now() > session.expiresAt) {
           localStorage.removeItem(SESSION_KEY);
-          // Expired -> Guest Mode
-          sLogin.classList.add('hidden');
-          loadClientDash(null);
           return;
         }
 
@@ -3471,74 +3463,28 @@
     // Client Dashboard Logic
     state.astroList = [];
 
-    function showLoginScreen() {
-      // Hide all other screens
-      sClient.classList.add('hidden');
-      sAstro.classList.add('hidden');
-      sAdmin.classList.add('hidden');
-      // Show Login
-      sLogin.classList.remove('hidden');
-    }
-
-
     function loadClientDash(user) {
       sClient.classList.remove('hidden');
-      sLogin.classList.add('hidden'); // Ensure login hidden
-
-      // Guest Handling
-      const walletDisplay = sClient.querySelector('.app-header div');
-      if (!user) {
-        // Guest Mode
-        if (walletDisplay) {
-          walletDisplay.innerHTML = `
-            <button onclick="showLoginScreen()" style="background:#F59E0B; color:white; border:none; padding:6px 14px; border-radius:20px; font-weight:bold; cursor:pointer; font-size:0.9rem;">
-              Login <i class="fas fa-sign-in-alt" style="margin-left:4px;"></i>
-            </button>`;
-        }
-        // Set default name for Home Greeting
-        if (document.getElementById('homeUserName')) {
-          document.getElementById('homeUserName').innerText = "Guest";
-          updateHomeTime();
-          setInterval(updateHomeTime, 60000);
-        }
-      } else {
-        // Logged In Mode
-        if (walletDisplay) {
-          walletDisplay.innerHTML = `
-            <i class="fas fa-wallet"></i> ₹<span id="clientWallet">${user.walletBalance || 0}</span>
-            <i class="fas fa-sign-out-alt" style="margin-left: 10px; cursor: pointer;" onclick="clearSession()"></i>`;
-        }
-
-        document.getElementById('clientWallet').innerText = user.walletBalance || 0;
-        if (document.getElementById('dashWalletBalance')) {
-          document.getElementById('dashWalletBalance').innerText = user.walletBalance || 0;
-        }
-
-        // Home Header
-        if (document.getElementById('homeUserName')) {
-          document.getElementById('homeUserName').innerText = user.name.split(' ')[0];
-          updateHomeTime();
-          setInterval(updateHomeTime, 60000);
-        }
+      document.getElementById('clientWallet').innerText = user.walletBalance || 0;
+      if (document.getElementById('dashWalletBalance')) {
+        document.getElementById('dashWalletBalance').innerText = user.walletBalance || 0;
       }
 
       // SHOW GLOBAL FOOTER (Client Nav)
       const globalFooter = document.querySelector('.doc-bottom-nav');
       if (globalFooter) globalFooter.style.display = 'flex';
 
-      // GUEST NAV TOGGLE
-      const navDash = document.getElementById('nav-dash');
-      if (!user) {
-        if (navDash) navDash.style.display = 'none'; // Hide Wallet for Guest
-      } else {
-        if (navDash) navDash.style.display = 'flex'; // Show Wallet for User
-      }
-
       const anav = document.querySelector('.admin-nav');
       if (anav) anav.style.display = 'none';
       const afoot = document.querySelector('.admin-footer');
       if (afoot) afoot.classList.remove('show');
 
+      // Home Header
+      if (document.getElementById('homeUserName')) {
+        document.getElementById('homeUserName').innerText = user.name.split(' ')[0];
+        updateHomeTime();
+        setInterval(updateHomeTime, 60000);
+      }
 
       // Initial State
       navSwitch('home');
@@ -3582,12 +3528,6 @@
     }
 
     window.navSwitch = function (tab) {
-      // GUEST GUARD: Block Profile and Dashboard (Wallet)
-      if ((tab === 'profile' || tab === 'dash') && (!state.me || !state.me.userId)) {
-        showLoginScreen();
-        return;
-      }
-
       document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
       const btn = document.getElementById('nav-' + tab);
       if (btn) btn.classList.add('active');
@@ -3769,19 +3709,19 @@
           <!-- Bottom Row: Action Buttons -->
           <div class="card-actions">
               <div class="cta-btn ${a.isChatOnline ? 'active-chat' : ''}"
-                   onclick="event.stopPropagation(); if(!state.me) { showLoginScreen(); return; } ${a.isChatOnline ? `showChatWithBirthChart('${a.userId}')` : ''}">
+                   onclick="event.stopPropagation(); ${a.isChatOnline ? `showChatWithBirthChart('${a.userId}')` : ''}">
                   <i class="fas fa-comment-dots"></i>
                   <span>Chat</span>
               </div>
 
               <div class="cta-btn ${a.isAudioOnline ? 'active-audio' : ''}"
-                   onclick="event.stopPropagation(); if(!state.me) { showLoginScreen(); return; } ${a.isAudioOnline ? `requestSession('${a.userId}', 'audio')` : ''}">
+                   onclick="event.stopPropagation(); ${a.isAudioOnline ? `requestSession('${a.userId}', 'audio')` : ''}">
                   <i class="fas fa-phone-alt"></i>
                   <span>Call</span>
               </div>
 
               <div class="cta-btn ${a.isVideoOnline ? 'active-video' : ''}"
-                   onclick="event.stopPropagation(); if(!state.me) { showLoginScreen(); return; } ${a.isVideoOnline ? `requestSession('${a.userId}', 'video')` : ''}">
+                   onclick="event.stopPropagation(); ${a.isVideoOnline ? `requestSession('${a.userId}', 'video')` : ''}">
                   <i class="fas fa-video"></i>
                   <span>Video</span>
               </div>
@@ -6421,10 +6361,7 @@
       const amount = parseFloat(amountStr);
       if (!amount || amount <= 0) return alert("Invalid amount");
 
-      if (!state.me || !state.me.userId) {
-        showLoginScreen();
-        return;
-      }
+      if (!state.me || !state.me.userId) return alert("Please login first");
 
       try {
         const res = await fetch('/api/payment/create', {
