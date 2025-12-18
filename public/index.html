@@ -3991,7 +3991,7 @@
     function updateTimerDisplay() {
       const m = Math.floor(timerSec / 60).toString().padStart(2, '0');
       const s = (timerSec % 60).toString().padStart(2, '0');
-      document.getElementById('sessionTimer').innerText = `${m}:${s}`;
+      document.getElementById('sessionTimer').innerHTML = `${m}:${s} <span style="font-size:0.8rem; opacity:0.8;">(${timerSec} ticks)</span>`;
     }
 
     // Session Management
@@ -6430,6 +6430,21 @@
         text.innerText = "Total Earnings";
         amt.innerText = '₹' + (data.earned || 0);
         amt.style.color = '#059669';
+      }
+
+      // Add Duration Display
+      if (typeof data.duration !== 'undefined') {
+        const dSec = data.duration;
+        const dMin = Math.floor(dSec / 60);
+        const dRem = dSec % 60;
+        let dText = document.getElementById('summaryDuration');
+        if (!dText) {
+          dText = document.createElement('div');
+          dText.id = 'summaryDuration';
+          dText.style.cssText = "font-size:1rem; color:#6B7280; margin-bottom:10px;";
+          amt.parentNode.insertBefore(dText, amt);
+        }
+        dText.innerText = `Billed Duration: ${dMin}m ${dRem}s (${dSec} ticks)`;
       }
     }
   </script>

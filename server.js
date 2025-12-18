@@ -454,7 +454,8 @@ async function endSessionRecord(sessionId) {
     reason: 'ended',
     summary: {
       deducted: s.totalDeducted || 0,
-      earned: s.totalEarned || 0
+      earned: s.totalEarned || 0,
+      duration: billableSeconds
     }
   };
 
@@ -589,7 +590,8 @@ function forceEndSession(sessionId, reason) {
     reason,
     summary: {
       deducted: session.totalDeducted || 0,
-      earned: session.totalEarned || 0
+      earned: session.totalEarned || 0,
+      duration: session.elapsedBillableSeconds || 0
     }
   };
 
@@ -1151,6 +1153,18 @@ io.on('connection', (socket) => {
       if (activeSession) {
         activeSession.actualBillingStart = billingStart;
 
+        // --- FIX: Initialize Billing Fields in Memory ---
+        if (typeof activeSession.elapsedBillableSeconds === 'undefined') {
+          activeSession.elapsedBillableSeconds = 0;
+          activeSession.lastBilledMinute = 1; // Prepare for first minute check
+          activeSession.clientId = session.clientId;
+          activeSession.astrologerId = session.astrologerId;
+          activeSession.currentSlab = 3; // Default Slab if not set
+          activeSession.totalDeducted = 0;
+          activeSession.totalEarned = 0;
+          console.log(`Session ${sessionId}: Billing Fields Initialized (Memory)`);
+        }
+
         // --- Phase 4: Init Pair Slab ---
         try {
           const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
@@ -1187,7 +1201,8 @@ io.on('connection', (socket) => {
   }
 
   // --- Phase 2: Session Timer Engine ---
-  setInterval(tickSessions, 1000);
+  if (global.tickInterval) clearInterval(global.tickInterval);
+  global.tickInterval = setInterval(tickSessions, 1000);
 
   // Phase 4 Helper
   function getSlabBySeconds(seconds) {
@@ -1225,6 +1240,10 @@ io.on('connection', (socket) => {
 
       if (isClientConnected && isAstroConnected) {
         session.elapsedBillableSeconds++;
+
+        // DEBUG LOGGING
+        console.log(`[${sessionId}] Tick: ${session.elapsedBillableSeconds}, LastBilled: ${session.lastBilledMinute}, Deducted: ${session.totalDeducted}, Slab: ${session.currentSlab}`);
+
         if (session.elapsedBillableSeconds % 5 === 0) console.log(`Session ${sessionId}: Tick ${session.elapsedBillableSeconds}s`);
 
         // Phase 3: First Minute Check (at 60s exactly)
@@ -1515,8 +1534,11 @@ io.on('connection', (socket) => {
         const u = await User.findOne({ userId: w.astroId });
         enriched.push({ ...w.toObject(), astroName: u ? u.name : 'Unknown' });
       }
-      cb({ ok: true, list: enriched });
-    } catch (e) { cb({ ok: false, list: [] }); }
+      if (typeof cb === 'function') cb({ ok: true, list: enriched });
+    } catch (e) {
+      console.error(e);
+      if (typeof cb === 'function') cb({ ok: false, list: [] });
+    }
   });
   // --- End Withdrawal Logic ---
 
