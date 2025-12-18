@@ -435,6 +435,21 @@ async function endSessionRecord(sessionId) {
 
   // Note: If billableSeconds >= 60, the minute ticks would have handled the charges.
   // We do NOT run the old legacy billing logic here.
+
+  // Notify with Summary
+  const s1 = userSockets.get(s.clientId);
+  const s2 = userSockets.get(s.astrologerId);
+
+  const payload = {
+    reason: 'ended',
+    summary: {
+      deducted: s.totalDeducted || 0,
+      earned: s.totalEarned || 0
+    }
+  };
+
+  if (s1) io.to(s1).emit('session-ended', payload);
+  if (s2) io.to(s2).emit('session-ended', payload);
 }
 
 // --- Phase 3: Billing Helper ---
@@ -457,7 +472,11 @@ async function processBillingCharge(sessionId, durationSeconds, minuteIndex, typ
     const client = await User.findOne({ userId: session.clientId });
     if (!client) return;
 
-    const pricePerMin = astro.price || 0;
+    // Phase: Dynamic Pricing Override
+    // Chat: 10, Audio: 15, Video: 20
+    let pricePerMin = 10;
+    if (session.type === 'audio') pricePerMin = 15;
+    if (session.type === 'video') pricePerMin = 20;
 
     let amountToCharge = 0;
     let adminShare = 0;
@@ -519,6 +538,13 @@ async function processBillingCharge(sessionId, durationSeconds, minuteIndex, typ
         reason
       });
 
+      // Track Session Totals
+      const activeSess = activeSessions.get(sessionId);
+      if (activeSess) {
+        activeSess.totalDeducted = (activeSess.totalDeducted || 0) + amountToCharge;
+        activeSess.totalEarned = (activeSess.totalEarned || 0) + astroShare;
+      }
+
       console.log(`Billing: ${reason} | Charge: ${amountToCharge} | Admin: ${adminShare} | Astro: ${astroShare}`);
 
       // Notify Wallets
@@ -530,15 +556,38 @@ async function processBillingCharge(sessionId, durationSeconds, minuteIndex, typ
 
     } else {
       console.log(`Billing Failed: Insufficient funds for ${client.name}`);
-      // Handle forced termination?
-      io.to(userSockets.get(session.clientId)).emit('session-ended', { reason: 'insufficient_funds' });
-      io.to(userSockets.get(session.astrologerId)).emit('session-ended', { reason: 'insufficient_funds' });
-      // Call endSessionRecord? Be careful of recursion.
+      // Handle forced termination
+      forceEndSession(sessionId, 'insufficient_funds');
     }
 
   } catch (e) {
     console.error('Billing Error:', e);
   }
+}
+
+function forceEndSession(sessionId, reason) {
+  const session = activeSessions.get(sessionId);
+  if (!session) return;
+
+  console.log(`Force Ending Session ${sessionId} due to: ${reason}`);
+
+  // Notify Users (With Summary)
+  const clientSocketId = userSockets.get(session.clientId);
+  const astroSocketId = userSockets.get(session.astrologerId);
+
+  const payload = {
+    reason,
+    summary: {
+      deducted: session.totalDeducted || 0,
+      earned: session.totalEarned || 0
+    }
+  };
+
+  if (clientSocketId) io.to(clientSocketId).emit('session-ended', payload);
+  if (astroSocketId) io.to(astroSocketId).emit('session-ended', payload);
+
+  // Cleanup Server State
+  endSessionRecord(sessionId);
 }
 
 // ===== City Autocomplete API =====
@@ -790,7 +839,9 @@ io.on('connection', (socket) => {
         astrologerId,
         elapsedBillableSeconds: 0,
         lastBilledMinute: 0,
-        actualBillingStart: null // Will be set by handleUserConnection
+        actualBillingStart: null, // Will be set by handleUserConnection
+        totalDeducted: 0,
+        totalEarned: 0
       });
       userActiveSession.set(fromUserId, sessionId);
       userActiveSession.set(toUserId, sessionId);
@@ -1139,6 +1190,12 @@ io.on('connection', (socket) => {
 
   function tickSessions() {
     const now = Date.now();
+    if (Math.floor(now / 1000) % 10 === 0) {
+      console.log(`[Ticker] Active: ${activeSessions.size}`);
+      for (const [sid, s] of activeSessions) {
+        console.log(`  - ${sid}: Billable=${s.elapsedBillableSeconds}, Start=${s.actualBillingStart}, TotalDed=${s.totalDeducted}`);
+      }
+    }
     for (const [sessionId, session] of activeSessions) {
       // 1. Check if Billing Started
       if (!session.actualBillingStart || now < session.actualBillingStart) continue;

@@ -798,6 +798,162 @@
       opacity: 0.9;
     }
 
+    /* --- Low Balance Alert Modal --- */
+    .low-balance-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .low-balance-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .low-balance-card {
+      background: rgba(255, 255, 255, 0.95);
+      width: 85%;
+      max-width: 340px;
+      padding: 30px 20px;
+      border-radius: 24px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      transform: scale(0.9);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .low-balance-overlay.active .low-balance-card {
+      transform: scale(1);
+    }
+
+    .alert-icon-wrapper {
+      width: 70px;
+      height: 70px;
+      background: #FEF2F2;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 15px;
+      position: relative;
+    }
+
+    .alert-icon-wrapper i {
+      font-size: 32px;
+      color: #EF4444;
+      animation: bell-shake 1s infinite;
+    }
+
+    @keyframes bell-shake {
+      0% {
+        transform: rotate(0);
+      }
+
+      15% {
+        transform: rotate(5deg);
+      }
+
+      30% {
+        transform: rotate(-5deg);
+      }
+
+      45% {
+        transform: rotate(4deg);
+      }
+
+      60% {
+        transform: rotate(-4deg);
+      }
+
+      75% {
+        transform: rotate(2deg);
+      }
+
+      85% {
+        transform: rotate(-2deg);
+      }
+
+      100% {
+        transform: rotate(0);
+      }
+    }
+
+    .lb-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #1F2937;
+      margin-bottom: 8px;
+    }
+
+    .lb-message {
+      color: #6B7280;
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .current-bal-box {
+      background: #F3F4F6;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 25px;
+      display: flex;
+      justify-content: center;
+      align-items: baseline;
+      gap: 5px;
+    }
+
+    .bal-label {
+      font-size: 0.9rem;
+      color: #4B5563;
+    }
+
+    .bal-amount {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #059669;
+    }
+
+    .btn-recharge {
+      background: linear-gradient(135deg, #059669, #10B981);
+      color: white;
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: none;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      margin-bottom: 12px;
+      transition: transform 0.2s;
+    }
+
+    .btn-recharge:active {
+      transform: scale(0.98);
+    }
+
+    .btn-dismiss {
+      background: transparent;
+      color: #6B7280;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 5px;
+    }
+
     .SouthChartBox {
       display: flex;
       flex-direction: column;
@@ -3353,6 +3509,13 @@
         }
         state.me.walletBalance = data.balance;
         saveSession(state.me);
+
+        // Low Balance Warning (e.g., < ₹50)
+        // Check if we are in a session? Maybe not needed, just warn.
+        if (data.balance < 50) {
+          // Optional: Check if we haven't shown it recently to avoid spam
+          showLowBalanceAlert(data.balance);
+        }
       });
     }
 
@@ -3762,10 +3925,8 @@
           window.incomingAudio.pause();
           window.incomingAudio = null;
         }
-        // The diff provided `window.incomingAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); {`
-        // which is syntactically incorrect and replaces the existing soundUrl logic.
-        // I will integrate the new URL but keep the existing structure.
-        const soundUrl = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'; // Updated from 'sound.mpeg'
+
+        const soundUrl = 'sound.mpeg';
         window.incomingAudio = new Audio(soundUrl);
         window.incomingAudio.loop = true;
         window.incomingAudio.play().catch(e => console.log('Autoplay blocked:', e));
@@ -3839,6 +4000,9 @@
 
       state.session = { id: sid, partnerId: pid, type };
       sSes.classList.remove('hidden');
+
+      // Trigger Billing Start on Server
+      socket.emit('session-connect', { sessionId: sid });
 
       if (window.ReactNativeWebView) {
         window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'KEEP_AWAKE', enable: true }));
@@ -4040,7 +4204,13 @@
 
     socket.on('session-ended', endLocal);
 
-    function endLocal() {
+    function endLocal(data) {
+      if (data && data.reason === 'insufficient_funds') {
+        showLowBalanceAlert(state.me.walletBalance || 0, "Current session ended due to insufficient funds. Please recharge to continue.");
+      } else if (data && data.summary) {
+        showSummary(data.summary);
+      }
+
       if (state.me && state.me.role === 'astrologer') {
         socket.emit('toggle-status', { online: true, type: 'online' });
       }
@@ -6141,6 +6311,26 @@
   }
 
   /* --- Custom Global Alert Modal --- */
+  <!-- Low Balance Pop-up -->
+  <div id="lowBalanceOverlay" class="low-balance-overlay">
+    <div class="low-balance-card">
+      <div class="alert-icon-wrapper">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <div class="lb-title">Low Balance!</div>
+      <div class="lb-message" id="lbMessage">Your wallet balance is running low. Recharge now to continue your cosmic
+        consultation uninterrupted.</div>
+
+      <div class="current-bal-box">
+        <span class="bal-label">Current Balance:</span>
+        <span class="bal-amount" id="lbAmount">₹0</span>
+      </div>
+
+      <button class="btn-recharge" onclick="location.href='#recharge'">Add Funds Now</button>
+      <button class="btn-dismiss" onclick="hideLowBalanceAlert()">I'll do it later</button>
+    </div>
+  </div>
+
   <!-- Custom Global Alert Modal HTML -->
   <div id="custom-alert-modal" class="custom-modal-overlay">
     <div class="custom-modal-box">
@@ -6170,7 +6360,65 @@
         modal.classList.remove('open');
       }
     }
+
+    // --- Low Balance Alert Logic ---
+    function showLowBalanceAlert(balance, message) {
+      const overlay = document.getElementById('lowBalanceOverlay');
+      const amtEl = document.getElementById('lbAmount');
+      const msgEl = document.getElementById('lbMessage');
+
+      if (amtEl) amtEl.innerText = '₹' + balance;
+      if (msgEl && message) msgEl.innerText = message;
+      else if (msgEl) msgEl.innerText = "Your wallet balance is running low. Recharge now to continue your cosmic consultation uninterrupted.";
+
+      if (overlay) overlay.classList.add('active');
+    }
+
+    function hideLowBalanceAlert() {
+      const overlay = document.getElementById('lowBalanceOverlay');
+      if (overlay) overlay.classList.remove('active');
+    }
+
+    // --- Session Summary Logic ---
+    function closeSummaryModal() {
+      document.getElementById('sessionSummaryModal').classList.add('hidden');
+      // Trigger wallet refresh
+      if (state.me && state.me.userId) {
+        socket.emit('get-wallet', { userId: state.me.userId });
+      }
+    }
+
+    function showSummary(data) {
+      const modal = document.getElementById('sessionSummaryModal');
+      const text = document.getElementById('summaryText');
+      const amt = modal.querySelector('.summary-amount');
+
+      modal.classList.remove('hidden');
+
+      if (state.me.role === 'client') {
+        text.innerText = "Total Deducted";
+        amt.innerText = '₹' + (data.deducted || 0);
+        amt.style.color = '#DC2626';
+      } else {
+        text.innerText = "Total Earnings";
+        amt.innerText = '₹' + (data.earned || 0);
+        amt.style.color = '#059669';
+      }
+    }
   </script>
+
+  <!-- Session Summary Modal -->
+  <div id="sessionSummaryModal" class="modal-overlay hidden"
+    style="display:flex; align-items:center; justify-content:center; position:fixed; top:0; left:0; width:100%; height:100%; bg:rgba(0,0,0,0.5); z-index:9999;">
+    <div class="modal-content"
+      style="background:white; border-radius:15px; width:90%; max-width:350px; text-align:center; padding:30px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+      <h2 style="color:#111; margin-bottom:10px;">Session Summary</h2>
+      <div id="summaryText" style="font-size:1.2rem; color:#4B5563; margin-bottom:20px;"></div>
+      <div class="summary-amount" style="font-size:2rem; font-weight:bold; color: #059669; margin-bottom:30px;"></div>
+      <button onclick="closeSummaryModal()" class="btn-primary"
+        style="width:100%; padding: 12px; font-size:1rem; border-radius:10px; border:none; background:#2563EB; color:white; font-weight:bold;">Okay</button>
+    </div>
+  </div>
 </body>
 
 </html>
