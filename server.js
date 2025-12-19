@@ -347,7 +347,16 @@ app.post('/api/verify-otp', async (req, res) => {
       user.role = 'superadmin';
       await user.save();
     }
-    return res.json({ ok: true, userId: user.userId, name: user.name, role: user.role, phone: user.phone, walletBalance: user.walletBalance, image: user.image });
+    return res.json({
+      ok: true,
+      userId: user.userId,
+      name: user.name,
+      role: user.role,
+      phone: user.phone,
+      walletBalance: user.walletBalance,
+      totalEarnings: user.totalEarnings || 0,
+      image: user.image
+    });
   }
 
   // --- Normal User Verification ---
@@ -382,7 +391,16 @@ app.post('/api/verify-otp', async (req, res) => {
     }
 
     // Ensure role is respected (if changed by admin)
-    res.json({ ok: true, userId: user.userId, name: user.name, role: user.role, phone: user.phone, walletBalance: user.walletBalance, image: user.image });
+    res.json({
+      ok: true,
+      userId: user.userId,
+      name: user.name,
+      role: user.role,
+      phone: user.phone,
+      walletBalance: user.walletBalance,
+      totalEarnings: user.totalEarnings || 0, // Ensure this is sent
+      image: user.image
+    });
   } catch (e) {
     res.status(500).json({ ok: false, error: 'DB Error' });
   }
@@ -411,15 +429,6 @@ async function endSessionRecord(sessionId) {
   const s = activeSessions.get(sessionId);
   if (!s) return;
 
-  // Cleanup user pointers
-  s.users.forEach((u) => {
-    if (userActiveSession.get(u) === sessionId) {
-      userActiveSession.delete(u);
-    }
-  });
-
-  activeSessions.delete(sessionId);
-
   const endTime = Date.now();
   // Phase 1/2: Use tracked billable seconds if available
   const billableSeconds = s.elapsedBillableSeconds || 0;
@@ -443,9 +452,29 @@ async function endSessionRecord(sessionId) {
     console.log(`Session ${sessionId}: Early exit at ${billableSeconds}s. Charging pro-rata.`);
     await processBillingCharge(sessionId, billableSeconds, 1, 'early_exit');
   }
+  // Phase 5: Round-Up Billing (Partial Minute at End)
+  else if (billableSeconds > 60) {
+    const lastBilled = s.lastBilledMinute || 1;
+    const totalMinutes = Math.ceil(billableSeconds / 60);
 
-  // Note: If billableSeconds >= 60, the minute ticks would have handled the charges.
-  // We do NOT run the old legacy billing logic here.
+    if (totalMinutes > lastBilled) {
+      console.log(`Session ${sessionId}: Finalizing billing for partial minutes ${lastBilled + 1} to ${totalMinutes}`);
+
+      for (let i = lastBilled + 1; i <= totalMinutes; i++) {
+        await processBillingCharge(sessionId, 60, i, 'slab');
+      }
+    }
+  }
+
+  // Cleanup active session finally
+  activeSessions.delete(sessionId);
+  if (s.users) {
+    s.users.forEach((u) => {
+      if (userActiveSession.get(u) === sessionId) {
+        userActiveSession.delete(u);
+      }
+    });
+  }
 
   // Notify with Summary
   const s1 = userSockets.get(s.clientId);
@@ -484,11 +513,18 @@ async function processBillingCharge(sessionId, durationSeconds, minuteIndex, typ
     const client = await User.findOne({ userId: session.clientId });
     if (!client) return;
 
-    // Phase: Dynamic Pricing Override
-    // Chat: 10, Audio: 15, Video: 20
+    // Phase: Pricing Logic
+    // Priority: Astro DB Price > Hardcoded fallback
     let pricePerMin = 10;
-    if (session.type === 'audio') pricePerMin = 15;
-    if (session.type === 'video') pricePerMin = 20;
+    if (astro.price && astro.price > 0) {
+      pricePerMin = parseInt(astro.price);
+    } else {
+      // Fallback defaults
+      if (session.type === 'audio') pricePerMin = 15;
+      if (session.type === 'video') pricePerMin = 20;
+    }
+
+    console.log(`[Billing] Session ${sessionId} | Type: ${session.type} | Price: ${pricePerMin}/min | Minute: ${minuteIndex}`);
 
     let amountToCharge = 0;
     let adminShare = 0;
@@ -496,31 +532,29 @@ async function processBillingCharge(sessionId, durationSeconds, minuteIndex, typ
     let reason = '';
 
     // Logic: First 60 Seconds (Admin Only)
-    // If type == 'first_60_full' (called at 60s tick)
-    // If type == 'early_exit' (called at endSession if < 60s)
-
     if (type === 'first_60_full') {
       amountToCharge = pricePerMin;
       adminShare = amountToCharge;
       astroShare = 0;
       reason = 'first_60';
     } else if (type === 'early_exit') {
-      // Pro-rata: (Price / 60) * seconds
       amountToCharge = (pricePerMin / 60) * durationSeconds;
       adminShare = amountToCharge; // 100% to Admin
       astroShare = 0;
       reason = 'first_60_partial';
     } else if (type === 'slab') {
-      // Phase 5: Standard Minute Billing
-      const currentSlab = activeSessions.get(sessionId)?.currentSlab || 3; // Default to 3 if missing
+      // Standard Minute Billing
+      const activeSess = activeSessions.get(sessionId);
+      const currentSlab = activeSess?.currentSlab || 3;
       const rate = SLAB_RATES[currentSlab] || 0.30;
 
       amountToCharge = pricePerMin;
       astroShare = amountToCharge * rate;
       adminShare = amountToCharge - astroShare;
       reason = `slab_${currentSlab}`;
+
+      console.log(`[Billing] Slab: ${currentSlab} | Rate: ${rate} | AstroShare: ${astroShare}`);
     } else {
-      // Unknown
       return;
     }
 
@@ -564,7 +598,10 @@ async function processBillingCharge(sessionId, durationSeconds, minuteIndex, typ
       if (s1) io.to(s1).emit('wallet-update', { balance: client.walletBalance });
 
       const s2 = userSockets.get(astro.userId);
-      if (s2) io.to(s2).emit('wallet-update', { balance: astro.walletBalance });
+      if (s2) io.to(s2).emit('wallet-update', {
+        balance: astro.walletBalance,
+        totalEarnings: astro.totalEarnings || 0
+      });
 
     } else {
       console.log(`Billing Failed: Insufficient funds for ${client.name}`);
@@ -721,7 +758,14 @@ io.on('connection', (socket) => {
         userSockets.set(userId, socket.id);
         socketToUser.set(socket.id, userId);
 
-        if (typeof cb === 'function') cb({ ok: true, userId: user.userId, role: user.role, name: user.name });
+        if (typeof cb === 'function') cb({
+          ok: true,
+          userId: user.userId,
+          role: user.role,
+          name: user.name,
+          walletBalance: user.walletBalance,
+          totalEarnings: user.totalEarnings || 0
+        });
         console.log(`User registered: ${user.name} (${user.role})`);
 
         // If astro, broadcast update
@@ -1490,6 +1534,21 @@ io.on('connection', (socket) => {
     }
   });
 
+  // --- Get Wallet (Manual Refresh) ---
+  socket.on('get-wallet', async (data) => {
+    const userId = socketToUser.get(socket.id);
+    if (!userId) return;
+    try {
+      const u = await User.findOne({ userId });
+      if (u) {
+        socket.emit('wallet-update', {
+          balance: u.walletBalance,
+          totalEarnings: u.totalEarnings || 0
+        });
+      }
+    } catch (e) { }
+  });
+
   // --- Withdrawal Logic ---
   socket.on('request-withdrawal', async (data, cb) => {
     const userId = socketToUser.get(socket.id);
@@ -1569,6 +1628,21 @@ io.on('connection', (socket) => {
     } catch (e) {
       console.error(e);
       if (typeof cb === 'function') cb({ ok: false, list: [] });
+    }
+  });
+
+  socket.on('get-payout-status', async (data, cb) => {
+    try {
+      const userId = socketToUser.get(socket.id);
+      if (!userId) return cb({ ok: false });
+
+      const pending = await Withdrawal.find({ astroId: userId, status: 'pending' });
+      const totalPending = pending.reduce((sum, w) => sum + (w.amount || 0), 0);
+
+      cb({ ok: true, pendingAmount: totalPending, count: pending.length });
+    } catch (e) {
+      console.error(e);
+      cb({ ok: false, error: 'Error' });
     }
   });
   // --- End Withdrawal Logic ---

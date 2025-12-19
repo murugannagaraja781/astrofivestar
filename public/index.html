@@ -1884,15 +1884,15 @@
       <!-- Toggles -->
       <div class="toggle-row">
         <div class="toggle-item">
-          <span>Chat <small class="text-muted">₹20/min</small></span>
+          <span>Chat </span>
           <div class="toggle-switch" id="toggleChat"></div>
         </div>
         <div class="toggle-item">
-          <span>Call <small class="text-muted">₹20/min</small></span>
+          <span>Call </span>
           <div class="toggle-switch" id="toggleCall"></div>
         </div>
         <div class="toggle-item">
-          <span>Video Call <small class="text-muted">₹20/min</small></span>
+          <span>Video Call </span>
           <div class="toggle-switch" id="toggleVideo"></div>
         </div>
       </div>
@@ -1902,16 +1902,14 @@
         <div style="font-size: 0.8rem; opacity: 0.9;">Boost your earnings with emergency sessions.</div>
       </div>
 
-      <!-- Astro Wallet Card -->
+      <!-- Astro Earnings Card -->
       <div class="progress-card"
         style="margin-bottom: 0px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; border: none;">
         <div>
-          <div style="font-weight: bold; font-size: 1.1rem;">Wallet Balance</div>
-          <div style="font-size: 1.8rem; font-weight: bold; margin-top: 5px;">₹<span id="astroWalletDisplay">0</span>
+          <div style="font-weight: bold; font-size: 1.1rem;">Total Earnings</div>
+          <div style="font-size: 1.8rem; font-weight: bold; margin-top: 5px;">₹<span id="astroLifetimeDisplay">0</span>
           </div>
-          <div style="font-size: 0.8rem; opacity: 0.9; margin-top:5px;">
-            Total Earnings: ₹<span id="astroLifetimeDisplay">0</span>
-          </div>
+          <!-- Removed Wallet Balance secondary line -->
           <div style="font-size: 0.75rem; opacity: 0.8; margin-top:2px;">Min. ₹500 to Withdraw</div>
         </div>
         <div>
@@ -1944,7 +1942,7 @@
           <div class="grid-icon"><i class="fas fa-comment"></i></div> Chat
         </div>
         <div class="grid-item">
-          <div class="grid-icon"><i class="fas fa-wallet"></i></div> Wallet
+          <div class="grid-icon"><i class="fas fa-rupee-sign"></i></div> Earnings
         </div>
         <div class="grid-item">
           <div class="grid-icon"><i class="fas fa-star"></i></div> Reviews
@@ -3440,12 +3438,21 @@
         console.log('Restoring session for:', session.name);
         state.me = session;
         socket.emit('register', { name: session.name, phone: session.phone, userId: session.userId }, (ack) => {
-          sLogin.classList.add('hidden');
-          if (session.role === 'astrologer') loadAstroDash(session);
-          else if (session.role === 'superadmin') loadAdminDash(session);
-          else {
-            if (session.intakeDetails) state.me.intakeDetails = session.intakeDetails;
-            loadClientDash(session);
+          if (ack.ok) {
+            // Merge fresh data from server (wallet, earnings, etc.)
+            state.me = { ...session, ...ack };
+            saveSession(state.me); // Update localStorage with fresh data
+
+            sLogin.classList.add('hidden');
+            if (state.me.role === 'astrologer') loadAstroDash(state.me);
+            else if (state.me.role === 'superadmin') loadAdminDash(state.me);
+            else {
+              if (session.intakeDetails) state.me.intakeDetails = session.intakeDetails;
+              loadClientDash(state.me);
+            }
+          } else {
+            // If register fails (e.g. user deleted), clear session
+            clearSession();
           }
         });
 
@@ -3609,9 +3616,10 @@
       });
 
       socket.on('wallet-update', (data) => {
-        document.getElementById('clientWallet').innerText = data.balance;
+        const bal = Number(data.balance).toFixed(2);
+        document.getElementById('clientWallet').innerText = bal;
         if (document.getElementById('dashWalletBalance')) {
-          document.getElementById('dashWalletBalance').innerText = data.balance;
+          document.getElementById('dashWalletBalance').innerText = bal;
         }
         state.me.walletBalance = data.balance;
         saveSession(state.me);
@@ -3869,6 +3877,51 @@
 
       const globalFooter = document.querySelector('.doc-bottom-nav');
       if (globalFooter) globalFooter.style.display = 'none';
+
+      // Initialize Wallet Display
+      document.getElementById('astroLifetimeDisplay').innerText = Number(user.totalEarnings || 0).toFixed(2);
+
+      // Update Dynamic Prices
+      const rate = user.price || 20;
+      const pChat = document.getElementById('priceChat');
+      const pCall = document.getElementById('priceCall');
+      const pVideo = document.getElementById('priceVideo');
+      if (pChat) pChat.innerText = rate;
+      if (pCall) pCall.innerText = rate;
+      if (pVideo) pVideo.innerText = rate;
+
+      // Status Toggles
+      updateToggleUI('toggleChat', user.isChatOnline);
+      updateToggleUI('toggleCall', user.isAudioOnline);
+      updateToggleUI('toggleVideo', user.isVideoOnline);
+
+      // Listen for Wallet Updates
+      socket.off('wallet-update'); // Prevent duplicates if reloaded
+      socket.on('wallet-update', (data) => {
+        // Update earnings display
+        if (data.totalEarnings !== undefined) {
+          const el = document.getElementById('astroLifetimeDisplay');
+          if (el) el.innerText = Number(data.totalEarnings).toFixed(2);
+          state.me.totalEarnings = data.totalEarnings;
+        }
+
+        // Update stored wallet balance (internal state)
+        if (data.balance !== undefined) {
+          state.me.walletBalance = data.balance;
+        }
+        saveSession(state.me);
+      });
+
+      // Update Payout Status (if any pending)
+      socket.emit('get-payout-status', {}, (res) => {
+        const pDiv = document.getElementById('astroPendingWithdrawals');
+        if (res.pendingAmount > 0) {
+          pDiv.style.display = 'block';
+          pDiv.innerHTML = `<i class="fas fa-clock"></i> Pending Withdrawal: ₹${res.pendingAmount}`;
+        } else {
+          pDiv.style.display = 'none';
+        }
+      });
     }
 
     function setupToggle(id, type) {
@@ -4319,7 +4372,15 @@
       if (data && data.reason === 'insufficient_funds') {
         showLowBalanceAlert(state.me.walletBalance || 0, "Current session ended due to insufficient funds. Please recharge to continue.");
       } else if (data && data.summary) {
-        showSummary(data.summary);
+        // Show summary modal ONLY for Clients
+        if (state.me.role !== 'astrologer') {
+          showSummary(data.summary);
+        }
+      }
+
+      // Force refresh of wallet/earnings
+      if (state.me && state.me.userId) {
+        socket.emit('get-wallet', { userId: state.me.userId });
       }
 
       if (state.me && state.me.role === 'astrologer') {
