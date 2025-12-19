@@ -2237,6 +2237,52 @@
 
   <!-- Screen: Super Admin Dashboard -->
   <div id="screen-admin" class="dashboard-container hidden">
+    <!-- Admin Edit User Modal -->
+    <div id="adminEditModal" class="modal-overlay hidden"
+      style="align-items: center; justify-content: center; z-index: 10001;">
+      <div
+        style="background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 12px; position:relative;">
+        <h3 style="margin-top:0; color:#1e3a8a;">Edit Profile</h3>
+        <input type="hidden" id="adminEditUserId">
+
+        <div style="margin-bottom:15px;">
+          <label style="display:block; font-size:0.8rem; color:#666; margin-bottom:5px;">Display Name</label>
+          <input type="text" id="adminEditName" class="app-input" placeholder="User Name">
+        </div>
+
+        <!-- Astrologer Specific Fields -->
+        <div id="adminEditAstroFields"
+          style="display:none; background:#ecfdf5; padding:10px; border-radius:8px; margin-bottom:15px;">
+          <div style="font-size:0.8rem; color:#065f46; font-weight:bold; margin-bottom:10px;">Astrologer Settings</div>
+
+          <div style="margin-bottom:10px;">
+            <label style="display:block; font-size:0.8rem; color:#666; margin-bottom:5px;">Call Rate (₹/min)</label>
+            <input type="number" id="adminEditPrice" class="app-input" placeholder="20">
+          </div>
+
+          <div style="margin-bottom:10px; display:flex; align-items:center; gap:10px;">
+            <label style="font-size:0.9rem; color:#333;">Verified (Blue Tick)</label>
+            <input type="checkbox" id="adminEditVerified" style="width:20px; height:20px;">
+          </div>
+
+          <div>
+            <label style="display:block; font-size:0.8rem; color:#666; margin-bottom:5px;">Document Verification</label>
+            <select id="adminEditDocStatus" class="app-input">
+              <option value="none">Without Doc</option>
+              <option value="processing">Processing</option>
+              <option value="verified">Verified (Green Badge)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button class="btn-admin" style="background:#e5e7eb; color:#333;"
+            onclick="document.getElementById('adminEditModal').classList.add('hidden')">Cancel</button>
+          <button class="btn-admin" style="background:#1e40af;" onclick="saveAdminEditUser()">Save Changes</button>
+        </div>
+      </div>
+    </div>
+
     <div class="app-header"
       style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); color:white; box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);">
       <div style="font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
@@ -3420,6 +3466,15 @@
       // For now, standard behavior is fine. User asked to "ask login".
     }
 
+    function hideAllScreens() {
+      if (document.getElementById('screen-login')) document.getElementById('screen-login').classList.add('hidden');
+      if (document.getElementById('screen-client')) document.getElementById('screen-client').classList.add('hidden');
+      if (document.getElementById('screen-astro')) document.getElementById('screen-astro').classList.add('hidden');
+      if (document.getElementById('screen-admin')) document.getElementById('screen-admin').classList.add('hidden');
+      // Hide Profile modal if open
+      if (document.getElementById('screen-profile')) document.getElementById('screen-profile').classList.add('hidden');
+    }
+
     function checkGuestAction(actionType, ...args) {
       if (state.me && state.me.role === 'guest') {
         showLogin();
@@ -3498,6 +3553,7 @@
     state.astroList = [];
 
     function loadClientDash(user) {
+      hideAllScreens();
       sClient.classList.remove('hidden');
 
       if (user.role === 'guest') {
@@ -3787,6 +3843,7 @@
 
     // Astrologer Dashboard Logic
     function loadAstroDash(user) {
+      hideAllScreens();
       sAstro.classList.remove('hidden');
       document.getElementById('astroName').textContent = user.name;
       document.getElementById('astroId').textContent = user.userId.slice(0, 6);
@@ -4423,6 +4480,7 @@
     };
 
     function loadAdminDash(user) {
+      hideAllScreens();
       sAdmin.classList.remove('hidden');
 
       // HIDE GLOBAL FOOTER (Client Nav)
@@ -4530,6 +4588,57 @@
       if (el) el.innerHTML = val;
     }
 
+    // --- Admin Edit User Modal Logic ---
+    window.openAdminEditUser = (userId) => {
+      // Find user in local cache
+      const u = adminUsersCache.find(x => x.userId === userId);
+      if (!u) return alert('User not found in cache');
+
+      document.getElementById('adminEditUserId').value = u.userId;
+      document.getElementById('adminEditName').value = u.name;
+
+      const astroFields = document.getElementById('adminEditAstroFields');
+      if (u.role === 'astrologer') {
+        astroFields.style.display = 'block';
+        document.getElementById('adminEditPrice').value = u.price || 20;
+        document.getElementById('adminEditVerified').checked = u.isVerified || false;
+
+        // Handle Document Status
+        // If has documentStatus (new), use it. Else fallback to isDocumentVerified
+        let docStatus = u.documentStatus || (u.isDocumentVerified ? 'verified' : 'none');
+        document.getElementById('adminEditDocStatus').value = docStatus;
+
+      } else {
+        astroFields.style.display = 'none';
+      }
+
+      document.getElementById('adminEditModal').classList.remove('hidden');
+    };
+
+    window.saveAdminEditUser = () => {
+      const uid = document.getElementById('adminEditUserId').value;
+      const name = document.getElementById('adminEditName').value;
+      const u = adminUsersCache.find(x => x.userId === uid);
+
+      const updates = { name };
+
+      if (u.role === 'astrologer') {
+        updates.price = document.getElementById('adminEditPrice').value;
+        updates.isVerified = document.getElementById('adminEditVerified').checked;
+        updates.documentStatus = document.getElementById('adminEditDocStatus').value;
+      }
+
+      socket.emit('admin-update-user-details', { userId: uid, updates }, (res) => {
+        if (res.ok) {
+          alert('Updated Successfully');
+          document.getElementById('adminEditModal').classList.add('hidden');
+          loadAdminDash(); // Refresh List
+        } else {
+          alert('Error: ' + res.error);
+        }
+      });
+    };
+
     // Render Astrologers for Payout Tab
     function renderAdminAstros(list) {
       const container = document.getElementById('adminAstroList');
@@ -4578,7 +4687,7 @@
                <button class="btn-admin btn-role" onclick="adminRole('${u.userId}', '${u.role}')" title="Change Role">
                  <i class="fas fa-user-tag"></i> Role
                </button>
-               <button class="btn-admin btn-role" onclick="adminEditUser('${u.userId}', '${u.name}')" title="Edit Profile">
+               <button class="btn-admin btn-role" onclick="openAdminEditUser('${u.userId}')" title="Edit Profile">
                  <i class="fas fa-edit"></i> Edit
                </button>
                <button class="btn-admin btn-block" onclick="adminBan('${u.userId}', ${!u.isBanned})" title="${u.isBanned ? 'Unblock User' : 'Block User'}">
@@ -4637,20 +4746,8 @@
            </div>
 
            <div class="admin-actions">
-              <button class="btn-admin btn-wallet" onclick="adminWallet('${u.userId}')"><i class="fas fa-plus"></i></button>
-              <button class="btn-admin btn-role" onclick="adminEditUser('${u.userId}', '${u.name}')"><i class="fas fa-edit"></i></button>
-
-              <!-- Astro Specific Verification Buttons -->
-              ${isAstro ? `
-                <button class="btn-admin" style="background:${isVerified ? '#DBEAFE' : '#9CA3AF'}; color:${isVerified ? '#1E3A8A' : 'white'};"
-                        onclick="adminVerify('${u.userId}', 'isVerified', ${!isVerified})">
-                   <i class="fas fa-check-circle"></i> ${isVerified ? 'Unverify' : 'Verify'}
-                </button>
-                <button class="btn-admin" style="background:${isDocs ? '#D1FAE5' : '#9CA3AF'}; color:${isDocs ? '#064E3B' : 'white'};"
-                        onclick="adminVerify('${u.userId}', 'isDocumentVerified', ${!isDocs})">
-                   <i class="fas fa-file"></i> ${isDocs ? 'Un-Doc' : 'Docs'}
-                </button>
-              ` : ''}
+              <button class="btn-admin btn-wallet" onclick="adminWallet('${u.userId}')"><i class="fas fa-plus"></i> Wallet</button>
+              <button class="btn-admin btn-role" onclick="openAdminEditUser('${u.userId}')"><i class="fas fa-edit"></i> Edit</button>
 
               <button class="btn-admin btn-block" onclick="adminBan('${u.userId}', ${!u.isBanned})" style="background:${u.isBanned ? '#DC2626' : '#eee'}; color:${u.isBanned ? 'white' : '#666'};">
                 <i class="fas fa-ban"></i>
@@ -6505,7 +6602,7 @@
 
   <!-- Session Summary Modal -->
   <div id="sessionSummaryModal" class="modal-overlay hidden"
-    style="display:flex; align-items:center; justify-content:center; position:fixed; top:0; left:0; width:100%; height:100%; bg:rgba(0,0,0,0.5); z-index:9999;">
+    style="display:flex; align-items:center; justify-content:center; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999;">
     <div class="modal-content"
       style="background:white; border-radius:15px; width:90%; max-width:350px; text-align:center; padding:30px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
       <h2 style="color:#111; margin-bottom:10px;">Session Summary</h2>

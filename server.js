@@ -100,7 +100,8 @@ const UserSchema = new mongoose.Schema({
   totalEarnings: { type: Number, default: 0 }, // Phase 16: Lifetime Earnings
   experience: { type: Number, default: 0 },
   isVerified: { type: Boolean, default: false }, // Blue Tick
-  isDocumentVerified: { type: Boolean, default: false }, // Document Badge
+  isDocumentVerified: { type: Boolean, default: false }, // Legacy Boolean
+  documentStatus: { type: String, enum: ['none', 'processing', 'verified'], default: 'none' }, // New Status
   image: { type: String, default: '' },
   birthDetails: {
     dob: String,
@@ -1377,6 +1378,36 @@ io.on('connection', (socket) => {
     } catch (e) {
       console.error(e);
       cb({ ok: false, error: 'Internal Error' });
+    }
+  });
+
+  // --- Admin: Update User Details (Unified) ---
+  socket.on('admin-update-user-details', async (data, cb) => {
+    if (!await checkAdmin(socket.id)) return cb({ ok: false, error: 'Unauthorized' });
+    try {
+      const { userId, updates } = data;
+      const user = await User.findOne({ userId });
+      if (!user) return cb({ ok: false, error: 'User not found' });
+
+      // Update allowed fields
+      if (updates.name) user.name = updates.name;
+      if (updates.price) user.price = parseInt(updates.price);
+      if (typeof updates.isVerified === 'boolean') user.isVerified = updates.isVerified;
+      if (updates.documentStatus) {
+        user.documentStatus = updates.documentStatus;
+        // Sync legacy boolean for backward compatibility if needed, but UI uses status now
+        user.isDocumentVerified = (updates.documentStatus === 'verified');
+      }
+
+      await user.save();
+      console.log(`Admin updated user ${user.name}:`, updates);
+
+      if (user.role === 'astrologer') broadcastAstroUpdate();
+
+      cb({ ok: true, user });
+    } catch (e) {
+      console.error(e);
+      cb({ ok: false, error: 'Update Failed' });
     }
   });
 
