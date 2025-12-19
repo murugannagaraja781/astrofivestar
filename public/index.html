@@ -276,6 +276,7 @@
       margin-bottom: 6px;
       display: -webkit-box;
       -webkit-line-clamp: 1;
+      line-clamp: 1;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
@@ -1661,9 +1662,7 @@
       <div id="step-phone">
         <input id="inputPhone" class="cosmic-input" placeholder="Mobile Number" value="">
         <button id="btnSendOtp" class="cosmic-btn">Get OTP</button>
-        <div style="margin-top: 10px; font-size: 0.8rem; color: #ddd;">
-          Use: 9000000001 (Astro) or 8000000001 (Client)
-        </div>
+
       </div>
       <div id="step-otp" class="hidden">
         <input id="inputOtp" class="cosmic-input" placeholder="OTP" value="">
@@ -3375,14 +3374,19 @@
     const sSes = document.getElementById('screen-session');
 
     // Check for existing session
+    // Check for existing session
     function checkSession() {
       try {
         const saved = localStorage.getItem(SESSION_KEY);
-        if (!saved) return;
+        if (!saved) {
+          loadGuestMode();
+          return;
+        }
 
         const session = JSON.parse(saved);
         if (Date.now() > session.expiresAt) {
           localStorage.removeItem(SESSION_KEY);
+          loadGuestMode();
           return;
         }
 
@@ -3394,13 +3398,43 @@
           if (session.role === 'astrologer') loadAstroDash(session);
           else if (session.role === 'superadmin') loadAdminDash(session);
           else {
-            // Preserve intakeDetails if available in session but missing in DB/socket logic
             if (session.intakeDetails) state.me.intakeDetails = session.intakeDetails;
             loadClientDash(session);
           }
         });
 
       } catch (e) { console.error('Session Error', e); }
+    }
+
+    function loadGuestMode() {
+      console.log('Loading Guest Mode');
+      const guestUser = { name: 'Guest', userId: 'guest', role: 'guest', walletBalance: 0 };
+      state.me = guestUser;
+      sLogin.classList.add('hidden');
+      loadClientDash(guestUser);
+    }
+
+    function showLogin() {
+      sLogin.classList.remove('hidden');
+      // Add a close button to login screen if not present, to return to guest mode?
+      // For now, standard behavior is fine. User asked to "ask login".
+    }
+
+    function checkGuestAction(actionType, ...args) {
+      if (state.me && state.me.role === 'guest') {
+        showLogin();
+        return;
+      }
+      // Execute the actual action
+      if (typeof actionType === 'function') {
+        actionType(...args);
+      } else if (actionType === 'chat') {
+        showChatWithBirthChart(...args); // args[0] is astroId
+      } else if (actionType === 'call') {
+        requestSession(args[0], 'audio');
+      } else if (actionType === 'video') {
+        requestSession(args[0], 'video');
+      }
     }
 
     // Login Handlers
@@ -3465,9 +3499,25 @@
 
     function loadClientDash(user) {
       sClient.classList.remove('hidden');
-      document.getElementById('clientWallet').innerText = user.walletBalance || 0;
-      if (document.getElementById('dashWalletBalance')) {
-        document.getElementById('dashWalletBalance').innerText = user.walletBalance || 0;
+
+      if (user.role === 'guest') {
+        const walletEl = document.getElementById('clientWallet');
+        // Replace wallet icon/text with Login Button
+        if (walletEl) {
+          walletEl.parentElement.innerHTML = '<button onclick="showLogin()" style="background:#F59E0B; color:white; border:none; padding:5px 15px; border-radius:20px; cursor:pointer; font-weight:bold; font-size:0.9rem;">Login</button>';
+        }
+        if (document.getElementById('dashWalletBalance')) {
+          document.getElementById('dashWalletBalance').innerText = '0';
+        }
+      } else {
+        // Normal User
+        const walletHtml = '<i class="fas fa-wallet"></i> ₹<span id="clientWallet">' + (user.walletBalance || 0) + '</span><i class="fas fa-sign-out-alt" style="margin-left: 10px; cursor: pointer;" onclick="clearSession()"></i>';
+        const headerRight = document.querySelector('.app-header > div:last-child');
+        if (headerRight) headerRight.innerHTML = walletHtml;
+
+        if (document.getElementById('dashWalletBalance')) {
+          document.getElementById('dashWalletBalance').innerText = user.walletBalance || 0;
+        }
       }
 
       // SHOW GLOBAL FOOTER (Client Nav)
@@ -3481,7 +3531,7 @@
 
       // Home Header
       if (document.getElementById('homeUserName')) {
-        document.getElementById('homeUserName').innerText = user.name.split(' ')[0];
+        document.getElementById('homeUserName').innerText = user.role === 'guest' ? 'Guest' : user.name.split(' ')[0];
         updateHomeTime();
         setInterval(updateHomeTime, 60000);
       }
@@ -3528,6 +3578,10 @@
     }
 
     window.navSwitch = function (tab) {
+      if ((tab === 'chat' || tab === 'profile') && state.me && state.me.role === 'guest') {
+        showLogin();
+        return;
+      }
       document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
       const btn = document.getElementById('nav-' + tab);
       if (btn) btn.classList.add('active');
@@ -3709,19 +3763,19 @@
           <!-- Bottom Row: Action Buttons -->
           <div class="card-actions">
               <div class="cta-btn ${a.isChatOnline ? 'active-chat' : ''}"
-                   onclick="event.stopPropagation(); ${a.isChatOnline ? `showChatWithBirthChart('${a.userId}')` : ''}">
+                   onclick="event.stopPropagation(); checkGuestAction('chat', '${a.userId}')">
                   <i class="fas fa-comment-dots"></i>
                   <span>Chat</span>
               </div>
 
               <div class="cta-btn ${a.isAudioOnline ? 'active-audio' : ''}"
-                   onclick="event.stopPropagation(); ${a.isAudioOnline ? `requestSession('${a.userId}', 'audio')` : ''}">
+                   onclick="event.stopPropagation(); checkGuestAction('call', '${a.userId}')">
                   <i class="fas fa-phone-alt"></i>
                   <span>Call</span>
               </div>
 
               <div class="cta-btn ${a.isVideoOnline ? 'active-video' : ''}"
-                   onclick="event.stopPropagation(); ${a.isVideoOnline ? `requestSession('${a.userId}', 'video')` : ''}">
+                   onclick="event.stopPropagation(); checkGuestAction('video', '${a.userId}')">
                   <i class="fas fa-video"></i>
                   <span>Video</span>
               </div>
@@ -3991,7 +4045,7 @@
     function updateTimerDisplay() {
       const m = Math.floor(timerSec / 60).toString().padStart(2, '0');
       const s = (timerSec % 60).toString().padStart(2, '0');
-      document.getElementById('sessionTimer').innerHTML = `${m}:${s} <span style="font-size:0.8rem; opacity:0.8;">(${timerSec} ticks)</span>`;
+      document.getElementById('sessionTimer').innerHTML = `${m}:${s} <span style="font-size:0.8rem; opacity:0.8;"></span>`;
     }
 
     // Session Management
@@ -5978,7 +6032,7 @@
             data.results.forEach(city => {
               html += `
                   <div onclick="selectMatchCity('${type}', '${city.name}', ${city.latitude}, ${city.longitude})"
-                       style="padding:10px; border-bottom:1px solid #eee; cursor:pointer; hover:bg-gray-100;">
+                       style="padding:10px; border-bottom:1px solid #eee; cursor:pointer;">
                     <div style="font-weight:bold;">${city.name}</div>
                     <div style="font-size:0.8rem; color:#666;">${city.state}</div>
                   </div>
@@ -6444,7 +6498,7 @@
           dText.style.cssText = "font-size:1rem; color:#6B7280; margin-bottom:10px;";
           amt.parentNode.insertBefore(dText, amt);
         }
-        dText.innerText = `Billed Duration: ${dMin}m ${dRem}s (${dSec} ticks)`;
+        dText.innerText = `Billed Duration: ${dMin}m ${dRem}s`;
       }
     }
   </script>
