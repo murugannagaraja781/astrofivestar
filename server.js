@@ -24,7 +24,13 @@ app.use(cors({ origin: "*" }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));  // Serve static files (HTML, CSS, JS, Images)
+app.use(express.static('public'));  // Serve static files
+
+// Policy Page Routes
+app.get('/terms-condition', (req, res) => res.sendFile(path.join(__dirname, 'public/terms-condition.html')));
+app.get('/refund-cancellation-policy', (req, res) => res.sendFile(path.join(__dirname, 'public/refund-cancellation-policy.html')));
+app.get('/return-policy', (req, res) => res.sendFile(path.join(__dirname, 'public/return-policy.html')));
+app.get('/shipping-policy', (req, res) => res.sendFile(path.join(__dirname, 'public/shipping-policy.html')));
 
 // Routes
 const vimshottariRouter = require("./routes/vimshottari");
@@ -1697,6 +1703,135 @@ io.on('connection', (socket) => {
       console.log('Socket disconnected (no user):', socket.id);
     }
   });
+});
+
+// ===== Payment Gateway Logic (PhonePe) =====
+// REPLACE THESE WITH REAL CREDENTIALS (MID, Salt, Index)
+// Current: Test Credentials
+const PHONEPE_MERCHANT_ID = "PGTESTPAYUAT";
+const PHONEPE_SALT_KEY = "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399";
+const PHONEPE_SALT_INDEX = 1;
+const PHONEPE_HOST_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox";
+
+// 1. Initiate Payment
+app.post('/api/payment/create', async (req, res) => {
+  try {
+    const { amount, userId } = req.body;
+    if (!amount || !userId) return res.json({ ok: false, error: 'Missing Amount or User' });
+
+    const merchantTransactionId = "MT" + Date.now() + Math.floor(Math.random() * 1000);
+
+    // Create Pending Record
+    await Payment.create({
+      transactionId: merchantTransactionId,
+      merchantTransactionId,
+      userId,
+      amount,
+      status: 'pending'
+    });
+
+    // PhonePe Payload
+    const payload = {
+      merchantId: PHONEPE_MERCHANT_ID,
+      merchantTransactionId: merchantTransactionId,
+      merchantUserId: userId,
+      amount: amount * 100, // Amount in Paise
+      redirectUrl: `https://astro5star.com/api/payment/callback`,
+      redirectMode: "POST",
+      callbackUrl: `https://astro5star.com/api/payment/callback`,
+      mobileNumber: "9999999999",
+      paymentInstrument: {
+        type: "PAY_PAGE"
+      }
+    };
+
+    const base64Payload = Buffer.from(JSON.stringify(payload)).toString('base64');
+    const stringToSign = base64Payload + "/pg/v1/pay" + PHONEPE_SALT_KEY;
+    const sha256 = crypto.createHash('sha256').update(stringToSign).digest('hex');
+    const checksum = sha256 + "###" + PHONEPE_SALT_INDEX;
+
+    const options = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-VERIFY': checksum,
+        'accept': 'application/json'
+      },
+      body: JSON.stringify({ request: base64Payload })
+    };
+
+    const fetchRes = await fetch(`${PHONEPE_HOST_URL}/pg/v1/pay`, options);
+    const response = await fetchRes.json();
+
+    if (response.success && response.data.instrumentResponse.redirectInfo.url) {
+      res.json({
+        ok: true,
+        paymentUrl: response.data.instrumentResponse.redirectInfo.url
+      });
+    } else {
+      console.error("PhonePe Error:", response);
+      res.json({ ok: false, error: response.message || 'Payment Init Failed' });
+    }
+
+  } catch (e) {
+    console.error("Payment Create Error:", e);
+    res.json({ ok: false, error: 'Internal Error' });
+  }
+});
+
+// 2. Callback (Webhook)
+app.post('/api/payment/callback', async (req, res) => {
+  try {
+    const base64Response = req.body.response;
+    if (!base64Response) {
+      return res.redirect('/?status=fail');
+    }
+
+    const decoded = JSON.parse(Buffer.from(base64Response, 'base64').toString('utf-8'));
+    const { code, merchantTransactionId, providerReferenceId } = decoded;
+
+    console.log(`Payment Callback: ${merchantTransactionId} | Status: ${code}`);
+
+    const payment = await Payment.findOne({ merchantTransactionId });
+    if (!payment) {
+      return res.redirect('/?status=fail&reason=not_found');
+    }
+
+    if (code === 'PAYMENT_SUCCESS') {
+      if (payment.status !== 'success') {
+        payment.status = 'success';
+        payment.providerRefId = providerReferenceId;
+        await payment.save();
+
+        // Credit Wallet
+        const user = await User.findOne({ userId: payment.userId });
+        if (user) {
+          user.walletBalance += payment.amount;
+          await user.save();
+          console.log(`Wallet Credited: ${user.name} +₹${payment.amount}`);
+
+          // Notify Socket if online
+          const sId = userSockets.get(user.userId);
+          if (sId) {
+            io.to(sId).emit('wallet-update', {
+              balance: user.walletBalance,
+              totalEarnings: user.totalEarnings
+            });
+            io.to(sId).emit('app-notification', { text: `✅ Recharge Successful! +₹${payment.amount}` });
+          }
+        }
+      }
+      return res.redirect('/?status=success');
+    } else {
+      payment.status = 'failed';
+      await payment.save();
+      return res.redirect('/?status=fail');
+    }
+
+  } catch (e) {
+    console.error("Callback Error:", e);
+    res.redirect('/?status=error');
+  }
 });
 
 const PORT = process.env.PORT || 3000;

@@ -58,6 +58,8 @@
       align-items: center;
       justify-content: center;
       z-index: 1000;
+      padding-bottom: 80px;
+      /* Space for fixed app-footer */
       color: white;
     }
 
@@ -230,30 +232,36 @@
 
     /* Online: Green & Pulsing */
     .status-badge.online {
-      background: #10B981;
-      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
-      animation: pulse-green 2s infinite;
+      background: #059669;
+      /* Darker Green as requested */
+      box-shadow: 0 0 0 2px white;
+      /* Clean separator */
+    }
+
+    /* Active Profile Image Ring */
+    .astro-img.online-active {
+      border: 2px solid #059669;
+      animation: pulse-border 2s infinite;
     }
 
     /* Busy/Offline: Red & Static */
     .status-badge.busy {
       background: #EF4444;
-      /* Red */
-      box-shadow: none;
-      animation: none;
+      box-shadow: 0 0 0 2px white;
     }
 
-    @keyframes pulse-green {
+    /* Pulse Animation for Border */
+    @keyframes pulse-border {
       0% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.7);
       }
 
       70% {
-        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+        box-shadow: 0 0 0 6px rgba(5, 150, 105, 0);
       }
 
       100% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+        box-shadow: 0 0 0 0 rgba(5, 150, 105, 0);
       }
     }
 
@@ -1669,7 +1677,68 @@
         <button id="btnVerifyOtp" class="cosmic-btn">Verify</button>
       </div>
     </div>
+
   </div>
+
+  <div class="app-footer">
+    <div class="footer-links">
+      <a href="https://astro5star.com/terms-condition" target="_blank">Terms</a>
+      <span class="sep">|</span>
+      <a href="https://astro5star.com/refund-cancellation-policy" target="_blank">Refunds</a>
+      <span class="sep">|</span>
+      <a href="https://astro5star.com/shipping-policy" target="_blank">Shipping</a>
+      <span class="sep">|</span>
+      <a href="https://astro5star.com/return-policy" target="_blank">Returns</a>
+    </div>
+    <div class="footer-copy">&copy; 2024 Astro5Star</div>
+  </div>
+  </div>
+
+  <style>
+    /* App Footer Styling */
+    .app-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(5px);
+      padding: 15px 10px;
+      text-align: center;
+      border-top: 1px solid rgba(0, 0, 0, 0.05);
+      z-index: 50;
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      font-size: 0.75rem;
+      color: #6B7280;
+      margin-bottom: 5px;
+    }
+
+    .footer-links a {
+      color: #6B7280;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: #F59E0B;
+    }
+
+    .footer-links .sep {
+      color: #E5E7EB;
+    }
+
+    .footer-copy {
+      font-size: 0.7rem;
+      color: #9CA3AF;
+    }
+  </style>
 
   <!-- Screen: Client Dashboard -->
   <div id="screen-client" class="dashboard-container hidden">
@@ -1907,8 +1976,15 @@
         style="margin-bottom: 0px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; border: none;">
         <div>
           <div style="font-weight: bold; font-size: 1.1rem;">Total Earnings</div>
-          <div style="font-size: 1.8rem; font-weight: bold; margin-top: 5px;">₹<span id="astroLifetimeDisplay">0</span>
+
+          <div id="astroEarningsContainer" style="display:none; font-size: 1.8rem; font-weight: bold; margin-top: 5px;">
+            ₹<span id="astroLifetimeDisplay">0.00</span>
           </div>
+
+          <button id="btnShowEarnings" onclick="toggleEarnings()"
+            style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 6px 15px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; margin-top: 5px; transition: all 0.2s;">
+            <i class="fas fa-eye"></i> View Earnings
+          </button>
           <!-- Removed Wallet Balance secondary line -->
           <div style="font-size: 0.75rem; opacity: 0.8; margin-top:2px;">Min. ₹500 to Withdraw</div>
         </div>
@@ -3641,7 +3717,7 @@
       if (dateEl) dateEl.innerText = now.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
     }
 
-    window.navSwitch = function (tab) {
+    function navSwitch(tab) {
       if ((tab === 'chat' || tab === 'profile') && state.me && state.me.role === 'guest') {
         showLogin();
         return;
@@ -3770,6 +3846,15 @@
       container.innerHTML = '';
 
       const astrologers = list || [];
+
+      // Sort: Online First, then by Order Count (desc)
+      astrologers.sort((a, b) => {
+        if (a.isOnline === b.isOnline) {
+          return (b.orderCount || 0) - (a.orderCount || 0);
+        }
+        return b.isOnline ? 1 : -1;
+      });
+
       if (astrologers.length === 0) {
         container.innerHTML = '<div style="text-align:center; padding:20px; color:#A7F3D0;">No astrologers online right now.</div>';
         return;
@@ -3793,7 +3878,8 @@
           <!-- Top Row: Image & Info -->
           <div class="card-top-row">
               <div class="astro-img-wrapper">
-                  <img src="${a.image || 'https://ui-avatars.com/api/?name=' + a.name + '&background=random'}" class="astro-img">
+                  <img src="${a.image || 'https://ui-avatars.com/api/?name=' + a.name + '&background=random'}"
+                       class="astro-img ${a.isOnline ? 'online-active' : ''}">
                   <div class="status-badge ${a.isOnline ? 'online' : 'busy'}"></div>
               </div>
 
@@ -6463,67 +6549,151 @@
     // Initialize
     checkSession();
   </script>
-  /* --- Trust Badges --- */
-  .ribbon {
-  position: absolute;
-  top: -4px;
-  left: -4px;
-  z-index: 10;
-  overflow: hidden;
-  width: 75px;
-  height: 75px;
-  text-align: right;
-  }
+  <style>
+    /* --- Trust Badges --- */
+    .ribbon {
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      z-index: 10;
+      overflow: hidden;
+      width: 75px;
+      height: 75px;
+      text-align: right;
+    }
 
-  .ribbon span {
-  font-size: 0.6rem;
-  font-weight: bold;
-  color: #FFF;
-  text-transform: uppercase;
-  text-align: center;
-  line-height: 20px;
-  transform: rotate(-45deg);
-  -webkit-transform: rotate(-45deg);
-  width: 100px;
-  display: block;
-  background: linear-gradient(#F59E0B 0%, #D97706 100%);
-  box-shadow: 0 3px 10px -5px rgba(0, 0, 0, 1);
-  position: absolute;
-  top: 19px;
-  left: -21px;
-  }
+    .ribbon span {
+      font-size: 0.6rem;
+      font-weight: bold;
+      color: #FFF;
+      text-transform: uppercase;
+      text-align: center;
+      line-height: 20px;
+      transform: rotate(-45deg);
+      -webkit-transform: rotate(-45deg);
+      width: 100px;
+      display: block;
+      background: linear-gradient(#F59E0B 0%, #D97706 100%);
+      box-shadow: 0 3px 10px -5px rgba(0, 0, 0, 1);
+      position: absolute;
+      top: 19px;
+      left: -21px;
+    }
 
-  .ribbon span::before, .ribbon span::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  margin: 0 -1px; /* tweak */
-  width: 100%;
-  height: 100%;
-  background: inherit;
-  min-height: 20px;
-  }
+    .ribbon span::before,
+    .ribbon span::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      margin: 0 -1px;
+      /* tweak */
+      width: 100%;
+      height: 100%;
+      background: inherit;
+      min-height: 20px;
+    }
 
-  .privacy-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: #F3F4F6;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  color: #6B7280;
-  margin-top: 5px;
-  border: 1px solid #E5E7EB;
-  }
+    .privacy-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #F3F4F6;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      color: #6B7280;
+      margin-top: 5px;
+      border: 1px solid #E5E7EB;
+    }
 
-  /* Modify card to accommodate ribbon */
-  .astro-card {
-  overflow: hidden; /* For ribbon cropping */
-  }
+    /* Modify card to accommodate ribbon */
+    .astro-card {
+      overflow: hidden;
+      /* For ribbon cropping */
+    }
 
-  /* --- Custom Global Alert Modal --- */
-  <!-- Low Balance Pop-up -->
+    /* --- Custom Global Alert Modal CSS --- */
+    .custom-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .custom-modal-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .custom-modal-box {
+      background: white;
+      width: 90%;
+      max-width: 320px;
+      padding: 25px 20px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      transform: scale(0.8);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .custom-modal-overlay.open .custom-modal-box {
+      transform: scale(1);
+    }
+
+    .custom-modal-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #FEF3C7;
+      color: #F59E0B;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 6px rgba(245, 158, 11, 0.2);
+    }
+
+    .custom-modal-message {
+      font-size: 1.05rem;
+      color: #374151;
+      margin-bottom: 25px;
+      line-height: 1.5;
+      font-weight: 500;
+    }
+
+    .custom-modal-btn {
+      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+      transition: transform 0.2s;
+      width: 100%;
+    }
+
+    .custom-modal-btn:active {
+      transform: scale(0.96);
+    }
+  </style>
   <div id="lowBalanceOverlay" class="low-balance-overlay">
     <div class="low-balance-card">
       <div class="alert-icon-wrapper">
@@ -6618,6 +6788,29 @@
       if (overlay) overlay.classList.remove('active');
     }
 
+    // --- On-Demand Earnings Logic ---
+    function toggleEarnings() {
+      const cont = document.getElementById('astroEarningsContainer');
+      const btn = document.getElementById('btnShowEarnings');
+      if (!cont || !btn) return;
+
+      // Unhide if hidden
+      if (cont.style.display === 'none') {
+        cont.style.display = 'block';
+        btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh Data';
+      } else {
+        // Feedback animation
+        const oldText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+        setTimeout(() => btn.innerHTML = oldText, 1000);
+      }
+
+      // Fetch Latest from DB
+      if (state.me && state.me.userId) {
+        socket.emit('get-wallet', { userId: state.me.userId });
+      }
+    }
+
     // --- Session Summary Logic ---
     function closeSummaryModal() {
       document.getElementById('sessionSummaryModal').classList.add('hidden');
@@ -6625,6 +6818,10 @@
       if (state.me && state.me.userId) {
         socket.emit('get-wallet', { userId: state.me.userId });
       }
+      // Refresh page as requested
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     }
 
     function showSummary(data) {
@@ -6666,8 +6863,8 @@
     style="display:flex; align-items:center; justify-content:center; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999;">
     <div class="modal-content"
       style="background:white; border-radius:15px; width:90%; max-width:350px; text-align:center; padding:30px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
-      <h2 style="color:#111; margin-bottom:10px;">Session Summary</h2>
-      <div id="summaryText" style="font-size:1.2rem; color:#4B5563; margin-bottom:20px;"></div>
+      <h2 style="color:#111; margin-bottom:10px;"> நன்றி மீண்டும் வருக</h2>
+      <!-- <div id="summaryText" style="font-size:1.2rem; color:#4B5563; margin-bottom:20px;"></div> -->
       <div class="summary-amount" style="font-size:2rem; font-weight:bold; color: #059669; margin-bottom:30px;"></div>
       <button onclick="closeSummaryModal()" class="btn-primary"
         style="width:100%; padding: 12px; font-size:1rem; border-radius:10px; border:none; background:#2563EB; color:white; font-weight:bold;">Okay</button>
