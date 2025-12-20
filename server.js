@@ -128,8 +128,22 @@ const UserSchema = new mongoose.Schema({
       tob: String,
       pob: String
     }
-  }
+  },
+  // Phase 2: Reliable Calling Fields
+  isAvailable: { type: Boolean, default: false }, // Explicit Online Toggle
+  availabilityExpiresAt: Date, // Safety timeout
+  fcmToken: String, // Push Notification Token
+  lastSeen: { type: Date, default: Date.now }
 });
+
+const CallRequestSchema = new mongoose.Schema({
+  callId: { type: String, unique: true },
+  callerId: String,
+  receiverId: String,
+  status: { type: String, enum: ['initiated', 'ringing', 'accepted', 'rejected', 'missed'], default: 'initiated' },
+  createdAt: { type: Date, default: Date.now }
+});
+const CallRequest = mongoose.model('CallRequest', CallRequestSchema);
 const User = mongoose.model('User', UserSchema);
 
 const SessionSchema = new mongoose.Schema({
@@ -1705,13 +1719,140 @@ io.on('connection', (socket) => {
   });
 });
 
+// ===== Reliable Calling System (DB + FCM) =====
+
+// 1. Astrologer Online Toggle
+app.post('/api/astrologer/online', async (req, res) => {
+  const { userId, available, fcmToken } = req.body;
+  if (!userId) return res.json({ ok: false, error: 'Missing userId' });
+
+  try {
+    const update = {
+      isAvailable: available,
+      lastSeen: new Date()
+    };
+
+    if (available) {
+      update.availabilityExpiresAt = new Date(Date.now() + 1000 * 60 * 60); // 1 Hour TTL
+    }
+    if (fcmToken) {
+      update.fcmToken = fcmToken;
+    }
+
+    await User.updateOne({ userId }, update);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error("Online Toggle Error:", e);
+    res.json({ ok: false });
+  }
+});
+
+// 2. Initiate Call (User -> Astrologer)
+app.post('/api/call/initiate', async (req, res) => {
+  const { callerId, receiverId } = req.body;
+  if (!callerId || !receiverId) return res.json({ ok: false, error: 'Missing IDs' });
+
+  try {
+    // A. Check Availability (DB Source of Truth)
+    const astro = await User.findOne({ userId: receiverId });
+
+    // Safety: Auto-expire offline if TTL passed
+    if (astro.availabilityExpiresAt && new Date() > astro.availabilityExpiresAt) {
+      astro.isAvailable = false;
+      await astro.save();
+    }
+
+    if (!astro || !astro.isAvailable) {
+      return res.json({ ok: false, error: 'Astrologer is Offline', code: 'OFFLINE' });
+    }
+
+    // B. Create Call Request
+    const callId = "CALL_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+    await CallRequest.create({
+      callId,
+      callerId,
+      receiverId,
+      status: 'ringing'
+    });
+
+    // C. Send FCM Push Notification (WAKE UP APP)
+    // NOTE: Replace with real Firebase Server Key from Environment Variable
+    if (astro.fcmToken) {
+      const fcmPayload = {
+        to: astro.fcmToken,
+        priority: 'high',
+        data: {
+          type: 'call',
+          callId: callId,
+          callerId: callerId,
+          callerName: "Client", // TODO: Fetch Name
+          title: "Incoming Call",
+          body: "Video Call Request"
+        },
+        notification: {
+          title: "Incoming Call",
+          body: "Tap to answer video call",
+          android_channel_id: "calls" // Important for Android
+        }
+      };
+
+      // Send to FCM (Legacy API)
+      const FCM_SERVER_KEY = "BKHoplA5AZRRiId8evnceHKysAFH8kzHTYv0jE2N041TYdKgk1mP9dslrt7a0bY0f7Sxe4JfDYr-vdKS82mBVEM";
+
+      const fcmRes = await fetch('https://fcm.googleapis.com/fcm/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `key=${FCM_SERVER_KEY}`
+        },
+        body: JSON.stringify(fcmPayload)
+      });
+
+      const fcmData = await fcmRes.json();
+      console.log(`[FCM] Sent Push to ${receiverId} | Success: ${fcmData.success}`);
+      console.log(`[FCM] Sending Push to ${receiverId} (Token: ${astro.fcmToken.substring(0, 10)}...)`);
+    } else {
+      console.log(`[FCM] No Token for ${receiverId}. Call might fail if app is killed.`);
+    }
+
+    res.json({ ok: true, callId, status: 'ringing' });
+
+  } catch (e) {
+    console.error("Init Call Error:", e);
+    res.json({ ok: false, error: 'Server Error' });
+  }
+});
+
+// 3. Accept Call (Astrologer -> Server)
+app.post('/api/call/accept', async (req, res) => {
+  const { callId, receiverId } = req.body;
+  try {
+    const call = await CallRequest.findOne({ callId });
+    if (!call) return res.json({ ok: false, error: 'Invalid Call' });
+
+    if (call.status !== 'ringing') {
+      return res.json({ ok: false, error: 'Call already handled' });
+    }
+
+    call.status = 'accepted';
+    await call.save();
+
+    res.json({ ok: true, message: 'Call Connected' });
+
+  } catch (e) {
+    console.error("Accept Call Error:", e);
+    res.json({ ok: false });
+  }
+});
+
+
 // ===== Payment Gateway Logic (PhonePe) =====
 // REPLACE THESE WITH REAL CREDENTIALS (MID, Salt, Index)
-// Current: Test Credentials
-const PHONEPE_MERCHANT_ID = "PGTESTPAYUAT";
-const PHONEPE_SALT_KEY = "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399";
+// Current: Production Credentials (LIVE)
+const PHONEPE_MERCHANT_ID = "M22LBBWEJKI6A";
+const PHONEPE_SALT_KEY = "ba824dad-ed66-4cec-9d76-4c1e0b118eb1";
 const PHONEPE_SALT_INDEX = 1;
-const PHONEPE_HOST_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox";
+const PHONEPE_HOST_URL = "https://api.phonepe.com/apis/hermes"; // Production URL
 
 // 1. Initiate Payment
 app.post('/api/payment/create', async (req, res) => {
