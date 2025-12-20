@@ -6899,28 +6899,28 @@
 
     async function processRecharge(amount) {
       if (!amount || amount <= 0) return alert("Invalid amount");
-
-      // Mobile Native Check: Use UPI Intent
-      if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({
-          type: 'UPI_PAY',
-          amount: amount
-        }));
-        return; // Stop here, App handles the rest
-      }
-
-      // Web Flow: PhonePe PG
       if (!state.me || !state.me.userId) return alert("Please login first");
 
       try {
+        const isApp = !!window.ReactNativeWebView;
+
         const res = await fetch('/api/payment/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount, userId: state.me.userId })
+          body: JSON.stringify({ amount, userId: state.me.userId, isApp })
         }).then(r => r.json());
 
         if (res.ok && res.paymentUrl) {
-          window.location.href = res.paymentUrl; // Redirect to PhonePe
+          if (isApp) {
+            // App: Open in Chrome
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'OPEN_EXTERNAL',
+              url: res.paymentUrl
+            }));
+          } else {
+            // Web: Redirect
+            window.location.href = res.paymentUrl;
+          }
         } else {
           alert("Recharge Error: " + (res.error || 'Unknown'));
         }

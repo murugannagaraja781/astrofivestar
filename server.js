@@ -1857,10 +1857,13 @@ const PHONEPE_HOST_URL = "https://api.phonepe.com/apis/hermes"; // Production UR
 // 1. Initiate Payment
 app.post('/api/payment/create', async (req, res) => {
   try {
-    const { amount, userId } = req.body;
+    const { amount, userId, isApp } = req.body;
     if (!amount || !userId) return res.json({ ok: false, error: 'Missing Amount or User' });
 
     const merchantTransactionId = "MT" + Date.now() + Math.floor(Math.random() * 1000);
+    const redirectUrl = isApp
+      ? `https://astro5star.com/api/payment/callback?isApp=true`
+      : `https://astro5star.com/api/payment/callback`;
 
     // Create Pending Record
     await Payment.create({
@@ -1877,7 +1880,7 @@ app.post('/api/payment/create', async (req, res) => {
       merchantTransactionId: merchantTransactionId,
       merchantUserId: userId,
       amount: amount * 100, // Amount in Paise
-      redirectUrl: `https://astro5star.com/api/payment/callback`,
+      redirectUrl: redirectUrl,
       redirectMode: "POST",
       callbackUrl: `https://astro5star.com/api/payment/callback`,
       mobileNumber: "9999999999",
@@ -1962,10 +1965,18 @@ app.post('/api/payment/callback', async (req, res) => {
           }
         }
       }
+
+      if (req.query.isApp === 'true') {
+        return res.redirect('astro5star://payment_status?status=success');
+      }
       return res.redirect('/?status=success');
     } else {
       payment.status = 'failed';
       await payment.save();
+
+      if (req.query.isApp === 'true') {
+        return res.redirect('astro5star://payment_status?status=failed');
+      }
       return res.redirect('/?status=fail');
     }
 

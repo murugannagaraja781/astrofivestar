@@ -44,6 +44,7 @@ function App(): React.JSX.Element {
   const [fcmToken, setFcmToken] = useState<string | null>(null);
 
   const [initialUrl, setInitialUrl] = useState('https://astro5star.com');
+  const webviewRef = React.useRef<WebView>(null);
 
   useEffect(() => {
     const setupServices = async () => {
@@ -149,9 +150,36 @@ function App(): React.JSX.Element {
       setIsConnected(state.isConnected);
     });
 
+    // Deep Link Handler
+    const handleDeepLink = (event: { url: string }) => {
+      console.log("Deep Link received:", event.url);
+      if (event.url.includes('payment_status') || event.url.includes('astro5star')) {
+        // Extract status or just force refresh
+        // Inject JS to refresh wallet
+        const refreshJS = `
+          (function() {
+            if (window.fetchTransactionHistory) window.fetchTransactionHistory();
+            if (window.socket && window.state && window.state.me) {
+               window.socket.emit('get-wallet', { userId: window.state.me.userId });
+            }
+            alert("Payment Verified! Wallet Updating...");
+          })();
+          true;
+        `;
+        webviewRef.current?.injectJavaScript(refreshJS);
+      }
+    };
+    const linkingUnsub = Linking.addEventListener('url', handleDeepLink);
+
+    // Check if app was launched by deep link
+    Linking.getInitialURL().then(url => {
+      if (url) handleDeepLink({ url });
+    });
+
     return () => {
       unsubscribe();
       netUnsub();
+      linkingUnsub.remove();
     };
   }, []);
 
@@ -185,6 +213,7 @@ function App(): React.JSX.Element {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <WebView
+        ref={webviewRef}
         source={{ uri: initialUrl }}
         style={styles.webview}
         injectedJavaScript={injectedJS}
@@ -203,6 +232,7 @@ function App(): React.JSX.Element {
         )}
         mediaCapturePermissionGrantType="grant"
         originWhitelist={['*']}
+        // @ts-ignore
         onPermissionRequest={(request: WebViewPermissionRequest) => {
           request.grant(request.resources);
         }}
@@ -216,24 +246,22 @@ function App(): React.JSX.Element {
             if (data.type === 'KEEP_AWAKE') {
               setKeepScreenAwake(!!data.enable);
             }
+            if (data.type === 'OPEN_EXTERNAL') {
+              // Open in Chrome/System Browser
+              Linking.openURL(data.url).catch(err => console.error("Couldn't load page", err));
+            }
             if (data.type === 'UPI_PAY') {
-              // Native UPI Intent (Deep Link) - Using strict library as requested
-              // UpiPayment.initializePayment(config, success, failure)
+              // Legacy/Alternative Native UPI
               const txnRef = 'TXN_' + Date.now();
               UpiPayment.initializePayment(
                 {
-                  vpa: 'M22LBBWEJKI6A', // As requested
+                  vpa: 'M22LBBWEJKI6A',
                   payeeName: 'Astro5star',
                   amount: String(data.amount),
                   transactionRef: txnRef,
                 },
-                (successData: any) => {
-                  console.log('UPI SUCCESS', successData);
-                  // Optionally verify with backend here
-                },
-                (failureData: any) => {
-                  console.log('UPI FAILED', failureData);
-                }
+                (successData: any) => console.log('UPI SUCCESS', successData),
+                (failureData: any) => console.log('UPI FAILED', failureData)
               );
             }
           } catch (e) {
