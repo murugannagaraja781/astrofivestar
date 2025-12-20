@@ -1658,6 +1658,25 @@
         font-size: 0.75rem;
       }
     }
+
+    .chip-btn {
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      padding: 6px 15px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      color: #374151;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .chip-btn:hover,
+    .chip-btn:active {
+      background: #d1fae5;
+      color: #047857;
+      border-color: #10b981;
+    }
   </style>
 </head>
 
@@ -2170,6 +2189,52 @@
         <button class="cosmic-btn" onclick="sendChatWithBirthChart()" style="margin-top:20px;">
           <i class="fas fa-comments"></i> Start Chat with Birth Details
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen: Recharge Wallet Modal -->
+  <div id="screen-recharge" class="modal-overlay hidden"
+    style="align-items: center; justify-content: center; z-index: 20000;">
+    <div class="call-popup" style="width: 90%; max-width: 350px; text-align: left; position: relative; padding: 25px;">
+      <button onclick="closeRechargeModal()" class="close-btn" style="position: absolute; right: 15px; top: 15px;"><i
+          class="fas fa-times"></i></button>
+
+      <div style="text-align: center; margin-bottom: 20px;">
+        <div
+          style="width: 50px; height: 50px; background: #ECFDF5; border-radius: 50%; color: #047857; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-size: 1.5rem;">
+          <i class="fas fa-wallet"></i>
+        </div>
+        <h3 style="margin: 0; color: #1F2937; font-size: 1.2rem;">Add Money to Wallet</h3>
+        <p style="font-size: 0.85rem; color: #6B7280; margin-top: 5px;">Secure payment for cosmic consultation</p>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label style="font-size: 0.85rem; font-weight: 600; color: #374151; display: block; margin-bottom: 8px;">Enter
+          Amount</label>
+        <div style="position: relative;">
+          <span
+            style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-weight: bold; color: #374151; font-size: 1.2rem;">₹</span>
+          <input type="number" id="rechargeInput" class="app-input"
+            style="padding-left: 35px; font-size: 1.3rem; font-weight: bold; color: #047857;" placeholder="100"
+            value="100">
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap;">
+        <button onclick="setRechargeAmount(100)" class="chip-btn">₹100</button>
+        <button onclick="setRechargeAmount(200)" class="chip-btn">₹200</button>
+        <button onclick="setRechargeAmount(500)" class="chip-btn">₹500</button>
+        <button onclick="setRechargeAmount(1000)" class="chip-btn">₹1000</button>
+      </div>
+
+      <button class="cosmic-btn" onclick="submitRecharge()"
+        style="width: 100%; border-radius: 12px; font-size: 1rem; padding: 14px;">
+        Proceed to Pay <i class="fas fa-arrow-right" style="margin-left: 8px;"></i>
+      </button>
+
+      <div style="text-align: center; margin-top: 15px; font-size: 0.75rem; color: #9CA3AF;">
+        <i class="fas fa-lock"></i> 100% Secure Payment via PhonePe/UPI
       </div>
     </div>
   </div>
@@ -6736,13 +6801,46 @@
       }
     };
 
-    window.initiateRecharge = async function (amountStr) {
-      if (!amountStr) {
-        amountStr = prompt("Enter amount to recharge (₹):", "100");
+    // --- New Recharge Modal Logic ---
+    window.initiateRecharge = function (amountStr) {
+      if (amountStr) {
+        // Direct call (if any)
+        processRecharge(parseFloat(amountStr));
+      } else {
+        // Show Modal
+        document.getElementById('screen-recharge').classList.remove('hidden');
       }
-      const amount = parseFloat(amountStr);
+    };
+
+    window.closeRechargeModal = function () {
+      document.getElementById('screen-recharge').classList.add('hidden');
+    };
+
+    window.setRechargeAmount = function (amt) {
+      document.getElementById('rechargeInput').value = amt;
+    };
+
+    window.submitRecharge = function () {
+      const amtVal = document.getElementById('rechargeInput').value;
+      if (!amtVal || parseFloat(amtVal) <= 0) return alert("Please enter a valid amount");
+
+      closeRechargeModal();
+      processRecharge(parseFloat(amtVal));
+    };
+
+    async function processRecharge(amount) {
       if (!amount || amount <= 0) return alert("Invalid amount");
 
+      // Mobile Native Check: Use UPI Intent
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'UPI_PAY',
+          amount: amount
+        }));
+        return; // Stop here, App handles the rest
+      }
+
+      // Web Flow: PhonePe PG
       if (!state.me || !state.me.userId) return alert("Please login first");
 
       try {
@@ -6761,7 +6859,7 @@
         console.error(e);
         alert("Failed to initiate payment");
       }
-    };
+    }
 
     function closeCustomAlert() {
       const modal = document.getElementById('custom-alert-modal');

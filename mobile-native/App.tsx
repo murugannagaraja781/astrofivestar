@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Text,
   Vibration,
+  Linking,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import KeepAwake from 'react-native-keep-awake';
@@ -210,6 +211,15 @@ function App(): React.JSX.Element {
             }
             if (data.type === 'KEEP_AWAKE') {
               setKeepScreenAwake(!!data.enable);
+            }
+            if (data.type === 'UPI_PAY') {
+              // Native UPI Intent (Deep Link) - Zero SDK
+              const upiUrl = `upi://pay?pa=abinash990@federal&pn=Astro5star&am=${data.amount}&cu=INR&tn=Astro Payment`;
+
+              Linking.openURL(upiUrl).catch(err => {
+                console.error("UPI Error:", err);
+                // Optionally send error back to Web
+              });
             }
           } catch (e) {
             console.log('WebView Message Error', e);
