@@ -5,35 +5,46 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-  workflow_dispatch:
+
+env:
+  ANDROID_SDK_ROOT: ${{ runner.tool_cache }}/android-sdk
 
 jobs:
   build:
-    name: Build Android App
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Cache Gradle Packages
+      - name: Cache Gradle
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('mobile-native/android/gradle/wrapper/gradle-wrapper.properties', 'mobile-native/android/**/*.gradle*', 'mobile-native/android/gradle.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
+
+      - name: Install Android SDK commandline tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O /tmp/cmdline-tools.zip
+          unzip -q /tmp/cmdline-tools.zip -d /tmp
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools/latest
+          mv /tmp/cmdline-tools/* $ANDROID_SDK_ROOT/cmdline-tools/latest/
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
       - name: Decode Keystore
         env:
@@ -47,20 +58,20 @@ jobs:
             echo "Warning: ANDROID_KEYSTORE_BASE64 secret not found. Build will be unsigned or debug signed."
           fi
 
+      - name: Make gradlew executable
+        working-directory: mobile-native/android
+        run: chmod +x ./gradlew
+
       - name: Build AAB and APK
-        id: build_android
         env:
           MYAPP_UPLOAD_STORE_FILE: "my-release-key.keystore"
           MYAPP_UPLOAD_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           MYAPP_UPLOAD_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           MYAPP_UPLOAD_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        working-directory: ./mobile-native/android
+          JAVA_HOME: ${{ env.JAVA_HOME_17_X64 || '/usr/lib/jvm/java-17-openjdk-amd64' }}
+        working-directory: mobile-native/android
         run: |
-          chmod +x gradlew
-          echo "Building AAB..."
-          ./gradlew bundleRelease
-          echo "Building APK..."
-          ./gradlew assembleRelease
+          ./gradlew clean assembleRelease bundleRelease --stacktrace --no-daemon
 
       - name: Upload AAB Artifact
         uses: actions/upload-artifact@v4
