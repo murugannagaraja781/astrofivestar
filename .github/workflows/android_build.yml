@@ -41,7 +41,7 @@ jobs:
         run: |
           if [ ! -z "$ANDROID_KEYSTORE_BASE64" ]; then
             echo "Decoding Keystore..."
-            echo $ANDROID_KEYSTORE_BASE64 | base64 --decode > mobile-native/android/app/my-release-key.keystore
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > mobile-native/android/app/my-release-key.keystore
             echo "Keystore Decoded Successfully."
           else
             echo "Warning: ANDROID_KEYSTORE_BASE64 secret not found. Build will be unsigned or debug signed."
