@@ -10,6 +10,7 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+        jcenter() // Required for old React Native libraries
     }
     dependencies {
         classpath("com.android.tools.build:gradle")

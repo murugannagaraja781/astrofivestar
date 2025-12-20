@@ -1848,7 +1848,7 @@ app.post('/api/call/accept', async (req, res) => {
 
 // ===== Payment Gateway Logic (PhonePe) =====
 // REPLACE THESE WITH REAL CREDENTIALS (MID, Salt, Index)
-// Current: Production Credentials (LIVE)
+// Payment Gateway Config (PhonePe)
 const PHONEPE_MERCHANT_ID = "M22LBBWEJKI6A";
 const PHONEPE_SALT_KEY = "ba824dad-ed66-4cec-9d76-4c1e0b118eb1";
 const PHONEPE_SALT_INDEX = 1;

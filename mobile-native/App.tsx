@@ -11,7 +11,11 @@ import {
   Text,
   Vibration,
   Linking,
+  Alert,
+  AppState,
 } from 'react-native';
+// @ts-ignore
+import UpiPayment from 'react-native-upi-payment';
 import { WebView } from 'react-native-webview';
 import KeepAwake from 'react-native-keep-awake';
 import NetInfo from '@react-native-community/netinfo';
@@ -213,13 +217,24 @@ function App(): React.JSX.Element {
               setKeepScreenAwake(!!data.enable);
             }
             if (data.type === 'UPI_PAY') {
-              // Native UPI Intent (Deep Link) - Zero SDK
-              const upiUrl = `upi://pay?pa=abinash990@federal&pn=Astro5star&am=${data.amount}&cu=INR&tn=Astro Payment`;
-
-              Linking.openURL(upiUrl).catch(err => {
-                console.error("UPI Error:", err);
-                // Optionally send error back to Web
-              });
+              // Native UPI Intent (Deep Link) - Using strict library as requested
+              // UpiPayment.initializePayment(config, success, failure)
+              const txnRef = 'TXN_' + Date.now();
+              UpiPayment.initializePayment(
+                {
+                  vpa: 'abinash990@federal', // As requested
+                  payeeName: 'Astro5star',
+                  amount: String(data.amount),
+                  transactionRef: txnRef,
+                },
+                (successData: any) => {
+                  console.log('UPI SUCCESS', successData);
+                  // Optionally verify with backend here
+                },
+                (failureData: any) => {
+                  console.log('UPI FAILED', failureData);
+                }
+              );
             }
           } catch (e) {
             console.log('WebView Message Error', e);

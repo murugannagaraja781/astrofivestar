@@ -105,7 +105,11 @@ android {
         }
         release {
             // Use release signing if configured, otherwise fallback to debug (local dev)
-            signingConfig signingConfigs.release
+            if (System.getenv("MYAPP_UPLOAD_STORE_FILE")) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig signingConfigs.debug
+            }
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
