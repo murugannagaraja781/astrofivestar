@@ -222,7 +222,7 @@ function App(): React.JSX.Element {
               const txnRef = 'TXN_' + Date.now();
               UpiPayment.initializePayment(
                 {
-                  vpa: 'abinash990@federal', // As requested
+                  vpa: 'M22LBBWEJKI6A', // As requested
                   payeeName: 'Astro5star',
                   amount: String(data.amount),
                   transactionRef: txnRef,
