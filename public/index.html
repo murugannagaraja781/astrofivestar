@@ -1827,6 +1827,22 @@
           </button>
         </div>
 
+        <!-- Transaction History Section -->
+        <div style="margin-bottom: 20px;">
+          <div
+            style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding: 0 5px;">
+            <h3 style="margin:0; font-size:1.1rem; color:#1F2937;">Recent Transactions</h3>
+            <button onclick="fetchTransactionHistory()"
+              style="background:none; border:none; color:#F59E0B; font-weight:600; cursor:pointer;">
+              <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+          </div>
+          <div id="transactionList" style="display:flex; flex-direction:column; gap:10px;">
+            <!-- Transactions will result here -->
+            <div style="text-align:center; padding:20px; color:#6B7280; font-size:0.9rem;">Loading...</div>
+          </div>
+        </div>
+
 
       </div>
     </div>
@@ -3721,6 +3737,9 @@
         if (document.getElementById('dashWalletBalance')) {
           document.getElementById('dashWalletBalance').innerText = user.walletBalance || 0;
         }
+
+        // Fetch Payment History
+        if (window.fetchTransactionHistory) window.fetchTransactionHistory();
       }
 
       // SHOW GLOBAL FOOTER (Client Nav)
@@ -3763,6 +3782,9 @@
         }
         state.me.walletBalance = data.balance;
         saveSession(state.me);
+
+        // Refresh History
+        if (window.fetchTransactionHistory) window.fetchTransactionHistory();
 
         // Low Balance Warning (e.g., < ₹50)
         // Check if we are in a session? Maybe not needed, just warn.
@@ -6801,6 +6823,54 @@
     };
 
     // --- New Recharge Modal Logic ---
+    // --- Transaction History ---
+    window.fetchTransactionHistory = async function () {
+      if (!state.me || !state.me.userId) return;
+
+      const listEl = document.getElementById('transactionList');
+      if (!listEl) return;
+
+      // Keep loading state if empty, or just transparent update
+      // listEl.innerHTML = '<div style="text-align:center; padding:10px; color:#6B7280;">Updating...</div>';
+
+      try {
+        const res = await fetch(`/api/payment/history/${state.me.userId}`).then(r => r.json());
+        if (res.ok && res.data) {
+          if (res.data.length === 0) {
+            listEl.innerHTML = '<div style="text-align:center; padding:20px; color:#6B7280; font-size:0.9rem;">No transactions found.</div>';
+            return;
+          }
+
+          listEl.innerHTML = res.data.map(txn => {
+            const date = new Date(txn.createdAt).toLocaleDateString() + ' ' + new Date(txn.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const statusColor = txn.status === 'success' ? '#059669' : (txn.status === 'failed' ? '#DC2626' : '#D97706');
+            const icon = txn.status === 'success' ? 'fa-check-circle' : (txn.status === 'failed' ? 'fa-times-circle' : 'fa-clock');
+
+            return `
+            <div style="background:white; padding:15px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:40px; height:40px; border-radius:50%; background:${statusColor}20; display:flex; align-items:center; justify-content:center; color:${statusColor}; font-size:1.1rem;">
+                  <i class="fas ${icon}"></i>
+                </div>
+                <div>
+                   <div style="font-weight:bold; color:#374151; font-size:1rem;">₹${txn.amount}</div>
+                   <div style="font-size:0.75rem; color:#9CA3AF;">${date}</div>
+                </div>
+              </div>
+              <div style="text-align:right;">
+                 <div style="font-size:0.8rem; font-weight:600; color:${statusColor}; text-transform:capitalize;">${txn.status}</div>
+                 <div style="font-size:0.65rem; color:#D1D5DB; margin-top:2px;">#${txn.transactionId ? txn.transactionId.slice(-6).toUpperCase() : '---'}</div>
+              </div>
+            </div>
+            `;
+          }).join('');
+        }
+      } catch (e) {
+        console.error("History Fetch Error", e);
+        listEl.innerHTML = '<div style="text-align:center; padding:10px; color:#EF4444;">Failed to load history.</div>';
+      }
+    };
+
     window.initiateRecharge = function (amountStr) {
       if (amountStr) {
         // Direct call (if any)

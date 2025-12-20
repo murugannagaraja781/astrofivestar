@@ -1975,6 +1975,25 @@ app.post('/api/payment/callback', async (req, res) => {
   }
 });
 
+// 3. Payment History API
+app.get('/api/payment/history/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) return res.status(400).json({ error: 'UserId required' });
+
+    // Fetch last 20 transactions
+    const transactions = await Payment.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean();
+
+    res.json({ ok: true, data: transactions });
+  } catch (e) {
+    console.error("Payment History Error:", e);
+    res.status(500).json({ ok: false, error: 'Internal Server Error' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
