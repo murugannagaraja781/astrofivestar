@@ -6,8 +6,7 @@ on:
   pull_request:
     branches: [ "main" ]
 
-env:
-  ANDROID_SDK_ROOT: ${{ runner.tool_cache }}/android-sdk
+
 
 jobs:
   build:
@@ -35,6 +34,8 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Install Android SDK commandline tools
+        env:
+          ANDROID_SDK_ROOT: ${{ runner.tool_cache }}/android-sdk
         run: |
           sudo apt-get update
           sudo apt-get install -y wget unzip
