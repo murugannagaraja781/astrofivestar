@@ -20,6 +20,7 @@
     "react-native-bootsplash": "^6.3.11",
     "react-native-keep-awake": "^4.0.0",
     "react-native-upi-payment": "^1.0.5",
+    "react-native-phonepe-pg": "^3.1.1",
     "react-native-webview": "^13.16.0"
   },
   "devDependencies": {

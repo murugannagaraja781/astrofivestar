@@ -1894,6 +1894,19 @@ app.post('/api/payment/create', async (req, res) => {
     const sha256 = crypto.createHash('sha256').update(stringToSign).digest('hex');
     const checksum = sha256 + "###" + PHONEPE_SALT_INDEX;
 
+    // --- FIX FOR NATIVE SDK ---
+    // If App, we DO NOT call the API here. The SDK calls it.
+    // We just return the signed payload.
+    if (isApp) {
+      return res.json({
+        ok: true,
+        merchantTransactionId: merchantTransactionId,
+        base64Body: base64Payload,
+        checksum: checksum
+      });
+    }
+
+    // --- WEB FLOW ---
     const options = {
       method: 'POST',
       headers: {
@@ -1911,7 +1924,7 @@ app.post('/api/payment/create', async (req, res) => {
       res.json({
         ok: true,
         paymentUrl: response.data.instrumentResponse.redirectInfo.url,
-        merchantTransactionId: merchantTransactionId // Return ID for App tracking
+        merchantTransactionId: merchantTransactionId
       });
     } else {
       console.error("PhonePe Error:", response);

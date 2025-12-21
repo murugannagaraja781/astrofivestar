@@ -15,8 +15,9 @@ import {
   AppState,
 } from 'react-native';
 // @ts-ignore
-import UpiPayment from 'react-native-upi-payment';
 import { WebView } from 'react-native-webview';
+// @ts-ignore
+import PhonePePaymentSDK from 'react-native-phonepe-pg';
 import KeepAwake from 'react-native-keep-awake';
 import NetInfo from '@react-native-community/netinfo';
 import RNBootSplash from 'react-native-bootsplash';
@@ -48,6 +49,15 @@ function App(): React.JSX.Element {
 
   useEffect(() => {
     const setupServices = async () => {
+      // Init PhonePe SDK
+      PhonePePaymentSDK.init(
+        'PRODUCTION',
+        'M22LBBWEJKI6A', // Merchant ID
+        'FLOW_' + Date.now(),
+        true // Enable Logging
+      ).then((res: any) => console.log("PhonePe Init:", res))
+        .catch((err: any) => console.error("PhonePe Init Error:", err));
+
       // 0. Check if opened from Notification (Quit State)
       const initialMsg = await messaging().getInitialNotification();
       if (initialMsg?.data?.callId) {
@@ -251,41 +261,42 @@ function App(): React.JSX.Element {
               Linking.openURL(data.url).catch(err => console.error("Couldn't load page", err));
             }
             if (data.type === 'UPI_PAY') {
-              // Native UPI Payment
-              // Use the Transaction ID from server
-              const txnRef = data.txnId || ('TXN_' + Date.now());
+              // PhonePe Native SDK Payment
+              // Input data: { base64Body, checksum, appId? }
+              // We use the base64Body from server as the 'requestBody' string
 
-              // NOTE: 'M22LBBWEJKI6A' is used as VPA here based on your existing code.
-              // Ensure this is a valid VPA (like merchant@ybl) if 'M22LBBWEJKI6A' fails.
-              UpiPayment.initializePayment(
-                {
-                  vpa: 'M22LBBWEJKI6A',
-                  payeeName: 'Astro5star',
-                  amount: String(data.amount),
-                  transactionRef: txnRef,
-                  transactionNote: data.note || 'Recharge',
-                },
-                (successData: any) => {
-                  console.log('UPI SUCCESS', successData);
-                  // Inject success alert and refresh
+              PhonePePaymentSDK.startTransaction(
+                data.base64Body,
+                data.checksum,
+                null, // Package Name (Android only, can be null or pkg name)
+                data.appId || null // App Schema
+              ).then((resp: any) => {
+                console.log('PhonePe SUCCESS', resp);
+                if (resp.status === 'SUCCESS') {
                   if (webviewRef.current) {
                     webviewRef.current.injectJavaScript(`
-                      alert("Payment Successful! Wallet updating...");
-                      setTimeout(() => { window.location.reload(); }, 2000);
-                      true;
-                    `);
+                        alert("Payment Successful! Verifying...");
+                        window.location.reload();
+                        true;
+                      `);
                   }
-                },
-                (failureData: any) => {
-                  console.log('UPI FAILED', failureData);
+                } else {
                   if (webviewRef.current) {
                     webviewRef.current.injectJavaScript(`
-                      alert("Payment Failed or Cancelled");
-                      true;
-                    `);
+                        alert("Payment Status: ` + resp.status + `");
+                        true;
+                      `);
                   }
                 }
-              );
+              }).catch((err: any) => {
+                console.log('PhonePe FAILED', err);
+                if (webviewRef.current) {
+                  webviewRef.current.injectJavaScript(`
+                      alert("Payment Failed: ` + err.message + `");
+                      true;
+                    `);
+                }
+              });
             }
           } catch (e) {
             console.log('WebView Message Error', e);
