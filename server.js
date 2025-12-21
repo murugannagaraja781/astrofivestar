@@ -1983,23 +1983,26 @@ app.post('/api/payment/callback', async (req, res) => {
               balance: user.walletBalance,
               totalEarnings: user.totalEarnings
             });
-            io.to(sId).emit('app-notification', { text: `✅ Recharge Successful! +₹${payment.amount}` });
           }
         }
       }
 
+      // Success Redirect
       if (req.query.isApp === 'true') {
-        return res.redirect('astro5star://payment_status?status=success');
+        return res.redirect('astro5star://payment-status?status=success');
       }
-      return res.redirect('/?status=success');
+      return res.redirect('https://astro5star.com/wallet?status=success');
+
     } else {
+      // Failure Handling
       payment.status = 'failed';
       await payment.save();
 
+      // Failure Redirect
       if (req.query.isApp === 'true') {
-        return res.redirect('astro5star://payment_status?status=failed');
+        return res.redirect('astro5star://payment-status?status=failed');
       }
-      return res.redirect('/?status=fail');
+      return res.redirect('https://astro5star.com/wallet?status=failure');
     }
 
   } catch (e) {

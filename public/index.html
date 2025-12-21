@@ -6911,9 +6911,16 @@
         }).then(r => r.json());
 
         if (res.ok && res.paymentUrl) {
-          // Universal Web Flow (Works for both App and Web)
-          // This will load the PhonePe Payment Page inside the WebView
-          window.location.href = res.paymentUrl;
+          if (isApp) {
+            // Use External Browser for best stability
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'OPEN_EXTERNAL',
+              url: res.paymentUrl
+            }));
+          } else {
+            // Web: Redirect normally
+            window.location.href = res.paymentUrl;
+          }
 
           /* Native SDK Flow (Disabled)
           if (isApp) {

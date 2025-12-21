@@ -174,17 +174,26 @@ function App(): React.JSX.Element {
       console.log('Deep Link received:', event.url);
       if (
         event.url.includes('payment_status') ||
+        event.url.includes('payment-status') ||
         event.url.includes('astro5star')
       ) {
-        // Extract status or just force refresh
-        // Inject JS to refresh wallet
+        // Parse status
+        const isSuccess = event.url.includes('status=success');
+
+        if (isSuccess) {
+          Alert.alert("Payment Successful", "Your wallet has been recharged.");
+          webviewRef.current?.reload();
+        } else if (event.url.includes('status=failed')) {
+          Alert.alert("Payment Failed", "Transaction could not be completed.");
+        }
+
+        // Also inject JS just in case
         const refreshJS = `
           (function() {
             if (window.fetchTransactionHistory) window.fetchTransactionHistory();
             if (window.socket && window.state && window.state.me) {
                window.socket.emit('get-wallet', { userId: window.state.me.userId });
             }
-            alert("Payment Verified! Wallet Updating...");
           })();
           true;
         `;
