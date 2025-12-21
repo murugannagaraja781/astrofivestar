@@ -260,66 +260,29 @@ function App(): React.JSX.Element {
         onPermissionRequest={(request: WebViewPermissionRequest) => {
           request.grant(request.resources);
         }}
-        onMessage={event => {
-          try {
-            // Handle messages from Web
-            const data = JSON.parse(event.nativeEvent.data);
-            if (data.type === 'VIBRATE') {
-              Vibration.vibrate([0, 1000, 500, 1000]);
-            }
-            if (data.type === 'KEEP_AWAKE') {
-              setKeepScreenAwake(!!data.enable);
-            }
-            if (data.type === 'OPEN_EXTERNAL') {
-              // Open in Chrome/System Browser
-              Linking.openURL(data.url).catch(err =>
-                console.error("Couldn't load page", err),
-              );
-            }
-            if (data.type === 'UPI_PAY') {
-              // PhonePe Native SDK Payment
-              // Input data: { base64Body, checksum, appId? }
-              // We use the base64Body from server as the 'requestBody' string
-
-              // Construct request body as expected by the SDK wrapper
-              const requestBody = JSON.stringify({
-                orderId: data.txnId,
-                token: data.checksum, // Pass checksum as token
-                paymentMode: data.base64Body, // Pass body as paymentMode (or separate field if needed)
-                targetAppPackageName: null
-              });
-
-              PhonePePaymentSDK.startTransaction(
-                requestBody,
-                data.appId || null // App Schema
-              ).then((resp: any) => {
-                console.log('PhonePe Response:', resp);
-                if (resp.status === 'SUCCESS') {
-                  // Inject success alert and reload
-                  webviewRef.current?.injectJavaScript(`
-                      alert("Payment Successful! Verifying...");
-                      window.location.reload();
-                      true;
-                   `);
-                } else {
-                  // Inject Failure Alert
-                  webviewRef.current?.injectJavaScript(`
-                      alert("Payment Failed or Cancelled. Status: ${resp.status}");
-                      true;
-                   `);
-                }
-              })
-                .catch((err: any) => {
-                  console.log('PhonePe SDK Error:', err);
-                  webviewRef.current?.injectJavaScript(`
-                    alert("Payment Error: ${err.message || 'Unknown Error'}");
-                    true;
-                 `);
-                });
-            }
-          } catch (e) {
-            console.log('WebView Message Error', e);
+        onShouldStartLoadWithRequest={(request) => {
+          const url = request.url;
+          // Handle External Payment Apps
+          if (
+            url.startsWith('phonepe://') ||
+            url.startsWith('tez://') ||
+            url.startsWith('paytmmp://') ||
+            url.startsWith('upi://')
+          ) {
+            Linking.openURL(url).catch(err => {
+              console.log("Could not open external app:", err);
+            });
+            return false; // Prevent WebView from loading this
           }
+          return true;
+        }}
+        onMessage={(event) => {
+          try {
+            const data = JSON.parse(event.nativeEvent.data);
+            if (data.type === 'VIBRATE') Vibration.vibrate([0, 1000, 500, 1000]);
+            if (data.type === 'KEEP_AWAKE') setKeepScreenAwake(!!data.enable);
+            if (data.type === 'OPEN_EXTERNAL') Linking.openURL(data.url).catch(() => { });
+          } catch (e) { }
         }}
       />
       {keepScreenAwake && <KeepAwake />}

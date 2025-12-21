@@ -1897,6 +1897,12 @@ app.post('/api/payment/create', async (req, res) => {
     // --- FIX FOR NATIVE SDK ---
     // If App, we DO NOT call the API here. The SDK calls it.
     // We just return the signed payload.
+    // --- FIX FOR NATIVE SDK ---
+    // Update: Falling back to Web Redirection flow for 100% reliability
+    // If App, we still return the payload variables in case we need them, but we CONTINUED to generate the URL.
+
+    // NOTE: Commenting out early return to allow generating Web URL
+    /*
     if (isApp) {
       return res.json({
         ok: true,
@@ -1906,6 +1912,7 @@ app.post('/api/payment/create', async (req, res) => {
         checksum: checksum
       });
     }
+    */
 
     // --- WEB FLOW ---
     const options = {

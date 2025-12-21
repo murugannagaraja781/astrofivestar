@@ -6910,25 +6910,16 @@
           body: JSON.stringify({ amount, userId: state.me.userId, isApp })
         }).then(r => r.json());
 
-        if (res.ok) {
+        if (res.ok && res.paymentUrl) {
+          // Universal Web Flow (Works for both App and Web)
+          // This will load the PhonePe Payment Page inside the WebView
+          window.location.href = res.paymentUrl;
+
+          /* Native SDK Flow (Disabled)
           if (isApp) {
-            // App: Use Native UPI
-            // Server returns base64Body + checksum for App Flow
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-              type: 'UPI_PAY',
-              amount: amount,
-              txnId: res.merchantTransactionId,
-              base64Body: res.base64Body,
-              checksum: res.checksum,
-              appId: null, // Optional
-              note: "Recharge Astro5Star"
-            }));
-          } else if (res.paymentUrl) {
-            // Web: Redirect
-            window.location.href = res.paymentUrl;
-          } else {
-            alert("Error: Payment URL missing");
+            window.ReactNativeWebView.postMessage(JSON.stringify({ ... }));
           }
+          */
         } else {
           alert("Recharge Error: " + (res.error || 'Unknown'));
         }
