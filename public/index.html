@@ -6903,6 +6903,7 @@
 
       try {
         const isApp = !!window.ReactNativeWebView;
+        // alert("Debug Mode: " + (isApp ? "App Detected" : "Web Detected"));
 
         const res = await fetch('/api/payment/create', {
           method: 'POST',

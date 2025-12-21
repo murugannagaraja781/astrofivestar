@@ -1983,31 +1983,75 @@ app.post('/api/payment/callback', async (req, res) => {
               balance: user.walletBalance,
               totalEarnings: user.totalEarnings
             });
+            io.to(sId).emit('app-notification', { text: `✅ Recharge Successful! +₹${payment.amount}` });
           }
         }
       }
 
-      // Success Redirect
+      // Determine Redirect URL
+      let targetUrl = '';
       if (req.query.isApp === 'true') {
-        return res.redirect('astro5star://payment-status?status=success');
+        targetUrl = `astro5star://payment-status?status=success`;
+      } else {
+        targetUrl = `https://astro5star.com/wallet?status=success`;
       }
-      return res.redirect('https://astro5star.com/wallet?status=success');
+
+      // Render HTML for App Deep Link (Bypasses Chrome Blocking)
+      if (req.query.isApp === 'true') {
+        const html = `
+            <html>
+              <body style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:sans-serif;">
+                <h1 style="color:green;">Payment Successful!</h1>
+                <p>Redirecting back to app...</p>
+                <a href="${targetUrl}" style="padding:15px 30px; background:blue; color:white; text-decoration:none; border-radius:5px; font-weight:bold;">Return to App</a>
+                <script>
+                  setTimeout(function() {
+                    window.location.href = "${targetUrl}";
+                  }, 1000);
+                </script>
+              </body>
+            </html>
+          `;
+        return res.send(html);
+      }
+
+      return res.redirect(targetUrl);
 
     } else {
       // Failure Handling
       payment.status = 'failed';
       await payment.save();
 
-      // Failure Redirect
+      let targetUrl = '';
       if (req.query.isApp === 'true') {
-        return res.redirect('astro5star://payment-status?status=failed');
+        targetUrl = `astro5star://payment-status?status=failed`;
+      } else {
+        targetUrl = `https://astro5star.com/wallet?status=failure`;
       }
-      return res.redirect('https://astro5star.com/wallet?status=failure');
+
+      if (req.query.isApp === 'true') {
+        const html = `
+            <html>
+              <body style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:sans-serif;">
+                <h1 style="color:red;">Payment Failed</h1>
+                <p>Redirecting back to app...</p>
+                <a href="${targetUrl}" style="padding:15px 30px; background:grey; color:white; text-decoration:none; border-radius:5px; font-weight:bold;">Return to App</a>
+                <script>
+                  setTimeout(function() {
+                    window.location.href = "${targetUrl}";
+                  }, 1000);
+                </script>
+              </body>
+            </html>
+          `;
+        return res.send(html);
+      }
+      return res.redirect(targetUrl);
     }
 
   } catch (e) {
     console.error("Callback Error:", e);
-    res.redirect('/?status=error');
+    return res.redirect('/?status=error');
   }
 });
 
