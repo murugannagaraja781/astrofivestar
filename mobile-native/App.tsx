@@ -267,7 +267,8 @@ function App(): React.JSX.Element {
             url.startsWith('phonepe://') ||
             url.startsWith('tez://') ||
             url.startsWith('paytmmp://') ||
-            url.startsWith('upi://')
+            url.startsWith('upi://') ||
+            url.startsWith('intent://')
           ) {
             Linking.openURL(url).catch(err => {
               console.log("Could not open external app:", err);
