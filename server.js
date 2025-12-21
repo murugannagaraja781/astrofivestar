@@ -1878,20 +1878,6 @@ app.post('/api/payment/create', async (req, res) => {
     // FIX: Sanitize UserID (Only Alphanumeric) and Use Valid Mobile
     const cleanUserId = userId.replace(/[^a-zA-Z0-9]/g, '');
 
-    let paymentInstrument;
-    if (isApp) {
-      // Vera Idea: Direct UPI Intent (No Browser Page)
-      paymentInstrument = {
-        type: "UPI_INTENT",
-        targetApp: "com.phonepe.app",
-        mobileNumber: "9000090000"
-      };
-    } else {
-      paymentInstrument = {
-        type: "PAY_PAGE"
-      };
-    }
-
     const payload = {
       merchantId: PHONEPE_MERCHANT_ID,
       merchantTransactionId: merchantTransactionId,
@@ -1901,7 +1887,9 @@ app.post('/api/payment/create', async (req, res) => {
       redirectMode: "POST",
       callbackUrl: `https://astro5star.com/api/payment/callback`,
       mobileNumber: "9000090000",
-      paymentInstrument: paymentInstrument
+      paymentInstrument: {
+        type: "PAY_PAGE"
+      }
     };
 
     const base64Payload = Buffer.from(JSON.stringify(payload)).toString('base64');
@@ -1909,25 +1897,16 @@ app.post('/api/payment/create', async (req, res) => {
     const sha256 = crypto.createHash('sha256').update(stringToSign).digest('hex');
     const checksum = sha256 + "###" + PHONEPE_SALT_INDEX;
 
-    // --- FIX FOR NATIVE SDK ---
-    // If App, we DO NOT call the API here. The SDK calls it.
-    // We just return the signed payload.
-    // --- FIX FOR NATIVE SDK ---
-    // Update: Falling back to Web Redirection flow for 100% reliability
-    // If App, we still return the payload variables in case we need them, but we CONTINUED to generate the URL.
-
-    // NOTE: Commenting out early return to allow generating Web URL
-    /*
+    // --- NATIVE SDK FLOW (Bypass "Transport IP" Error) ---
     if (isApp) {
       return res.json({
         ok: true,
+        merchantId: PHONEPE_MERCHANT_ID,
         merchantTransactionId: merchantTransactionId,
-        payload: payload, // Return raw payload in case SDK needs JSON string
         base64Body: base64Payload,
         checksum: checksum
       });
     }
-    */
 
     // --- WEB FLOW ---
     const options = {

@@ -292,6 +292,31 @@ function App(): React.JSX.Element {
             if (data.type === 'VIBRATE') Vibration.vibrate([0, 1000, 500, 1000]);
             if (data.type === 'KEEP_AWAKE') setKeepScreenAwake(!!data.enable);
             if (data.type === 'OPEN_EXTERNAL') Linking.openURL(data.url).catch(() => { });
+
+            // Native SDK Payment
+            if (data.type === 'UPI_PAY') {
+              const requestPayload = JSON.stringify({
+                merchantId: data.merchantId,
+                merchantTransactionId: data.txnId,
+                orderId: data.txnId,
+                token: data.checksum,
+                paymentMode: data.base64Body
+              });
+
+              PhonePePaymentSDK.startTransaction(
+                requestPayload,
+                null // App Schema
+              ).then((resp: any) => {
+                if (resp.status === 'SUCCESS') {
+                  webviewRef.current?.injectJavaScript(`alert('Payment Success!'); window.location.reload(); true;`);
+                } else {
+                  Alert.alert("Payment Failed", resp.error || "User Cancelled");
+                }
+              }).catch((err: any) => {
+                console.log("SDK Error:", err);
+                Alert.alert("SDK Error", err.message || "Unknown Code Error");
+              });
+            }
           } catch (e) { }
         }}
       />

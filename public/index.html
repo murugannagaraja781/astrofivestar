@@ -6912,23 +6912,20 @@
         }).then(r => r.json());
 
         if (res.ok) {
-          if (isApp && res.intentUrl) {
-            // Direct UPI Intent (No Browser)
+          if (isApp && res.base64Body) {
+            // Native SDK Flow (Fixes IP Error)
             window.ReactNativeWebView.postMessage(JSON.stringify({
-              type: 'OPEN_EXTERNAL',
-              url: res.intentUrl
-            }));
-          } else if (isApp && res.paymentUrl) {
-            // Fallback to External Browser
-            window.ReactNativeWebView.postMessage(JSON.stringify({
-              type: 'OPEN_EXTERNAL',
-              url: res.paymentUrl
+              type: 'UPI_PAY',
+              merchantId: res.merchantId,
+              txnId: res.merchantTransactionId,
+              base64Body: res.base64Body,
+              checksum: res.checksum
             }));
           } else if (res.paymentUrl) {
             // Web Flow
             window.location.href = res.paymentUrl;
           } else {
-            alert("Payment Error: No URL returned");
+            alert("Payment Error: No URL or Signature");
           }
 
           /* Native SDK Flow (Disabled)
