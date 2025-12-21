@@ -1875,15 +1875,18 @@ app.post('/api/payment/create', async (req, res) => {
     });
 
     // PhonePe Payload
+    // FIX: Sanitize UserID (Only Alphanumeric) and Use Valid Mobile
+    const cleanUserId = userId.replace(/[^a-zA-Z0-9]/g, '');
+
     const payload = {
       merchantId: PHONEPE_MERCHANT_ID,
       merchantTransactionId: merchantTransactionId,
-      merchantUserId: userId,
+      merchantUserId: cleanUserId,
       amount: amount * 100, // Amount in Paise
       redirectUrl: redirectUrl,
       redirectMode: "POST",
       callbackUrl: `https://astro5star.com/api/payment/callback`,
-      mobileNumber: "9999999999",
+      mobileNumber: "9000090000", // Use standard dummy or real format
       paymentInstrument: {
         type: "PAY_PAGE"
       }
@@ -1935,8 +1938,9 @@ app.post('/api/payment/create', async (req, res) => {
         merchantTransactionId: merchantTransactionId
       });
     } else {
-      console.error("PhonePe Error:", response);
-      res.json({ ok: false, error: response.message || 'Payment Init Failed' });
+      console.error("PhonePe Initiation Failed:", JSON.stringify(response));
+      // Return specific error from PhonePe if available
+      res.json({ ok: false, error: response.data?.message || response.message || 'Payment Init Failed' });
     }
 
   } catch (e) {
