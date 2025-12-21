@@ -251,17 +251,40 @@ function App(): React.JSX.Element {
               Linking.openURL(data.url).catch(err => console.error("Couldn't load page", err));
             }
             if (data.type === 'UPI_PAY') {
-              // Legacy/Alternative Native UPI
-              const txnRef = 'TXN_' + Date.now();
+              // Native UPI Payment
+              // Use the Transaction ID from server
+              const txnRef = data.txnId || ('TXN_' + Date.now());
+
+              // NOTE: 'M22LBBWEJKI6A' is used as VPA here based on your existing code.
+              // Ensure this is a valid VPA (like merchant@ybl) if 'M22LBBWEJKI6A' fails.
               UpiPayment.initializePayment(
                 {
                   vpa: 'M22LBBWEJKI6A',
                   payeeName: 'Astro5star',
                   amount: String(data.amount),
                   transactionRef: txnRef,
+                  transactionNote: data.note || 'Recharge',
                 },
-                (successData: any) => console.log('UPI SUCCESS', successData),
-                (failureData: any) => console.log('UPI FAILED', failureData)
+                (successData: any) => {
+                  console.log('UPI SUCCESS', successData);
+                  // Inject success alert and refresh
+                  if (webviewRef.current) {
+                    webviewRef.current.injectJavaScript(`
+                      alert("Payment Successful! Wallet updating...");
+                      setTimeout(() => { window.location.reload(); }, 2000);
+                      true;
+                    `);
+                  }
+                },
+                (failureData: any) => {
+                  console.log('UPI FAILED', failureData);
+                  if (webviewRef.current) {
+                    webviewRef.current.injectJavaScript(`
+                      alert("Payment Failed or Cancelled");
+                      true;
+                    `);
+                  }
+                }
               );
             }
           } catch (e) {

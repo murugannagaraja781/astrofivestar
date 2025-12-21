@@ -6912,10 +6912,12 @@
 
         if (res.ok && res.paymentUrl) {
           if (isApp) {
-            // App: Open in Chrome
+            // App: Use Native UPI
             window.ReactNativeWebView.postMessage(JSON.stringify({
-              type: 'OPEN_EXTERNAL',
-              url: res.paymentUrl
+              type: 'UPI_PAY',
+              amount: amount,
+              txnId: res.merchantTransactionId, // Pass ID
+              note: "Recharge Astro5Star"
             }));
           } else {
             // Web: Redirect

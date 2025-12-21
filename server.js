@@ -1910,7 +1910,8 @@ app.post('/api/payment/create', async (req, res) => {
     if (response.success && response.data.instrumentResponse.redirectInfo.url) {
       res.json({
         ok: true,
-        paymentUrl: response.data.instrumentResponse.redirectInfo.url
+        paymentUrl: response.data.instrumentResponse.redirectInfo.url,
+        merchantTransactionId: merchantTransactionId // Return ID for App tracking
       });
     } else {
       console.error("PhonePe Error:", response);
