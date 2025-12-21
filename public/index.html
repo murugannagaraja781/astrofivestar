@@ -6910,18 +6910,24 @@
           body: JSON.stringify({ amount, userId: state.me.userId, isApp })
         }).then(r => r.json());
 
-        if (res.ok && res.paymentUrl) {
+        if (res.ok) {
           if (isApp) {
             // App: Use Native UPI
+            // Server returns base64Body + checksum for App Flow
             window.ReactNativeWebView.postMessage(JSON.stringify({
               type: 'UPI_PAY',
               amount: amount,
-              txnId: res.merchantTransactionId, // Pass ID
+              txnId: res.merchantTransactionId,
+              base64Body: res.base64Body,
+              checksum: res.checksum,
+              appId: null, // Optional
               note: "Recharge Astro5Star"
             }));
-          } else {
+          } else if (res.paymentUrl) {
             // Web: Redirect
             window.location.href = res.paymentUrl;
+          } else {
+            alert("Error: Payment URL missing");
           }
         } else {
           alert("Recharge Error: " + (res.error || 'Unknown'));

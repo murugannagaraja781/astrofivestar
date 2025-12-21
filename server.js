@@ -1901,6 +1901,7 @@ app.post('/api/payment/create', async (req, res) => {
       return res.json({
         ok: true,
         merchantTransactionId: merchantTransactionId,
+        payload: payload, // Return raw payload in case SDK needs JSON string
         base64Body: base64Payload,
         checksum: checksum
       });

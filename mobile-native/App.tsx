@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import {
   SafeAreaView,
@@ -54,15 +53,21 @@ function App(): React.JSX.Element {
         'PRODUCTION',
         'M22LBBWEJKI6A', // Merchant ID
         'FLOW_' + Date.now(),
-        true // Enable Logging
-      ).then((res: any) => console.log("PhonePe Init:", res))
-        .catch((err: any) => console.error("PhonePe Init Error:", err));
+        true, // Enable Logging
+      )
+        .then((res: any) => console.log('PhonePe Init:', res))
+        .catch((err: any) => console.error('PhonePe Init Error:', err));
 
       // 0. Check if opened from Notification (Quit State)
       const initialMsg = await messaging().getInitialNotification();
       if (initialMsg?.data?.callId) {
-        console.log('App opened from QUIT state via Call Notification:', initialMsg.data.callId);
-        setInitialUrl(`https://astro5star.com?incomingCallId=${initialMsg.data.callId}`);
+        console.log(
+          'App opened from QUIT state via Call Notification:',
+          initialMsg.data.callId,
+        );
+        setInitialUrl(
+          `https://astro5star.com?incomingCallId=${initialMsg.data.callId}`,
+        );
       }
 
       // 1. Request Permissions
@@ -70,7 +75,9 @@ function App(): React.JSX.Element {
         try {
           // Android 13+ Notification Permission
           if (Platform.Version >= 33) {
-            await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+            await PermissionsAndroid.request(
+              PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+            );
           }
 
           const granted = await PermissionsAndroid.requestMultiple([
@@ -81,8 +88,10 @@ function App(): React.JSX.Element {
           ]);
 
           if (
-            granted['android.permission.CAMERA'] === PermissionsAndroid.RESULTS.GRANTED &&
-            granted['android.permission.RECORD_AUDIO'] === PermissionsAndroid.RESULTS.GRANTED
+            granted['android.permission.CAMERA'] ===
+            PermissionsAndroid.RESULTS.GRANTED &&
+            granted['android.permission.RECORD_AUDIO'] ===
+            PermissionsAndroid.RESULTS.GRANTED
           ) {
             setHasPermissions(true);
           } else {
@@ -111,7 +120,7 @@ function App(): React.JSX.Element {
           setFcmToken(token);
         }
       } catch (error) {
-        console.error("FCM Error:", error);
+        console.error('FCM Error:', error);
       }
 
       // 3. Start Forensic Service (Keep Alive)
@@ -150,7 +159,7 @@ function App(): React.JSX.Element {
           importance: AndroidImportance.HIGH,
           pressAction: { id: 'default' },
           fullScreenAction: { id: 'default', launchActivity: 'default' }, // Attempt to wake
-        }
+        },
       });
 
       Vibration.vibrate([0, 500, 200, 500]); // Vibrate
@@ -162,8 +171,11 @@ function App(): React.JSX.Element {
 
     // Deep Link Handler
     const handleDeepLink = (event: { url: string }) => {
-      console.log("Deep Link received:", event.url);
-      if (event.url.includes('payment_status') || event.url.includes('astro5star')) {
+      console.log('Deep Link received:', event.url);
+      if (
+        event.url.includes('payment_status') ||
+        event.url.includes('astro5star')
+      ) {
         // Extract status or just force refresh
         // Inject JS to refresh wallet
         const refreshJS = `
@@ -183,7 +195,9 @@ function App(): React.JSX.Element {
 
     // Check if app was launched by deep link
     Linking.getInitialURL().then(url => {
-      if (url) handleDeepLink({ url });
+      if (url) {
+        handleDeepLink({ url });
+      }
     });
 
     return () => {
@@ -214,8 +228,8 @@ function App(): React.JSX.Element {
 
   // Inject Token into WebView
   const injectedJS = `
-    window.localStorage.setItem('fcmToken', '${fcmToken || ""}');
-    console.log("FCM Token Injected:", '${fcmToken || ""}');
+    window.localStorage.setItem('fcmToken', '${fcmToken || ''}');
+    console.log("FCM Token Injected:", '${fcmToken || ''}');
     true;
   `;
 
@@ -246,7 +260,7 @@ function App(): React.JSX.Element {
         onPermissionRequest={(request: WebViewPermissionRequest) => {
           request.grant(request.resources);
         }}
-        onMessage={(event) => {
+        onMessage={event => {
           try {
             // Handle messages from Web
             const data = JSON.parse(event.nativeEvent.data);
@@ -258,45 +272,50 @@ function App(): React.JSX.Element {
             }
             if (data.type === 'OPEN_EXTERNAL') {
               // Open in Chrome/System Browser
-              Linking.openURL(data.url).catch(err => console.error("Couldn't load page", err));
+              Linking.openURL(data.url).catch(err =>
+                console.error("Couldn't load page", err),
+              );
             }
             if (data.type === 'UPI_PAY') {
               // PhonePe Native SDK Payment
               // Input data: { base64Body, checksum, appId? }
               // We use the base64Body from server as the 'requestBody' string
 
+              // Construct request body as expected by the SDK wrapper
+              const requestBody = JSON.stringify({
+                orderId: data.txnId,
+                token: data.checksum, // Pass checksum as token
+                paymentMode: data.base64Body, // Pass body as paymentMode (or separate field if needed)
+                targetAppPackageName: null
+              });
+
               PhonePePaymentSDK.startTransaction(
-                data.base64Body,
-                data.checksum,
-                null, // Package Name (Android only, can be null or pkg name)
+                requestBody,
                 data.appId || null // App Schema
               ).then((resp: any) => {
-                console.log('PhonePe SUCCESS', resp);
+                console.log('PhonePe Response:', resp);
                 if (resp.status === 'SUCCESS') {
-                  if (webviewRef.current) {
-                    webviewRef.current.injectJavaScript(`
-                        alert("Payment Successful! Verifying...");
-                        window.location.reload();
-                        true;
-                      `);
-                  }
-                } else {
-                  if (webviewRef.current) {
-                    webviewRef.current.injectJavaScript(`
-                        alert("Payment Status: ` + resp.status + `");
-                        true;
-                      `);
-                  }
-                }
-              }).catch((err: any) => {
-                console.log('PhonePe FAILED', err);
-                if (webviewRef.current) {
-                  webviewRef.current.injectJavaScript(`
-                      alert("Payment Failed: ` + err.message + `");
+                  // Inject success alert and reload
+                  webviewRef.current?.injectJavaScript(`
+                      alert("Payment Successful! Verifying...");
+                      window.location.reload();
                       true;
-                    `);
+                   `);
+                } else {
+                  // Inject Failure Alert
+                  webviewRef.current?.injectJavaScript(`
+                      alert("Payment Failed or Cancelled. Status: ${resp.status}");
+                      true;
+                   `);
                 }
-              });
+              })
+                .catch((err: any) => {
+                  console.log('PhonePe SDK Error:', err);
+                  webviewRef.current?.injectJavaScript(`
+                    alert("Payment Error: ${err.message || 'Unknown Error'}");
+                    true;
+                 `);
+                });
             }
           } catch (e) {
             console.log('WebView Message Error', e);
