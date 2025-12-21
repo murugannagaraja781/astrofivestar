@@ -6911,16 +6911,24 @@
           body: JSON.stringify({ amount, userId: state.me.userId, isApp })
         }).then(r => r.json());
 
-        if (res.ok && res.paymentUrl) {
-          if (isApp) {
-            // Use External Browser for best stability
+        if (res.ok) {
+          if (isApp && res.intentUrl) {
+            // Direct UPI Intent (No Browser)
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'OPEN_EXTERNAL',
+              url: res.intentUrl
+            }));
+          } else if (isApp && res.paymentUrl) {
+            // Fallback to External Browser
             window.ReactNativeWebView.postMessage(JSON.stringify({
               type: 'OPEN_EXTERNAL',
               url: res.paymentUrl
             }));
-          } else {
-            // Web: Redirect normally
+          } else if (res.paymentUrl) {
+            // Web Flow
             window.location.href = res.paymentUrl;
+          } else {
+            alert("Payment Error: No URL returned");
           }
 
           /* Native SDK Flow (Disabled)

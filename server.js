@@ -1878,6 +1878,20 @@ app.post('/api/payment/create', async (req, res) => {
     // FIX: Sanitize UserID (Only Alphanumeric) and Use Valid Mobile
     const cleanUserId = userId.replace(/[^a-zA-Z0-9]/g, '');
 
+    let paymentInstrument;
+    if (isApp) {
+      // Vera Idea: Direct UPI Intent (No Browser Page)
+      paymentInstrument = {
+        type: "UPI_INTENT",
+        targetApp: "com.phonepe.app",
+        mobileNumber: "9000090000"
+      };
+    } else {
+      paymentInstrument = {
+        type: "PAY_PAGE"
+      };
+    }
+
     const payload = {
       merchantId: PHONEPE_MERCHANT_ID,
       merchantTransactionId: merchantTransactionId,
@@ -1886,10 +1900,8 @@ app.post('/api/payment/create', async (req, res) => {
       redirectUrl: redirectUrl,
       redirectMode: "POST",
       callbackUrl: `https://astro5star.com/api/payment/callback`,
-      mobileNumber: "9000090000", // Use standard dummy or real format
-      paymentInstrument: {
-        type: "PAY_PAGE"
-      }
+      mobileNumber: "9000090000",
+      paymentInstrument: paymentInstrument
     };
 
     const base64Payload = Buffer.from(JSON.stringify(payload)).toString('base64');
@@ -1931,11 +1943,15 @@ app.post('/api/payment/create', async (req, res) => {
     const fetchRes = await fetch(`${PHONEPE_HOST_URL}/pg/v1/pay`, options);
     const response = await fetchRes.json();
 
-    if (response.success && response.data.instrumentResponse.redirectInfo.url) {
+    if (response.success) {
+      const payUrl = response.data.instrumentResponse?.redirectInfo?.url || response.data.instrumentResponse?.intentUrl;
+      const intentUrl = response.data.instrumentResponse?.intentUrl; // Specifically for UPI_INTENT
+
       res.json({
         ok: true,
-        paymentUrl: response.data.instrumentResponse.redirectInfo.url,
-        merchantTransactionId: merchantTransactionId
+        merchantTransactionId: merchantTransactionId,
+        paymentUrl: payUrl,
+        intentUrl: intentUrl // Pass this to Frontend for Deep Link
       });
     } else {
       console.error("PhonePe Initiation Failed:", JSON.stringify(response));
