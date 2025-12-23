@@ -398,56 +398,47 @@ function App(): React.JSX.Element {
             if (data.type === 'KEEP_AWAKE') setKeepScreenAwake(!!data.enable);
             if (data.type === 'OPEN_EXTERNAL') Linking.openURL(data.url).catch(() => { });
 
-            // Native SDK Payment (FIXED - Proper SDK request format)
+            // ============ ROBUST PAYMENT FLOW WITH FALLBACKS ============
+            // Priority: 1) UPI Intent (opens GPay/PhonePe) → 2) External Browser → 3) Error
+
+            // Method 1: Open UPI Intent directly (Best - opens GPay/PhonePe/Paytm)
+            if (data.type === 'OPEN_UPI_INTENT' && data.intentUrl) {
+              setIsPaymentLoading(false);
+              console.log('Opening UPI Intent:', data.intentUrl);
+
+              Linking.openURL(data.intentUrl)
+                .then(() => {
+                  console.log('UPI app opened successfully');
+                })
+                .catch((err) => {
+                  console.log('UPI Intent failed, trying browser:', err);
+                  // Fallback to browser if UPI intent fails
+                  if (data.paymentUrl) {
+                    Linking.openURL(data.paymentUrl).catch(() => {
+                      Alert.alert('Payment Error', 'No UPI app found. Please install GPay or PhonePe.');
+                    });
+                  } else {
+                    Alert.alert('Payment Error', 'No UPI app found. Please install GPay or PhonePe.');
+                  }
+                });
+            }
+
+            // Method 2: Open Payment URL in external browser
+            if (data.type === 'OPEN_PAYMENT_URL' && data.url) {
+              setIsPaymentLoading(false);
+              console.log('Opening Payment URL in browser:', data.url);
+
+              Linking.openURL(data.url).catch((err) => {
+                console.log('Failed to open payment URL:', err);
+                Alert.alert('Error', 'Could not open payment page');
+              });
+            }
+
+            // Legacy UPI_PAY handler (for backward compatibility)
             if (data.type === 'UPI_PAY') {
               setIsPaymentLoading(true);
-              console.log('Starting PhonePe Transaction:', {
-                merchantId: data.merchantId,
-                txnId: data.txnId,
-                hasBase64: !!data.base64Body,
-                hasChecksum: !!data.checksum
-              });
-
-              try {
-                // PhonePe React Native SDK native code expects:
-                // {
-                //   orderId: string,           // Transaction ID
-                //   token: string,             // Checksum (X-VERIFY)
-                //   requestBody: string,       // Base64 encoded payload
-                //   targetAppPackageName: string  // Optional, empty for all apps
-                // }
-
-                const sdkRequest = JSON.stringify({
-                  orderId: data.txnId,              // merchantTransactionId
-                  token: data.checksum,              // X-VERIFY checksum
-                  requestBody: data.base64Body,     // Base64 encoded payload
-                  targetAppPackageName: ''          // Empty = show all UPI apps
-                });
-
-                console.log('PhonePe SDK Request:', sdkRequest);
-
-                PhonePePaymentSDK.startTransaction(
-                  sdkRequest,           // SDK request payload
-                  'astro5star'          // App Schema for callback
-                ).then((resp: any) => {
-                  setIsPaymentLoading(false);
-                  console.log('PhonePe Response:', resp);
-                  if (resp.status === 'SUCCESS') {
-                    Alert.alert('Payment Successful', 'Your wallet has been recharged.');
-                    webviewRef.current?.reload();
-                  } else {
-                    Alert.alert('Payment Failed', resp.error || 'User Cancelled');
-                  }
-                }).catch((err: any) => {
-                  setIsPaymentLoading(false);
-                  console.log('SDK Error:', err);
-                  Alert.alert('SDK Error', err.message || 'Unknown Error');
-                });
-              } catch (sdkErr: any) {
-                setIsPaymentLoading(false);
-                console.log('SDK Setup Error:', sdkErr);
-                Alert.alert('Payment Error', 'Failed to process payment request');
-              }
+              console.log('Legacy UPI_PAY received - should use OPEN_UPI_INTENT or OPEN_PAYMENT_URL');
+              setTimeout(() => setIsPaymentLoading(false), 2000);
             }
           } catch (e) { }
         }}

@@ -1878,10 +1878,11 @@ app.post('/api/payment/create', async (req, res) => {
     // FIX: Sanitize UserID (Only Alphanumeric) and Use Valid Mobile
     const cleanUserId = userId.replace(/[^a-zA-Z0-9]/g, '');
 
-    // --- NATIVE SDK FLOW ---
+    // --- NATIVE APP FLOW (Use Web Payment via External Browser) ---
+    // Native SDK has issues, so we use browser redirect which is more reliable
     if (isApp) {
-      // Native SDK payload with UPI_INTENT type for native mobile flow
-      const nativePayload = {
+      // Use PAY_PAGE type - same as web, opens in browser
+      const appPayload = {
         merchantId: PHONEPE_MERCHANT_ID,
         merchantTransactionId: merchantTransactionId,
         merchantUserId: cleanUserId,
@@ -1891,22 +1892,46 @@ app.post('/api/payment/create', async (req, res) => {
         callbackUrl: `https://astro5star.com/api/payment/callback`,
         mobileNumber: "9000090000",
         paymentInstrument: {
-          type: "UPI_INTENT"
+          type: "PAY_PAGE"
         }
       };
 
-      const nativeBase64Payload = Buffer.from(JSON.stringify(nativePayload)).toString('base64');
-      const nativeStringToSign = nativeBase64Payload + "/pg/v1/pay" + PHONEPE_SALT_KEY;
-      const nativeSha256 = crypto.createHash('sha256').update(nativeStringToSign).digest('hex');
-      const nativeChecksum = nativeSha256 + "###" + PHONEPE_SALT_INDEX;
+      const appBase64Payload = Buffer.from(JSON.stringify(appPayload)).toString('base64');
+      const appStringToSign = appBase64Payload + "/pg/v1/pay" + PHONEPE_SALT_KEY;
+      const appSha256 = crypto.createHash('sha256').update(appStringToSign).digest('hex');
+      const appChecksum = appSha256 + "###" + PHONEPE_SALT_INDEX;
 
-      return res.json({
-        ok: true,
-        merchantId: PHONEPE_MERCHANT_ID,
-        merchantTransactionId: merchantTransactionId,
-        base64Body: nativeBase64Payload,
-        checksum: nativeChecksum
-      });
+      // Call PhonePe API to get payment URL
+      const appOptions = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-VERIFY': appChecksum,
+          'accept': 'application/json'
+        },
+        body: JSON.stringify({ request: appBase64Payload })
+      };
+
+      try {
+        const appFetchRes = await fetch(`${PHONEPE_HOST_URL}/pg/v1/pay`, appOptions);
+        const appResponse = await appFetchRes.json();
+
+        if (appResponse.success) {
+          const payUrl = appResponse.data.instrumentResponse?.redirectInfo?.url;
+          return res.json({
+            ok: true,
+            merchantTransactionId: merchantTransactionId,
+            paymentUrl: payUrl,  // App will open this in external browser
+            useWebFlow: true
+          });
+        } else {
+          console.error("PhonePe App Initiation Failed:", JSON.stringify(appResponse));
+          return res.json({ ok: false, error: appResponse.data?.message || 'Payment Init Failed' });
+        }
+      } catch (appErr) {
+        console.error("PhonePe App Error:", appErr);
+        return res.json({ ok: false, error: 'Payment service error' });
+      }
     }
 
     // --- WEB FLOW PAYLOAD ---

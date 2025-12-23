@@ -6903,7 +6903,6 @@
 
       try {
         const isApp = !!window.ReactNativeWebView;
-        // alert("Debug Mode: " + (isApp ? "App Detected" : "Web Detected"));
 
         const res = await fetch('/api/payment/create', {
           method: 'POST',
@@ -6912,8 +6911,19 @@
         }).then(r => r.json());
 
         if (res.ok) {
-          if (isApp && res.base64Body) {
-            // Native SDK Flow (Fixes IP Error)
+          if (isApp && res.paymentUrl) {
+            // App Flow - Open payment URL in external browser
+            // This is more reliable than native SDK
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'OPEN_PAYMENT_URL',
+              url: res.paymentUrl,
+              txnId: res.merchantTransactionId
+            }));
+          } else if (res.paymentUrl) {
+            // Web Flow - Redirect to payment page
+            window.location.href = res.paymentUrl;
+          } else if (isApp && res.base64Body) {
+            // Legacy Native SDK Flow (Fallback)
             window.ReactNativeWebView.postMessage(JSON.stringify({
               type: 'UPI_PAY',
               merchantId: res.merchantId,
@@ -6921,18 +6931,9 @@
               base64Body: res.base64Body,
               checksum: res.checksum
             }));
-          } else if (res.paymentUrl) {
-            // Web Flow
-            window.location.href = res.paymentUrl;
           } else {
-            alert("Payment Error: No URL or Signature");
+            alert("Payment Error: No URL returned");
           }
-
-          /* Native SDK Flow (Disabled)
-          if (isApp) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ ... }));
-          }
-          */
         } else {
           alert("Recharge Error: " + (res.error || 'Unknown'));
         }
