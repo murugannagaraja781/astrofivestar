@@ -16,7 +16,7 @@ import {
 // @ts-ignore
 import { WebView } from 'react-native-webview';
 // @ts-ignore
-import PhonePePaymentSDK from 'react-native-phonepe-pg';
+// PhonePe SDK import removed
 import KeepAwake from 'react-native-keep-awake';
 import NetInfo from '@react-native-community/netinfo';
 import RNBootSplash from 'react-native-bootsplash';
@@ -138,14 +138,8 @@ function App(): React.JSX.Element {
   useEffect(() => {
     const setupServices = async () => {
       // Init PhonePe SDK
-      PhonePePaymentSDK.init(
-        'PRODUCTION',
-        'M22LBBWEJKI6A', // Merchant ID
-        'FLOW_' + Date.now(),
-        true, // Enable Logging
-      )
-        .then((res: any) => console.log('PhonePe Init:', res))
-        .catch((err: any) => console.error('PhonePe Init Error:', err));
+      // PhonePe SDK Removed check browser flow
+      // PhonePePaymentSDK.init(...) legacy code removed
 
       // 0. Check if opened from Notification (Quit State)
       const initialMsg = await messaging().getInitialNotification();

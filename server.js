@@ -1860,6 +1860,11 @@ app.post('/api/payment/create', async (req, res) => {
     const { amount, userId, isApp } = req.body;
     if (!amount || !userId) return res.json({ ok: false, error: 'Missing Amount or User' });
 
+    // Fetch User to get real mobile number
+    const userObj = await User.findOne({ userId });
+    const rawPhone = (userObj && userObj.phone) ? userObj.phone : "9999999999";
+    const userMobile = rawPhone.replace(/[^0-9]/g, '').slice(-10);
+
     const merchantTransactionId = "MT" + Date.now() + Math.floor(Math.random() * 1000);
     const redirectUrl = isApp
       ? `https://astro5star.com/api/payment/callback?isApp=true`
@@ -1881,6 +1886,8 @@ app.post('/api/payment/create', async (req, res) => {
     // --- NATIVE APP FLOW (Use Web Payment via External Browser) ---
     // Native SDK has issues, so we use browser redirect which is more reliable
     if (isApp) {
+      console.log('App Payment Request:', { userId, amount, cleanUserId });
+
       // Use PAY_PAGE type - same as web, opens in browser
       const appPayload = {
         merchantId: PHONEPE_MERCHANT_ID,
@@ -1890,11 +1897,13 @@ app.post('/api/payment/create', async (req, res) => {
         redirectUrl: redirectUrl,
         redirectMode: "POST",
         callbackUrl: `https://astro5star.com/api/payment/callback`,
-        mobileNumber: "9000090000",
+        mobileNumber: userMobile,
         paymentInstrument: {
           type: "PAY_PAGE"
         }
       };
+
+      console.log('App Payload:', JSON.stringify(appPayload));
 
       const appBase64Payload = Buffer.from(JSON.stringify(appPayload)).toString('base64');
       const appStringToSign = appBase64Payload + "/pg/v1/pay" + PHONEPE_SALT_KEY;
@@ -1913,11 +1922,20 @@ app.post('/api/payment/create', async (req, res) => {
       };
 
       try {
+        console.log('Calling PhonePe API for app...');
         const appFetchRes = await fetch(`${PHONEPE_HOST_URL}/pg/v1/pay`, appOptions);
         const appResponse = await appFetchRes.json();
+        console.log('PhonePe App Response:', JSON.stringify(appResponse));
 
         if (appResponse.success) {
           const payUrl = appResponse.data.instrumentResponse?.redirectInfo?.url;
+          console.log('Payment URL:', payUrl);
+
+          if (!payUrl) {
+            console.error('No payment URL in response');
+            return res.json({ ok: false, error: 'No payment URL received' });
+          }
+
           return res.json({
             ok: true,
             merchantTransactionId: merchantTransactionId,
@@ -1925,12 +1943,13 @@ app.post('/api/payment/create', async (req, res) => {
             useWebFlow: true
           });
         } else {
-          console.error("PhonePe App Initiation Failed:", JSON.stringify(appResponse));
-          return res.json({ ok: false, error: appResponse.data?.message || 'Payment Init Failed' });
+          const errorMsg = appResponse.data?.message || appResponse.message || 'Payment Init Failed';
+          console.error("PhonePe App Initiation Failed:", errorMsg, JSON.stringify(appResponse));
+          return res.json({ ok: false, error: errorMsg });
         }
       } catch (appErr) {
         console.error("PhonePe App Error:", appErr);
-        return res.json({ ok: false, error: 'Payment service error' });
+        return res.json({ ok: false, error: 'Payment service temporarily unavailable' });
       }
     }
 
