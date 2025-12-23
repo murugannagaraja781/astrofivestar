@@ -1880,7 +1880,7 @@ app.post('/api/payment/create', async (req, res) => {
 
     // --- NATIVE SDK FLOW ---
     if (isApp) {
-      // Native SDK payload - NO paymentInstrument needed (SDK handles it)
+      // Native SDK payload with UPI_INTENT type for native mobile flow
       const nativePayload = {
         merchantId: PHONEPE_MERCHANT_ID,
         merchantTransactionId: merchantTransactionId,
@@ -1889,8 +1889,10 @@ app.post('/api/payment/create', async (req, res) => {
         redirectUrl: redirectUrl,
         redirectMode: "POST",
         callbackUrl: `https://astro5star.com/api/payment/callback`,
-        mobileNumber: "9000090000"
-        // No paymentInstrument for native SDK - it will show UPI apps
+        mobileNumber: "9000090000",
+        paymentInstrument: {
+          type: "UPI_INTENT"
+        }
       };
 
       const nativeBase64Payload = Buffer.from(JSON.stringify(nativePayload)).toString('base64');
