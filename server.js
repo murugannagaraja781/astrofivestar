@@ -1878,6 +1878,36 @@ app.post('/api/payment/create', async (req, res) => {
     // FIX: Sanitize UserID (Only Alphanumeric) and Use Valid Mobile
     const cleanUserId = userId.replace(/[^a-zA-Z0-9]/g, '');
 
+    // --- NATIVE SDK FLOW ---
+    if (isApp) {
+      // Native SDK payload - NO paymentInstrument needed (SDK handles it)
+      const nativePayload = {
+        merchantId: PHONEPE_MERCHANT_ID,
+        merchantTransactionId: merchantTransactionId,
+        merchantUserId: cleanUserId,
+        amount: amount * 100, // Amount in Paise
+        redirectUrl: redirectUrl,
+        redirectMode: "POST",
+        callbackUrl: `https://astro5star.com/api/payment/callback`,
+        mobileNumber: "9000090000"
+        // No paymentInstrument for native SDK - it will show UPI apps
+      };
+
+      const nativeBase64Payload = Buffer.from(JSON.stringify(nativePayload)).toString('base64');
+      const nativeStringToSign = nativeBase64Payload + "/pg/v1/pay" + PHONEPE_SALT_KEY;
+      const nativeSha256 = crypto.createHash('sha256').update(nativeStringToSign).digest('hex');
+      const nativeChecksum = nativeSha256 + "###" + PHONEPE_SALT_INDEX;
+
+      return res.json({
+        ok: true,
+        merchantId: PHONEPE_MERCHANT_ID,
+        merchantTransactionId: merchantTransactionId,
+        base64Body: nativeBase64Payload,
+        checksum: nativeChecksum
+      });
+    }
+
+    // --- WEB FLOW PAYLOAD ---
     const payload = {
       merchantId: PHONEPE_MERCHANT_ID,
       merchantTransactionId: merchantTransactionId,
@@ -1896,17 +1926,6 @@ app.post('/api/payment/create', async (req, res) => {
     const stringToSign = base64Payload + "/pg/v1/pay" + PHONEPE_SALT_KEY;
     const sha256 = crypto.createHash('sha256').update(stringToSign).digest('hex');
     const checksum = sha256 + "###" + PHONEPE_SALT_INDEX;
-
-    // --- NATIVE SDK FLOW (Bypass "Transport IP" Error) ---
-    if (isApp) {
-      return res.json({
-        ok: true,
-        merchantId: PHONEPE_MERCHANT_ID,
-        merchantTransactionId: merchantTransactionId,
-        base64Body: base64Payload,
-        checksum: checksum
-      });
-    }
 
     // --- WEB FLOW ---
     const options = {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -25,6 +25,28 @@ import OfflineNotice from './components/OfflineNotice';
 
 import messaging from '@react-native-firebase/messaging';
 
+// Base64 decode utility for React Native
+const base64Decode = (str: string): string => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+  let output = '';
+  str = str.replace(/[^A-Za-z0-9\+\/\=]/g, '');
+  let i = 0;
+  while (i < str.length) {
+    const enc1 = chars.indexOf(str.charAt(i++));
+    const enc2 = chars.indexOf(str.charAt(i++));
+    const enc3 = chars.indexOf(str.charAt(i++));
+    const enc4 = chars.indexOf(str.charAt(i++));
+    const chr1 = (enc1 << 2) | (enc2 >> 4);
+    const chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+    const chr3 = ((enc3 & 3) << 6) | enc4;
+    output += String.fromCharCode(chr1);
+    if (enc3 !== 64) output += String.fromCharCode(chr2);
+    if (enc4 !== 64) output += String.fromCharCode(chr3);
+  }
+  return output;
+};
+
+
 // Handler for Background/Quit State Messages
 messaging().setBackgroundMessageHandler(async remoteMessage => {
   console.log('Message handled in the background!', remoteMessage);
@@ -42,9 +64,76 @@ function App(): React.JSX.Element {
   const [keepScreenAwake, setKeepScreenAwake] = useState(false);
   const [isConnected, setIsConnected] = useState<boolean | null>(true);
   const [fcmToken, setFcmToken] = useState<string | null>(null);
+  const [isPaymentLoading, setIsPaymentLoading] = useState(false);
 
   const [initialUrl, setInitialUrl] = useState('https://astro5star.com');
   const webviewRef = React.useRef<WebView>(null);
+
+  // Helper function to handle external URLs (UPI/PhonePe intents)
+  const handleExternalUrl = useCallback(async (url: string): Promise<boolean> => {
+    // Handle UPI/PhonePe schemes directly
+    if (
+      url.startsWith('phonepe://') ||
+      url.startsWith('tez://') ||
+      url.startsWith('paytmmp://') ||
+      url.startsWith('upi://')
+    ) {
+      try {
+        const canOpen = await Linking.canOpenURL(url);
+        if (canOpen) {
+          await Linking.openURL(url);
+          return true;
+        } else {
+          console.log('Cannot open URL, no app available:', url);
+          Alert.alert('App Not Found', 'Please install the UPI payment app.');
+        }
+      } catch (e) {
+        console.log('Cannot open UPI URL:', e);
+      }
+      return false;
+    }
+
+    // Handle intent:// URLs (Android specific)
+    if (url.startsWith('intent://')) {
+      try {
+        // Parse intent URL to extract scheme
+        // Format: intent://path#Intent;scheme=upi;package=com.phonepe.app;...;end
+        const schemeMatch = url.match(/scheme=([^;]+)/);
+        const packageMatch = url.match(/package=([^;]+)/);
+
+        if (schemeMatch) {
+          const scheme = schemeMatch[1];
+          // Build native URL from intent
+          const pathStart = url.indexOf('://') + 3;
+          const pathEnd = url.indexOf('#Intent');
+          const path = pathEnd > -1 ? url.substring(pathStart, pathEnd) : url.substring(pathStart);
+          const nativeUrl = `${scheme}://${path}`;
+
+          console.log('Converted intent URL to:', nativeUrl);
+
+          const canOpen = await Linking.canOpenURL(nativeUrl);
+          if (canOpen) {
+            await Linking.openURL(nativeUrl);
+            return true;
+          } else {
+            // Try opening with just the scheme
+            const basicUrl = `${scheme}://pay`;
+            const canOpenBasic = await Linking.canOpenURL(basicUrl);
+            if (canOpenBasic) {
+              await Linking.openURL(url); // Try original intent URL
+              return true;
+            }
+            Alert.alert('App Not Found', `Cannot open ${scheme} app. Please install it.`);
+          }
+        }
+      } catch (e) {
+        console.log('Intent URL handling failed:', e);
+      }
+      return false;
+    }
+
+    return false;
+  }, []);
 
   useEffect(() => {
     const setupServices = async () => {
@@ -252,6 +341,11 @@ function App(): React.JSX.Element {
         injectedJavaScript={injectedJS}
         javaScriptEnabled={true}
         domStorageEnabled={true}
+        // Cookie & Content Settings (FIX for payment page loading)
+        thirdPartyCookiesEnabled={true}
+        sharedCookiesEnabled={Platform.OS === 'ios'}
+        mixedContentMode="always"
+        cacheEnabled={true}
         allowFileAccess={true}
         allowFileAccessFromFileURLs={true}
         allowUniversalAccessFromFileURLs={true}
@@ -260,7 +354,7 @@ function App(): React.JSX.Element {
         startInLoadingState={true}
         renderLoading={() => (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#0000ff" />
+            <ActivityIndicator size="large" color="#5B21B6" />
           </View>
         )}
         mediaCapturePermissionGrantType="grant"
@@ -269,9 +363,9 @@ function App(): React.JSX.Element {
         onPermissionRequest={(request: WebViewPermissionRequest) => {
           request.grant(request.resources);
         }}
-        onShouldStartLoadWithRequest={(request) => {
+        onShouldStartLoadWithRequest={(request: { url: string }) => {
           const url = request.url;
-          // Handle External Payment Apps
+          // Handle External Payment Apps (iOS primarily, but also Android fallback)
           if (
             url.startsWith('phonepe://') ||
             url.startsWith('tez://') ||
@@ -279,47 +373,95 @@ function App(): React.JSX.Element {
             url.startsWith('upi://') ||
             url.startsWith('intent://')
           ) {
-            Linking.openURL(url).catch(err => {
-              console.log("Could not open external app:", err);
-            });
+            handleExternalUrl(url);
             return false; // Prevent WebView from loading this
           }
           return true;
         }}
-        onMessage={(event) => {
+        // Android-specific navigation handler for intents
+        onNavigationStateChange={(navState: { url: string }) => {
+          const url = navState.url;
+          if (
+            url.startsWith('phonepe://') ||
+            url.startsWith('tez://') ||
+            url.startsWith('paytmmp://') ||
+            url.startsWith('upi://') ||
+            url.startsWith('intent://')
+          ) {
+            handleExternalUrl(url);
+          }
+        }}
+        onMessage={(event: { nativeEvent: { data: string } }) => {
           try {
             const data = JSON.parse(event.nativeEvent.data);
             if (data.type === 'VIBRATE') Vibration.vibrate([0, 1000, 500, 1000]);
             if (data.type === 'KEEP_AWAKE') setKeepScreenAwake(!!data.enable);
             if (data.type === 'OPEN_EXTERNAL') Linking.openURL(data.url).catch(() => { });
 
-            // Native SDK Payment
+            // Native SDK Payment (FIXED - Proper SDK request format)
             if (data.type === 'UPI_PAY') {
-              const requestPayload = JSON.stringify({
+              setIsPaymentLoading(true);
+              console.log('Starting PhonePe Transaction:', {
                 merchantId: data.merchantId,
-                merchantTransactionId: data.txnId,
-                orderId: data.txnId,
-                token: data.checksum,
-                paymentMode: data.base64Body
+                txnId: data.txnId,
+                hasBase64: !!data.base64Body,
+                hasChecksum: !!data.checksum
               });
 
-              PhonePePaymentSDK.startTransaction(
-                requestPayload,
-                null // App Schema
-              ).then((resp: any) => {
-                if (resp.status === 'SUCCESS') {
-                  webviewRef.current?.injectJavaScript(`alert('Payment Success!'); window.location.reload(); true;`);
-                } else {
-                  Alert.alert("Payment Failed", resp.error || "User Cancelled");
-                }
-              }).catch((err: any) => {
-                console.log("SDK Error:", err);
-                Alert.alert("SDK Error", err.message || "Unknown Code Error");
-              });
+              try {
+                // PhonePe React Native SDK native code expects:
+                // {
+                //   orderId: string,           // Transaction ID
+                //   token: string,             // Checksum (X-VERIFY)
+                //   requestBody: string,       // Base64 encoded payload
+                //   targetAppPackageName: string  // Optional, empty for all apps
+                // }
+
+                const sdkRequest = JSON.stringify({
+                  orderId: data.txnId,              // merchantTransactionId
+                  token: data.checksum,              // X-VERIFY checksum
+                  requestBody: data.base64Body,     // Base64 encoded payload
+                  targetAppPackageName: ''          // Empty = show all UPI apps
+                });
+
+                console.log('PhonePe SDK Request:', sdkRequest);
+
+                PhonePePaymentSDK.startTransaction(
+                  sdkRequest,           // SDK request payload
+                  'astro5star'          // App Schema for callback
+                ).then((resp: any) => {
+                  setIsPaymentLoading(false);
+                  console.log('PhonePe Response:', resp);
+                  if (resp.status === 'SUCCESS') {
+                    Alert.alert('Payment Successful', 'Your wallet has been recharged.');
+                    webviewRef.current?.reload();
+                  } else {
+                    Alert.alert('Payment Failed', resp.error || 'User Cancelled');
+                  }
+                }).catch((err: any) => {
+                  setIsPaymentLoading(false);
+                  console.log('SDK Error:', err);
+                  Alert.alert('SDK Error', err.message || 'Unknown Error');
+                });
+              } catch (sdkErr: any) {
+                setIsPaymentLoading(false);
+                console.log('SDK Setup Error:', sdkErr);
+                Alert.alert('Payment Error', 'Failed to process payment request');
+              }
             }
           } catch (e) { }
         }}
       />
+      {/* Payment Loading Overlay */}
+      {isPaymentLoading && (
+        <View style={styles.paymentLoadingOverlay}>
+          <View style={styles.paymentLoadingCard}>
+            <ActivityIndicator size="large" color="#5B21B6" />
+            <Text style={styles.paymentLoadingText}>Processing Payment...</Text>
+            <Text style={styles.paymentLoadingSubtext}>Please wait, do not close the app</Text>
+          </View>
+        </View>
+      )}
       {keepScreenAwake && <KeepAwake />}
     </SafeAreaView>
   );
@@ -339,6 +481,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'white',
   },
+  paymentLoadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  paymentLoadingCard: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 30,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  paymentLoadingText: {
+    marginTop: 15,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1F2937',
+  },
+  paymentLoadingSubtext: {
+    marginTop: 5,
+    fontSize: 13,
+    color: '#6B7280',
+  },
 });
 
 export default App;
+

@@ -26,8 +26,10 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        jcenter() // Required for old React Native libraries
         maven {
             url "https://phonepe.mycloudrepo.io/public/repositories/phonepe-intentsdk-android"
         }
     }
 }
+
