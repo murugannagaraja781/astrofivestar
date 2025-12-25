@@ -32,6 +32,11 @@
       background: var(--bg-body);
     }
 
+    body.fullscreen {
+      width: 100vw;
+      height: 100vh;
+    }
+
     input,
     button {
       font-family: inherit;
@@ -2927,8 +2932,33 @@
       <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
       <script>
+        // Check if Mobile Browser
+        function isMobileBrowser() {
+          return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+
+        // Request Fullscreen on Page Load (Mobile Only)
+        function requestFullscreen() {
+          if (!isMobileBrowser()) return; // Only for mobile
+
+          const elem = document.documentElement;
+          if (elem.requestFullscreen) {
+            elem.requestFullscreen().catch(err => console.log('Fullscreen request failed:', err));
+          } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+          } else if (elem.mozRequestFullScreen) {
+            elem.mozRequestFullScreen();
+          } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen();
+          }
+          document.body.classList.add('fullscreen');
+        }
+
         // Initialize placeholder chart
         document.addEventListener('DOMContentLoaded', function () {
+          // Request fullscreen on load
+          requestFullscreen();
+
           const ctx = document.getElementById('revenueChart')?.getContext('2d');
           if (ctx) {
             new Chart(ctx, {
@@ -3545,14 +3575,14 @@
   <script src="https://unpkg.com/simple-peer/simplepeer.min.js"></script>
   <script>
     // State
-    const state = { me: null, socket: null, session: null, peer: null, localStream: null };
+    const state = {me: null, socket: null, session: null, peer: null, localStream: null};
 
     // Persistent Session Helper
     const SESSION_KEY = 'astro_session';
     const TWO_MONTHS = 60 * 24 * 60 * 60 * 1000;
 
     function saveSession(user) {
-      const session = { ...user, expiresAt: Date.now() + TWO_MONTHS };
+      const session = {...user, expiresAt: Date.now() + TWO_MONTHS};
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     }
 
@@ -3593,10 +3623,10 @@
         // Auto Login
         console.log('Restoring session for:', session.name);
         state.me = session;
-        socket.emit('register', { name: session.name, phone: session.phone, userId: session.userId }, (ack) => {
+        socket.emit('register', {name: session.name, phone: session.phone, userId: session.userId}, (ack) => {
           if (ack.ok) {
             // Merge fresh data from server (wallet, earnings, etc.)
-            state.me = { ...session, ...ack };
+            state.me = {...session, ...ack};
             saveSession(state.me); // Update localStorage with fresh data
 
             sLogin.classList.add('hidden');
@@ -3612,12 +3642,12 @@
           }
         });
 
-      } catch (e) { console.error('Session Error', e); }
+      } catch (e) {console.error('Session Error', e);}
     }
 
     function loadGuestMode() {
       console.log('Loading Guest Mode');
-      const guestUser = { name: 'Guest', userId: 'guest', role: 'guest', walletBalance: 0 };
+      const guestUser = {name: 'Guest', userId: 'guest', role: 'guest', walletBalance: 0};
       state.me = guestUser;
       sLogin.classList.add('hidden');
       loadClientDash(guestUser);
@@ -3658,7 +3688,7 @@
     // Login Handlers
     document.getElementById('btnSendOtp').onclick = async () => {
       const phone = document.getElementById('inputPhone').value;
-      if (!phone) { alert('Enter Phone'); return; }
+      if (!phone) {alert('Enter Phone'); return;}
 
       const btn = document.getElementById('btnSendOtp');
       const original = btn.textContent;
@@ -3667,8 +3697,8 @@
 
       try {
         const res = await fetch('/api/send-otp', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone })
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({phone})
         }).then(r => r.json());
 
         if (res.ok) {
@@ -3677,7 +3707,7 @@
         } else {
           alert(res.error || 'Failed');
         }
-      } catch (e) { alert('Network Error'); }
+      } catch (e) {alert('Network Error');}
 
       btn.textContent = original;
       btn.disabled = false;
@@ -3687,15 +3717,15 @@
       const phone = document.getElementById('inputPhone').value;
       const otp = document.getElementById('inputOtp').value;
       const res = await fetch('/api/verify-otp', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, otp })
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({phone, otp})
       }).then(r => r.json());
 
       if (res.ok) {
         state.me = res;
         saveSession(res);
 
-        socket.emit('register', { name: res.name, phone: phone }, (ack) => {
+        socket.emit('register', {name: res.name, phone: phone}, (ack) => {
           sLogin.classList.add('hidden');
           if (res.role === 'astrologer') {
             loadAstroDash(res);
@@ -3799,8 +3829,8 @@
       const now = new Date();
       const timeEl = document.getElementById('homeTimeDisplay');
       const dateEl = document.getElementById('homeDateDisplay');
-      if (timeEl) timeEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      if (dateEl) dateEl.innerText = now.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
+      if (timeEl) timeEl.innerText = now.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+      if (dateEl) dateEl.innerText = now.toLocaleDateString([], {weekday: 'short', day: 'numeric', month: 'short'});
     }
 
     function navSwitch(tab) {
@@ -4103,7 +4133,7 @@
       el.onclick = () => {
         el.classList.toggle('active');
         const isOnline = el.classList.contains('active');
-        socket.emit('toggle-status', { online: isOnline, type: type });
+        socket.emit('toggle-status', {online: isOnline, type: type});
       };
     }
 
@@ -4129,7 +4159,7 @@
       btn.textContent = 'Uploading...';
 
       try {
-        const res = await fetch('/upload', { method: 'POST', body: formData }).then(r => r.json());
+        const res = await fetch('/upload', {method: 'POST', body: formData}).then(r => r.json());
         if (res.ok) {
           tempAvatarUrl = res.url;
           document.getElementById('editAvatar').src = res.url;
@@ -4149,7 +4179,7 @@
       const price = document.getElementById('editPrice').value;
       const exp = document.getElementById('editExp').value;
 
-      const update = { price, experience: exp };
+      const update = {price, experience: exp};
       if (tempAvatarUrl) update.image = tempAvatarUrl;
 
       socket.emit('update-profile', update, (res) => {
@@ -4209,7 +4239,7 @@
 
     // Session Request Logic
     window.requestSession = (targetId, type) => {
-      const titles = { chat: 'Chat', audio: 'Audio Call', video: 'Video Call' };
+      const titles = {chat: 'Chat', audio: 'Audio Call', video: 'Video Call'};
       const modal = document.createElement('div');
       modal.id = 'calling-modal';
       modal.className = 'modal-overlay';
@@ -4222,7 +4252,7 @@
       `;
       document.body.appendChild(modal);
 
-      socket.emit('request-session', { toUserId: targetId, type }, (res) => {
+      socket.emit('request-session', {toUserId: targetId, type}, (res) => {
         if (res.ok) {
           initSession(res.sessionId, targetId, type, true, null);
           document.getElementById('calling-modal').remove();
@@ -4236,11 +4266,11 @@
     // Incoming Session Handler
     socket.on('incoming-session', (data) => {
       if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'VIBRATE' }));
+        window.ReactNativeWebView.postMessage(JSON.stringify({type: 'VIBRATE'}));
       }
       console.log('Incoming session:', data);
       if (state.session) {
-        socket.emit('answer-session', { sessionId: data.sessionId, toUserId: data.fromUserId, accept: false });
+        socket.emit('answer-session', {sessionId: data.sessionId, toUserId: data.fromUserId, accept: false});
         return;
       }
 
@@ -4251,7 +4281,7 @@
       }
 
       sInc.classList.remove('hidden');
-      const titles = { chat: 'Chat Request', audio: 'Incoming Call', video: 'Incoming Video Call' };
+      const titles = {chat: 'Chat Request', audio: 'Incoming Call', video: 'Incoming Video Call'};
       document.getElementById('callerName').innerHTML = `
         <strong>${titles[data.type]}</strong><br>Client ${data.fromUserId.slice(0, 4)}
       `;
@@ -4266,7 +4296,7 @@
         window.incomingAudio = new Audio(soundUrl);
         window.incomingAudio.loop = true;
         window.incomingAudio.play().catch(e => console.log('Autoplay blocked:', e));
-      } catch (e) { console.error('Sound Error', e); }
+      } catch (e) {console.error('Sound Error', e);}
 
       document.getElementById('btnAccept').onclick = () => {
         if (window.incomingAudio) {
@@ -4274,9 +4304,9 @@
           window.incomingAudio = null;
         }
         sInc.classList.add('hidden');
-        socket.emit('answer-session', { sessionId: data.sessionId, toUserId: data.fromUserId, type: data.type, accept: true });
+        socket.emit('answer-session', {sessionId: data.sessionId, toUserId: data.fromUserId, type: data.type, accept: true});
         initSession(data.sessionId, data.fromUserId, data.type, false, data.birthData);
-        if (data.type === 'chat') { startTimer(); }
+        if (data.type === 'chat') {startTimer();}
       };
 
       document.getElementById('btnReject').onclick = () => {
@@ -4285,7 +4315,7 @@
           window.incomingAudio = null;
         }
         sInc.classList.add('hidden');
-        socket.emit('answer-session', { sessionId: data.sessionId, toUserId: data.fromUserId, accept: false });
+        socket.emit('answer-session', {sessionId: data.sessionId, toUserId: data.fromUserId, accept: false});
       };
     });
 
@@ -4334,14 +4364,14 @@
     function initSession(sid, pid, type, isInit, birthData) {
       document.getElementById('messagesList').innerHTML = '';
 
-      state.session = { id: sid, partnerId: pid, type };
+      state.session = {id: sid, partnerId: pid, type};
       sSes.classList.remove('hidden');
 
       // Trigger Billing Start on Server
-      socket.emit('session-connect', { sessionId: sid });
+      socket.emit('session-connect', {sessionId: sid});
 
       if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'KEEP_AWAKE', enable: true }));
+        window.ReactNativeWebView.postMessage(JSON.stringify({type: 'KEEP_AWAKE', enable: true}));
       }
 
       if (birthData) {
@@ -4477,17 +4507,17 @@
           document.getElementById('localVideo').srcObject = stream;
         }
 
-        const p = new SimplePeer({ initiator, stream, trickle: false });
+        const p = new SimplePeer({initiator, stream, trickle: false});
 
         p.on('signal', d => {
           if (state.session) {
-            socket.emit('signal', { sessionId: state.session.id, toUserId: state.session.partnerId, signal: d });
+            socket.emit('signal', {sessionId: state.session.id, toUserId: state.session.partnerId, signal: d});
           }
         });
 
         p.on('stream', s => {
           if (window.ReactNativeWebView) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'VIBRATE' }));
+            window.ReactNativeWebView.postMessage(JSON.stringify({type: 'VIBRATE'}));
           }
           const loader = document.getElementById('connectionStatus');
           if (loader) loader.classList.add('hidden');
@@ -4508,7 +4538,7 @@
 
         p.on('data', data => {
           if (window.ReactNativeWebView) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'VIBRATE' }));
+            window.ReactNativeWebView.postMessage(JSON.stringify({type: 'VIBRATE'}));
           }
           console.log('WebRTC Data:', data);
         });
@@ -4533,7 +4563,7 @@
     // End Session
     document.getElementById('btnEnd').onclick = () => {
       if (state.session) {
-        socket.emit('session-ended', { sessionId: state.session.id, toUserId: state.session.partnerId });
+        socket.emit('session-ended', {sessionId: state.session.id, toUserId: state.session.partnerId});
       }
       endLocal();
     };
@@ -4552,14 +4582,14 @@
 
       // Force refresh of wallet/earnings
       if (state.me && state.me.userId) {
-        socket.emit('get-wallet', { userId: state.me.userId });
+        socket.emit('get-wallet', {userId: state.me.userId});
       }
 
       if (state.me && state.me.role === 'astrologer') {
-        socket.emit('toggle-status', { online: true, type: 'online' });
+        socket.emit('toggle-status', {online: true, type: 'online'});
       }
       stopTimer();
-      if (state.peer) { state.peer.destroy(); state.peer = null; }
+      if (state.peer) {state.peer.destroy(); state.peer = null;}
       if (state.localStream) {
         state.localStream.getTracks().forEach(t => t.stop());
         state.localStream = null;
@@ -4569,7 +4599,7 @@
       state.session = null;
 
       if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'KEEP_AWAKE', enable: false }));
+        window.ReactNativeWebView.postMessage(JSON.stringify({type: 'KEEP_AWAKE', enable: false}));
       }
 
 
@@ -4582,7 +4612,7 @@
     // Chat Logic
     const appendMsg = (txt, isMe, messageId, timestamp = Date.now()) => {
       const t = new Date(timestamp);
-      const timeStr = t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const timeStr = t.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
       const mid = messageId || Date.now();
 
       const div = document.createElement('div');
@@ -4615,7 +4645,7 @@
       const mid = Date.now();
       socket.emit('chat-message', {
         toUserId: state.session.partnerId, sessionId: state.session.id,
-        content: { type: 'text', text: txt }, messageId: mid, timestamp: mid
+        content: {type: 'text', text: txt}, messageId: mid, timestamp: mid
       });
       appendMsg(txt, true, mid, mid);
       document.getElementById('msgInput').value = '';
@@ -4624,7 +4654,7 @@
     // Chat Message Handler
     socket.on('chat-message', d => {
       if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'VIBRATE' }));
+        window.ReactNativeWebView.postMessage(JSON.stringify({type: 'VIBRATE'}));
       }
       if (state.session && d.fromUserId === state.session.partnerId) {
         const requestDetailsDiv = document.getElementById('clientRequestDetails');
@@ -4634,11 +4664,11 @@
 
         // Emit delivered immediately
         if (d.messageId) {
-          socket.emit('message-delivered', { toUserId: d.fromUserId, messageId: d.messageId });
+          socket.emit('message-delivered', {toUserId: d.fromUserId, messageId: d.messageId});
 
           // Simulate Read after 1s (or if window focused)
           setTimeout(() => {
-            socket.emit('message-read', { toUserId: d.fromUserId, messageId: d.messageId });
+            socket.emit('message-read', {toUserId: d.fromUserId, messageId: d.messageId});
           }, 1000);
         }
 
@@ -4650,11 +4680,11 @@
     let typingTimeout = null;
     document.getElementById('msgInput').addEventListener('input', () => {
       if (!state.session) return;
-      socket.emit('typing', { toUserId: state.session.partnerId, isTyping: true });
+      socket.emit('typing', {toUserId: state.session.partnerId, isTyping: true});
 
       if (typingTimeout) clearTimeout(typingTimeout);
       typingTimeout = setTimeout(() => {
-        socket.emit('typing', { toUserId: state.session.partnerId, isTyping: false });
+        socket.emit('typing', {toUserId: state.session.partnerId, isTyping: false});
       }, 2000);
     });
 
@@ -4745,7 +4775,7 @@
       const now = new Date();
       const timeEl = document.getElementById('footerTime');
       if (timeEl) {
-        timeEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        timeEl.innerText = now.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
       }
     }
 
@@ -4784,7 +4814,7 @@
             // Aggregate by type
             const agg = {};
             res.fullLedger.forEach(l => {
-              if (!agg[l.type]) agg[l.type] = { count: 0, amount: 0 };
+              if (!agg[l.type]) agg[l.type] = {count: 0, amount: 0};
               agg[l.type].count++;
               agg[l.type].amount += (l.amount || 0);
             });
@@ -4853,7 +4883,7 @@
       const name = document.getElementById('adminEditName').value;
       const u = adminUsersCache.find(x => x.userId === uid);
 
-      const updates = { name };
+      const updates = {name};
 
       if (u.role === 'astrologer') {
         updates.price = document.getElementById('adminEditPrice').value;
@@ -4861,7 +4891,7 @@
         updates.documentStatus = document.getElementById('adminEditDocStatus').value;
       }
 
-      socket.emit('admin-update-user-details', { userId: uid, updates }, (res) => {
+      socket.emit('admin-update-user-details', {userId: uid, updates}, (res) => {
         if (res.ok) {
           alert('Updated Successfully');
           document.getElementById('adminEditModal').classList.add('hidden');
@@ -4994,7 +5024,7 @@
     window.adminWallet = (uid) => {
       const amt = prompt("Enter amount to ADD (e.g., 100):");
       if (amt) {
-        socket.emit('admin-add-money', { userId: uid, amount: parseInt(amt) }, (res) => {
+        socket.emit('admin-add-money', {userId: uid, amount: parseInt(amt)}, (res) => {
           alert(res.msg || (res.ok ? 'Success' : 'Failed'));
           loadAdminDash(); // Refresh
         });
@@ -5028,7 +5058,7 @@
       // Confirm
       if (!confirm(`Request withdrawal of ₹${amount}?`)) return;
 
-      socket.emit('request-withdrawal', { amount }, (res) => {
+      socket.emit('request-withdrawal', {amount}, (res) => {
         if (res.ok) {
           alert("Request Sent! Pending Admin Approval.");
         } else {
@@ -5078,7 +5108,7 @@
 
     window.adminApproveWithdrawal = (wid) => {
       if (!confirm("Approve this withdrawal? Funds will be deducted from Astrologer's wallet now.")) return;
-      socket.emit('approve-withdrawal', { withdrawalId: wid }, (res) => {
+      socket.emit('approve-withdrawal', {withdrawalId: wid}, (res) => {
         if (res.ok) {
           alert("Withdrawal Approved & Funds Deducted.");
           loadAdminWithdrawals(); // Refresh list
@@ -5104,7 +5134,7 @@
       if (!roleChangeTargetId) return;
       const newRole = document.getElementById('adminRoleSelect').value;
 
-      socket.emit('admin-update-role', { userId: roleChangeTargetId, role: newRole }, (res) => {
+      socket.emit('admin-update-role', {userId: roleChangeTargetId, role: newRole}, (res) => {
         if (res.ok) {
           alert('Role Updated');
           document.getElementById('screen-admin-role-modal').classList.add('hidden');
@@ -5117,8 +5147,8 @@
 
     window.adminBan = (uid, doBan) => {
       if (confirm(doBan ? 'Block this user?' : 'Unblock this user?')) {
-        socket.emit('admin-toggle-ban', { userId: uid, isBanned: doBan }, (res) => {
-          if (res.ok) { alert(doBan ? 'User Blocked' : 'User Unblocked'); refreshAdminData(); }
+        socket.emit('admin-toggle-ban', {userId: uid, isBanned: doBan}, (res) => {
+          if (res.ok) {alert(doBan ? 'User Blocked' : 'User Unblocked'); refreshAdminData();}
           else alert('Failed');
         });
       }
@@ -5129,7 +5159,7 @@
       // value is passed as boolean
       const label = field === 'isVerified' ? 'Verification Badge' : 'Document Verification';
       if (confirm(`Change ${label} status?`)) {
-        socket.emit('admin-toggle-verification', { targetUserId: uid, field: field, value: value }, (res) => {
+        socket.emit('admin-toggle-verification', {targetUserId: uid, field: field, value: value}, (res) => {
           if (res.ok) {
             // alert('Updated!'); // Optional: silent update is better for admin flow
             refreshAdminData();
@@ -5146,7 +5176,7 @@
       const newName = prompt('Enter new display name:', currentName);
       if (!newName || newName === currentName) return;
 
-      socket.emit('admin-edit-user', { targetUserId: targetId, updates: { name: newName } }, (res) => {
+      socket.emit('admin-edit-user', {targetUserId: targetId, updates: {name: newName}}, (res) => {
         if (res.ok) {
           alert('Name Updated');
           loadAdminDash(state.me);
@@ -5208,7 +5238,7 @@
       if (inp) {
         inp.addEventListener('input', e => {
           const v = e.target.value.trim();
-          if (v.length < 3) { res.style.display = 'none'; return; }
+          if (v.length < 3) {res.style.display = 'none'; return;}
           clearTimeout(t);
           t = setTimeout(async () => {
             res.innerHTML = '<div style="padding:10px; color:#666;">Searching...</div>';
@@ -5217,7 +5247,7 @@
               const req = await fetch(`https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=15&q=${encodeURIComponent(v)}`);
               const data = await req.json();
               res.innerHTML = '';
-              if (!data.length) { res.innerHTML = '<div style="padding:10px; color:#999;">No results</div>'; return; }
+              if (!data.length) {res.innerHTML = '<div style="padding:10px; color:#999;">No results</div>'; return;}
 
               data.sort((a, b) => {
                 const nA = a.display_name.toLowerCase();
@@ -5242,10 +5272,10 @@
                 };
                 res.appendChild(d);
               });
-            } catch (e) { res.style.display = 'none'; }
+            } catch (e) {res.style.display = 'none';}
           }, 500);
         });
-        document.addEventListener('click', e => { if (e.target !== inp && e.target !== res) res.style.display = 'none'; });
+        document.addEventListener('click', e => {if (e.target !== inp && e.target !== res) res.style.display = 'none';});
       }
     })();
 
@@ -5265,8 +5295,8 @@
         try {
           const response = await fetch('/api/city-autocomplete', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: query.trim() })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({query: query.trim()})
           });
 
           const data = await response.json();
@@ -5307,8 +5337,8 @@
       try {
         const response = await fetch('/api/city-timezone', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ latitude, longitude })
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({latitude, longitude})
         });
 
         const data = await response.json();
@@ -5356,7 +5386,7 @@
           };
 
           // Direct Request
-          socket.emit('request-session', { toUserId: astroId, type: 'chat', birthData }, (res) => {
+          socket.emit('request-session', {toUserId: astroId, type: 'chat', birthData}, (res) => {
             if (res.ok) initSession(res.sessionId, astroId, 'chat', true, null);
             else alert('Request failed: ' + res.error);
           });
@@ -5490,7 +5520,7 @@
           tob: `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`,
           pob: city, lat: parseFloat(lat), lon: parseFloat(lon)
         };
-        state.me.intakeDetails = { gender, marital, occupation, topic, partner };
+        state.me.intakeDetails = {gender, marital, occupation, topic, partner};
         saveSession(state.me);
       }
 
@@ -5680,7 +5710,7 @@
 
         const res = await fetch('https://newapi-production-ea98.up.railway.app/api/charts/birth-chart', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(bd)
         }).then(r => r.json());
 
@@ -5828,7 +5858,7 @@
         const lon = document.getElementById('chartLon')?.value;
         const tz = document.getElementById('chartTz')?.value;
 
-        console.log('Using form inputs:', { dateStr, timeStr, lat, lon, tz });
+        console.log('Using form inputs:', {dateStr, timeStr, lat, lon, tz});
 
         if (!dateStr || !timeStr || !lat || !lon) {
           return alert("Please fill all required fields (Date, Time, Latitude, Longitude)");
@@ -5859,7 +5889,7 @@
       try {
         const res = await fetch('https://newapi-production-ea98.up.railway.app/api/charts/birth-chart', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
             year: bd.year,
             month: bd.month,
@@ -6135,7 +6165,7 @@
       socket.emit('chat-message', {
         toUserId: state.session.partnerId,
         sessionId: state.session.id,
-        content: { type: 'text', text: summary },
+        content: {type: 'text', text: summary},
         messageId: Date.now()
       });
 
@@ -6238,11 +6268,11 @@
 
       try {
         $('.s-sign-label').tooltip({
-          position: { my: "center bottom-10", at: "center top" },
-          show: { effect: "fade", duration: 200 },
-          hide: { effect: "fade", duration: 100 }
+          position: {my: "center bottom-10", at: "center top"},
+          show: {effect: "fade", duration: 200},
+          hide: {effect: "fade", duration: 100}
         });
-      } catch (e) { console.warn("jQuery Tooltip failed", e); }
+      } catch (e) {console.warn("jQuery Tooltip failed", e);}
     }
 
 
@@ -6352,8 +6382,8 @@
         try {
           const response = await fetch('/api/city-autocomplete', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({query})
           });
           const data = await response.json();
 
@@ -6373,7 +6403,7 @@
           } else {
             resultsDiv.style.display = 'none';
           }
-        } catch (e) { console.error(e); }
+        } catch (e) {console.error(e);}
       }, 300);
     };
 
@@ -6406,8 +6436,8 @@
       const [gh, gmin] = gTime.split(':');
 
       const payload = {
-        boy: { year: parseInt(by), month: parseInt(bm), day: parseInt(bd), hour: parseInt(bh), minute: parseInt(bmin), lat: parseFloat(bLat), lon: parseFloat(bLon) },
-        girl: { year: parseInt(gy), month: parseInt(gm), day: parseInt(gd), hour: parseInt(gh), minute: parseInt(gmin), lat: parseFloat(gLat), lon: parseFloat(gLon) }
+        boy: {year: parseInt(by), month: parseInt(bm), day: parseInt(bd), hour: parseInt(bh), minute: parseInt(bmin), lat: parseFloat(bLat), lon: parseFloat(bLon)},
+        girl: {year: parseInt(gy), month: parseInt(gm), day: parseInt(gd), hour: parseInt(gh), minute: parseInt(gmin), lat: parseFloat(gLat), lon: parseFloat(gLon)}
       };
 
       document.getElementById('poruthamLoading').style.display = 'block';
@@ -6416,7 +6446,7 @@
       try {
         const res = await fetch('/api/match/porutham', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(payload)
         }).then(r => r.json());
 
@@ -6434,18 +6464,18 @@
 
     // --- Daily Horoscope Logic ---
     const zodiacSigns = [
-      { name: 'மேஷம்', icon: '🐏', api: 'aries' },
-      { name: 'ரிஷபம்', icon: '🐂', api: 'taurus' },
-      { name: 'மிதுனம்', icon: '👯', api: 'gemini' },
-      { name: 'கடகம்', icon: '🦀', api: 'cancer' },
-      { name: 'சிம்மம்', icon: '🦁', api: 'leo' },
-      { name: 'கன்னி', icon: '👧', api: 'virgo' },
-      { name: 'துலாம்', icon: '⚖️', api: 'libra' },
-      { name: 'விருச்சிகம்', icon: '🦂', api: 'scorpio' },
-      { name: 'தனுசு', icon: '🏹', api: 'sagittarius' },
-      { name: 'மகரம்', icon: '🐐', api: 'capricorn' },
-      { name: 'கும்பம்', icon: '🏺', api: 'aquarius' },
-      { name: 'மீனம்', icon: '🐟', api: 'pisces' }
+      {name: 'மேஷம்', icon: '🐏', api: 'aries'},
+      {name: 'ரிஷபம்', icon: '🐂', api: 'taurus'},
+      {name: 'மிதுனம்', icon: '👯', api: 'gemini'},
+      {name: 'கடகம்', icon: '🦀', api: 'cancer'},
+      {name: 'சிம்மம்', icon: '🦁', api: 'leo'},
+      {name: 'கன்னி', icon: '👧', api: 'virgo'},
+      {name: 'துலாம்', icon: '⚖️', api: 'libra'},
+      {name: 'விருச்சிகம்', icon: '🦂', api: 'scorpio'},
+      {name: 'தனுசு', icon: '🏹', api: 'sagittarius'},
+      {name: 'மகரம்', icon: '🐐', api: 'capricorn'},
+      {name: 'கும்பம்', icon: '🏺', api: 'aquarius'},
+      {name: 'மீனம்', icon: '🐟', api: 'pisces'}
     ];
 
     function renderZodiacScroller() {
@@ -6472,18 +6502,18 @@
     let horoscopeCache = {}; // Simple cache
     // Tamil Fallback Data
     const fallbackHoroscopeData = {
-      'aries': { date: 'இன்று', horoscope_data: 'இன்று உங்களுக்கு நற்பலன்கள் கிடைக்கும்.\nஉங்கள் முயற்சிகளில் வெற்றி கிட்டும்.\nஅதிர்ஷ்ட நிறம்: சிவப்பு (Red)' },
-      'taurus': { date: 'இன்று', horoscope_data: 'பொருளாதார வரவு சிறப்பாக இருக்கும்.\nகுடும்பத்தில் மகிழ்ச்சி நிலவும்.\nஅதிர்ஷ்ட நிறம்: வெள்ளை (White)' },
-      'gemini': { date: 'இன்று', horoscope_data: 'நண்பர்களின் உதவி கிடைக்கும்.\nபுதிய முயற்சிகள் கைக்கூடும்.\nஅதிர்ஷ்ட நிறம்: பச்சை (Green)' },
-      'cancer': { date: 'இன்று', horoscope_data: 'மனதில் நிம்மதி பிறக்கும்.\nதொழிலில் முன்னேற்றம் உண்டு.\nஅதிர்ஷ்ட நிறம்: பால் வெள்ளை (Cream)' },
-      'leo': { date: 'இன்று', horoscope_data: 'உத்தியோகத்தில் மதிப்பு கூடும்.\nஅரசு வழியில் ஆதாயம் உண்டு.\nஅதிர்ஷ்ட நிறம்: ஆரஞ்சு (Orange)' },
-      'virgo': { date: 'இன்று', horoscope_data: 'வியாபாரத்தில் லாவம் பெருகும்.\nஉறவினர்கள் வருகை இருக்கும்.\nஅதிர்ஷ்ட நிறம்: பச்சை (Green)' },
-      'libra': { date: 'இன்று', horoscope_data: 'கணவன் மனைவி ஒற்றுமை பலப்படும்.\nபயணங்களால் நன்மை உண்டாகும்.\nஅதிர்ஷ்ட நிறம்: நீலம் (Blue)' },
-      'scorpio': { date: 'இன்று', horoscope_data: 'சந்திராஷ்டமம் என்பதால் கவனம் தேவை.\nவீண் விவாதங்களை தவிர்க்கவும்.\nஅதிர்ஷ்ட நிறம்: சிவப்பு (Red)' },
-      'sagittarius': { date: 'இன்று', horoscope_data: 'குரு அருள் பரிபூரணமாக உள்ளது.\nஆன்மீக சிந்தனை மேலோங்கும்.\nஅதிர்ஷ்ட நிறம்: மஞ்சள் (Yellow)' },
-      'capricorn': { date: 'இன்று', horoscope_data: 'உழைப்புக்கேற்ற ஊதியம் கிடைக்கும்.\nநிலுவையில் உள்ள பணிகள் முடியும்.\nஅதிர்ஷ்ட நிறம்: நீலம் (Blue)' },
-      'aquarius': { date: 'இன்று', horoscope_data: 'எதிர்பாராத தனவரவு உண்டாகும்.\nநண்பர்களால் ஆதாயம் உண்டு.\nஅதிர்ஷ்ட நிறம்: நீலம் (Blue)' },
-      'pisces': { date: 'இன்று', horoscope_data: 'சுப விரயங்கள் ஏற்படும்.\nகுடும்பத்துடன் இறைவழிபாடு செய்வீர்கள்.\nஅதிர்ஷ்ட நிறம்: மஞ்சள் (Yellow)' }
+      'aries': {date: 'இன்று', horoscope_data: 'இன்று உங்களுக்கு நற்பலன்கள் கிடைக்கும்.\nஉங்கள் முயற்சிகளில் வெற்றி கிட்டும்.\nஅதிர்ஷ்ட நிறம்: சிவப்பு (Red)'},
+      'taurus': {date: 'இன்று', horoscope_data: 'பொருளாதார வரவு சிறப்பாக இருக்கும்.\nகுடும்பத்தில் மகிழ்ச்சி நிலவும்.\nஅதிர்ஷ்ட நிறம்: வெள்ளை (White)'},
+      'gemini': {date: 'இன்று', horoscope_data: 'நண்பர்களின் உதவி கிடைக்கும்.\nபுதிய முயற்சிகள் கைக்கூடும்.\nஅதிர்ஷ்ட நிறம்: பச்சை (Green)'},
+      'cancer': {date: 'இன்று', horoscope_data: 'மனதில் நிம்மதி பிறக்கும்.\nதொழிலில் முன்னேற்றம் உண்டு.\nஅதிர்ஷ்ட நிறம்: பால் வெள்ளை (Cream)'},
+      'leo': {date: 'இன்று', horoscope_data: 'உத்தியோகத்தில் மதிப்பு கூடும்.\nஅரசு வழியில் ஆதாயம் உண்டு.\nஅதிர்ஷ்ட நிறம்: ஆரஞ்சு (Orange)'},
+      'virgo': {date: 'இன்று', horoscope_data: 'வியாபாரத்தில் லாவம் பெருகும்.\nஉறவினர்கள் வருகை இருக்கும்.\nஅதிர்ஷ்ட நிறம்: பச்சை (Green)'},
+      'libra': {date: 'இன்று', horoscope_data: 'கணவன் மனைவி ஒற்றுமை பலப்படும்.\nபயணங்களால் நன்மை உண்டாகும்.\nஅதிர்ஷ்ட நிறம்: நீலம் (Blue)'},
+      'scorpio': {date: 'இன்று', horoscope_data: 'சந்திராஷ்டமம் என்பதால் கவனம் தேவை.\nவீண் விவாதங்களை தவிர்க்கவும்.\nஅதிர்ஷ்ட நிறம்: சிவப்பு (Red)'},
+      'sagittarius': {date: 'இன்று', horoscope_data: 'குரு அருள் பரிபூரணமாக உள்ளது.\nஆன்மீக சிந்தனை மேலோங்கும்.\nஅதிர்ஷ்ட நிறம்: மஞ்சள் (Yellow)'},
+      'capricorn': {date: 'இன்று', horoscope_data: 'உழைப்புக்கேற்ற ஊதியம் கிடைக்கும்.\nநிலுவையில் உள்ள பணிகள் முடியும்.\nஅதிர்ஷ்ட நிறம்: நீலம் (Blue)'},
+      'aquarius': {date: 'இன்று', horoscope_data: 'எதிர்பாராத தனவரவு உண்டாகும்.\nநண்பர்களால் ஆதாயம் உண்டு.\nஅதிர்ஷ்ட நிறம்: நீலம் (Blue)'},
+      'pisces': {date: 'இன்று', horoscope_data: 'சுப விரயங்கள் ஏற்படும்.\nகுடும்பத்துடன் இறைவழிபாடு செய்வீர்கள்.\nஅதிர்ஷ்ட நிறம்: மஞ்சள் (Yellow)'}
     };
 
     async function fetchHoroscope(signObj) {
@@ -6568,11 +6598,11 @@
        `;
 
       const items = [
-        { k: 'dina', l: 'Dina' }, { k: 'gana', l: 'Gana' },
-        { k: 'mahendra', l: 'Mahendra' }, { k: 'streeDeergha', l: 'Stree Deergha' },
-        { k: 'yoni', l: 'Yoni' }, { k: 'rasi', l: 'Rasi' },
-        { k: 'rasiAdhipati', l: 'Rasi Adhipati' }, { k: 'vashya', l: 'Vashya' },
-        { k: 'rajju', l: 'Rajju' }, { k: 'vedha', l: 'Vedha' }
+        {k: 'dina', l: 'Dina'}, {k: 'gana', l: 'Gana'},
+        {k: 'mahendra', l: 'Mahendra'}, {k: 'streeDeergha', l: 'Stree Deergha'},
+        {k: 'yoni', l: 'Yoni'}, {k: 'rasi', l: 'Rasi'},
+        {k: 'rasiAdhipati', l: 'Rasi Adhipati'}, {k: 'vashya', l: 'Vashya'},
+        {k: 'rajju', l: 'Rajju'}, {k: 'vedha', l: 'Vedha'}
       ];
 
       items.forEach(i => {
@@ -6600,7 +6630,7 @@
     // --- Admin Withdrawal Logic ---
     window.approveWithdrawal = function (wid, amount) {
       if (!confirm(`Approve deduction of ₹${amount} from Astrologer wallet?`)) return;
-      socket.emit('approve-withdrawal', { withdrawalId: wid }, (res) => {
+      socket.emit('approve-withdrawal', {withdrawalId: wid}, (res) => {
         if (res.ok) {
           alert('✅ Connection Approved & Wallet Deducted!');
           // Remove popup if exists
@@ -6628,7 +6658,7 @@
         document.body.appendChild(div);
 
         // Sound Effect
-        try { new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play(); } catch (e) { }
+        try {new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play();} catch (e) { }
       }
     });
 
@@ -6842,7 +6872,7 @@
           }
 
           listEl.innerHTML = res.data.map(txn => {
-            const date = new Date(txn.createdAt).toLocaleDateString() + ' ' + new Date(txn.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const date = new Date(txn.createdAt).toLocaleDateString() + ' ' + new Date(txn.createdAt).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
             const statusColor = txn.status === 'success' ? '#059669' : (txn.status === 'failed' ? '#DC2626' : '#D97706');
             const icon = txn.status === 'success' ? 'fa-check-circle' : (txn.status === 'failed' ? 'fa-times-circle' : 'fa-clock');
 
@@ -6906,8 +6936,8 @@
 
         const res = await fetch('/api/payment/create', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount, userId: state.me.userId, isApp })
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({amount, userId: state.me.userId, isApp})
         }).then(r => r.json());
 
         if (res.ok) {
@@ -6987,7 +7017,7 @@
 
       // Fetch Latest from DB
       if (state.me && state.me.userId) {
-        socket.emit('get-wallet', { userId: state.me.userId });
+        socket.emit('get-wallet', {userId: state.me.userId});
       }
     }
 
@@ -6996,7 +7026,7 @@
       document.getElementById('sessionSummaryModal').classList.add('hidden');
       // Trigger wallet refresh
       if (state.me && state.me.userId) {
-        socket.emit('get-wallet', { userId: state.me.userId });
+        socket.emit('get-wallet', {userId: state.me.userId});
       }
       // Refresh page as requested
       setTimeout(() => {
