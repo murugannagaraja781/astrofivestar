@@ -70,6 +70,7 @@
         <activity android:name=".LoginActivity" />
         <activity android:name=".OtpActivity" />
         <activity android:name=".HomeActivity" />
+        <activity android:name=".AstrologerActivity" />
         <activity android:name=".ChatActivity"
             android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".CallActivity"

@@ -6,9 +6,8 @@ public class LoginResponse {
     private String userId;
     private String name;
     private String role;
-    private String phone;
-    private double walletBalance;
-    private String image;
+    private int walletBalance;
+    private int totalEarnings;
 
     public boolean isOk() {
         return ok;
@@ -30,11 +29,11 @@ public class LoginResponse {
         return role;
     }
 
-    public double getWalletBalance() {
+    public int getWalletBalance() {
         return walletBalance;
     }
 
-    public String getImage() {
-        return image;
+    public int getTotalEarnings() {
+        return totalEarnings;
     }
 }

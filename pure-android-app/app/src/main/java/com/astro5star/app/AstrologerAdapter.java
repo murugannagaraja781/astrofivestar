@@ -37,6 +37,13 @@ public class AstrologerAdapter extends RecyclerView.Adapter<AstrologerAdapter.Vi
         holder.tvName.setText(astro.getName());
         holder.tvPrice.setText("₹ " + astro.getPrice() + "/min");
 
+        // Show/Hide Online Indicator
+        if (astro.isOnline()) {
+            holder.viewOnlineIndicator.setVisibility(View.VISIBLE);
+        } else {
+            holder.viewOnlineIndicator.setVisibility(View.GONE);
+        }
+
         if (astro.getSkills() != null && astro.getSkills().length > 0) {
             StringBuilder sb = new StringBuilder();
             for (String s : astro.getSkills())
@@ -54,7 +61,7 @@ public class AstrologerAdapter extends RecyclerView.Adapter<AstrologerAdapter.Vi
             // ApiClient URL is 10.0.2.2. If image is /uploads/..., we need to append.
             String imageUrl = astro.getImage();
             if (imageUrl.startsWith("/")) {
-                imageUrl = "http://10.0.2.2:3000" + imageUrl;
+                imageUrl = "https://astro5star.com" + imageUrl;
             }
             Glide.with(context).load(imageUrl).placeholder(R.mipmap.ic_launcher).into(holder.ivAstrologer);
         }
@@ -84,6 +91,7 @@ public class AstrologerAdapter extends RecyclerView.Adapter<AstrologerAdapter.Vi
         TextView tvName, tvSkills, tvPrice;
         ImageView ivAstrologer;
         Button btnCall, btnChat;
+        View viewOnlineIndicator;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -93,6 +101,7 @@ public class AstrologerAdapter extends RecyclerView.Adapter<AstrologerAdapter.Vi
             ivAstrologer = itemView.findViewById(R.id.ivAstrologer);
             btnCall = itemView.findViewById(R.id.btnCall);
             btnChat = itemView.findViewById(R.id.btnChat);
+            viewOnlineIndicator = itemView.findViewById(R.id.viewOnlineIndicator);
         }
     }
 }

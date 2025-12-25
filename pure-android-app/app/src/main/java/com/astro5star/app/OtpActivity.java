@@ -58,9 +58,23 @@ public class OtpActivity extends AppCompatActivity {
             public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     if (response.body().isOk()) {
-                        // Success - Navigate Home
-                        Intent intent = new Intent(OtpActivity.this, HomeActivity.class);
-                        // Clear back stack so user can't go back to Login
+                        // Success - Route based on role
+                        LoginResponse user = response.body();
+                        String role = user.getRole();
+
+                        Intent intent;
+                        if ("astrologer".equals(role)) {
+                            // Route to Astrologer Dashboard
+                            intent = new Intent(OtpActivity.this, AstrologerActivity.class);
+                            intent.putExtra("USER_ID", user.getUserId());
+                            intent.putExtra("USER_NAME", user.getName());
+                            intent.putExtra("TOTAL_EARNINGS", user.getTotalEarnings());
+                        } else {
+                            // Route to Client Home
+                            intent = new Intent(OtpActivity.this, HomeActivity.class);
+                        }
+
+                        // Clear back stack
                         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                         startActivity(intent);
                         finish();
