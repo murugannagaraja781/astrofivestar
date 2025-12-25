@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Queries to allow checking/opening other apps -->
     <queries>
@@ -79,6 +81,12 @@
         <activity android:name=".IncomingRequestActivity"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"
             android:excludeFromRecents="true"/>
+
+        <!-- Foreground Service for persistent socket connection -->
+        <service
+            android:name=".SocketService"
+            android:enabled="true"
+            android:exported="false" />
 
     </application>
 

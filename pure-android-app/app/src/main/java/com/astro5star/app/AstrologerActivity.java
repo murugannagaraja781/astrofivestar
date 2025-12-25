@@ -78,6 +78,9 @@ public class AstrologerActivity extends AppCompatActivity {
         // Initialize Socket
         initSocket();
 
+        // ✅ Disabled for now - causes crash on some devices
+        // startSocketService();
+
         // Toggle listeners
         switchChat.setOnCheckedChangeListener((buttonView, isChecked) -> {
             toggleStatus("chat", isChecked);
@@ -133,6 +136,25 @@ public class AstrologerActivity extends AppCompatActivity {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
+    }
+
+    private void startSocketService() {
+        try {
+            Intent serviceIntent = new Intent(this, SocketService.class);
+            serviceIntent.putExtra("USER_ID", userId);
+            serviceIntent.putExtra("USER_NAME", userName);
+            serviceIntent.putExtra("USER_PHONE", userPhone);
+
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            } else {
+                startService(serviceIntent);
+            }
+            android.util.Log.d("AstrologerActivity", "✅ Started SocketService (foreground)");
+        } catch (Exception e) {
+            android.util.Log.e("AstrologerActivity", "❌ Failed to start SocketService: " + e.getMessage());
+            // Don't crash - socket in activity will still work
+        }
     }
 
     private void initSocket() {

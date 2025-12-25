@@ -834,8 +834,16 @@ io.on('connection', (socket) => {
         totalEarnings: user.totalEarnings || 0
       });
 
-      // If astro, broadcast update
+      // ✅ Rule 2: Log socket map status for debugging
+      console.log(`   📊 Socket map now has ${userSockets.size} registered users`);
+      console.log(`   📍 Registered IDs:`, Array.from(userSockets.keys()));
+
+      // If astro, mark online and broadcast update
       if (user.role === 'astrologer') {
+        // ✅ Auto-set online when astrologer connects
+        user.isOnline = true;
+        await user.save();
+        console.log(`   🟢 Astrologer ${user.name} marked ONLINE`);
         broadcastAstroUpdate();
       }
       // If superadmin, join room
