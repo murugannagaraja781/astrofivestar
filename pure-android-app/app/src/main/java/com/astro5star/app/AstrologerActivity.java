@@ -103,12 +103,18 @@ public class AstrologerActivity extends AppCompatActivity {
     private void toggleStatus(String type, boolean online) {
         JSONObject payload = new JSONObject();
         try {
-            payload.put("type", type);
-            payload.put("online", online);
+            // Send userId and ALL toggle states
+            payload.put("userId", userId);
+            payload.put("chatOnline", swChatOnline.isChecked());
+            payload.put("audioOnline", swAudioOnline.isChecked());
+            payload.put("videoOnline", swVideoOnline.isChecked());
+
             mSocket.emit("toggle-status", payload);
 
             String statusText = online ? "enabled" : "disabled";
             Toast.makeText(this, type.toUpperCase() + " " + statusText, Toast.LENGTH_SHORT).show();
+
+            android.util.Log.d("AstrologerActivity", "✅ Toggled " + type + ": " + online);
 
             // Toggle listeners
             mSocket.on("toggle-status", args -> {

@@ -848,24 +848,45 @@ io.on('connection', (socket) => {
 
   // --- Toggle Status (Astrologer Only) ---
   socket.on('toggle-status', async (data) => {
-    const userId = socketToUser.get(socket.id);
-    if (!userId) return;
+    // Get userId from socket mapping OR from payload
+    let userId = socketToUser.get(socket.id) || data.userId;
+    if (!userId) {
+      console.log('toggle-status: No userId found');
+      return;
+    }
 
     try {
       const update = {};
-      if (data.type === 'chat') update.isChatOnline = !!data.online;
-      if (data.type === 'audio') update.isAudioOnline = !!data.online;
-      if (data.type === 'video') update.isVideoOnline = !!data.online;
 
-      // We first get the user to calculate global isOnline
+      // Support BOTH formats:
+      // Format 1 (Website): {type: 'chat', online: true}
+      // Format 2 (App): {chatOnline: true, audioOnline: false, videoOnline: true}
+
+      if (data.type !== undefined) {
+        // Website format: single toggle
+        if (data.type === 'chat') update.isChatOnline = !!data.online;
+        if (data.type === 'audio') update.isAudioOnline = !!data.online;
+        if (data.type === 'video') update.isVideoOnline = !!data.online;
+      } else {
+        // App format: all toggles at once
+        if (data.chatOnline !== undefined) update.isChatOnline = !!data.chatOnline;
+        if (data.audioOnline !== undefined) update.isAudioOnline = !!data.audioOnline;
+        if (data.videoOnline !== undefined) update.isVideoOnline = !!data.videoOnline;
+      }
+
+      // Update user
       let user = await User.findOne({ userId });
       if (user) {
         Object.assign(user, update);
         user.isOnline = user.isChatOnline || user.isAudioOnline || user.isVideoOnline;
         await user.save();
+
+        console.log(`✅ Toggle updated for ${userId}: chat=${user.isChatOnline}, audio=${user.isAudioOnline}, video=${user.isVideoOnline}`);
+
+        // Broadcast to ALL clients (Web + App)
         broadcastAstroUpdate();
       }
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error('toggle-status error:', e); }
   });
 
   // --- Update Profile ---
