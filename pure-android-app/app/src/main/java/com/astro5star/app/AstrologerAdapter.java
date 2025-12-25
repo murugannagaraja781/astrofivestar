@@ -37,12 +37,26 @@ public class AstrologerAdapter extends RecyclerView.Adapter<AstrologerAdapter.Vi
         holder.tvName.setText(astro.getName());
         holder.tvPrice.setText("₹ " + astro.getPrice() + "/min");
 
-        // Show/Hide Online Indicator
-        if (astro.isOnline()) {
-            holder.viewOnlineIndicator.setVisibility(View.VISIBLE);
+        // ✅ Check if ANY service is online
+        boolean isChatOnline = astro.isChatOnline();
+        boolean isAudioOnline = astro.isAudioOnline();
+        boolean isVideoOnline = astro.isVideoOnline();
+        boolean isAnyOnline = isChatOnline || isAudioOnline || isVideoOnline;
+
+        // ✅ Show GREEN dot if online, ORANGE if offline
+        if (isAnyOnline) {
+            holder.viewOnlineIndicator.setBackgroundResource(R.drawable.circle_status_green);
         } else {
-            holder.viewOnlineIndicator.setVisibility(View.GONE);
+            holder.viewOnlineIndicator.setBackgroundResource(R.drawable.circle_status_orange);
         }
+        holder.viewOnlineIndicator.setVisibility(View.VISIBLE);
+
+        // ✅ Enable/Disable buttons based on service status
+        holder.btnChat.setEnabled(isChatOnline);
+        holder.btnChat.setAlpha(isChatOnline ? 1.0f : 0.5f);
+
+        holder.btnCall.setEnabled(isAudioOnline);
+        holder.btnCall.setAlpha(isAudioOnline ? 1.0f : 0.5f);
 
         if (astro.getSkills() != null && astro.getSkills().length > 0) {
             StringBuilder sb = new StringBuilder();
@@ -54,11 +68,7 @@ public class AstrologerAdapter extends RecyclerView.Adapter<AstrologerAdapter.Vi
         }
 
         // Load Image using Glide
-        // Assuming astro.getImage() returns a strict path or URL. If local path, might
-        // need tweaking.
         if (astro.getImage() != null && !astro.getImage().isEmpty()) {
-            // If image is relative (Phase 16), prepend base URL? Or assumed full URL?
-            // ApiClient URL is 10.0.2.2. If image is /uploads/..., we need to append.
             String imageUrl = astro.getImage();
             if (imageUrl.startsWith("/")) {
                 imageUrl = "https://astro5star.com" + imageUrl;
@@ -67,6 +77,12 @@ public class AstrologerAdapter extends RecyclerView.Adapter<AstrologerAdapter.Vi
         }
 
         holder.btnChat.setOnClickListener(v -> {
+            if (!isChatOnline) {
+                android.widget.Toast.makeText(context, "Chat is currently offline", android.widget.Toast.LENGTH_SHORT)
+                        .show();
+                return;
+            }
+
             Intent intent = new Intent(context, ChatActivity.class);
             intent.putExtra("PARTNER_ID", astro.getUserId());
             intent.putExtra("PARTNER_NAME", astro.getName());
@@ -74,10 +90,17 @@ public class AstrologerAdapter extends RecyclerView.Adapter<AstrologerAdapter.Vi
         });
 
         holder.btnCall.setOnClickListener(v -> {
+            if (!isAudioOnline) {
+                android.widget.Toast.makeText(context, "Call is currently offline", android.widget.Toast.LENGTH_SHORT)
+                        .show();
+                return;
+            }
+
             Intent intent = new Intent(context, CallActivity.class);
             intent.putExtra("PARTNER_ID", astro.getUserId());
+            intent.putExtra("PARTNER_NAME", astro.getName());
             intent.putExtra("IS_INCOMING", false);
-            // In a real app, define AUDIO/VIDEO type here
+            intent.putExtra("CALL_TYPE", "audio");
             context.startActivity(intent);
         });
     }
