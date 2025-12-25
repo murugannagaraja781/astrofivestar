@@ -941,6 +941,7 @@ io.on('connection', (socket) => {
       // Check userSockets for connectivity
       const targetSocketId = userSockets.get(toUserId);
       if (!targetSocketId) {
+        console.log(`❌ User offline: ${toUserId} - Registered sockets:`, Array.from(userSockets.keys()));
         return cb({ ok: false, error: 'User offline (socket)' });
       }
 
@@ -987,10 +988,11 @@ io.on('connection', (socket) => {
         sessionId,
         fromUserId,
         type,
+        callerName: fromUser ? fromUser.name : 'Client',
         birthData: birthData || null
       });
 
-      console.log(`Session request: ${sessionId} (${type})`);
+      console.log(`✅ Session request: ${sessionId} (${type}) - sent to socket: ${targetSocketId}`);
       cb({ ok: true, sessionId });
     } catch (err) {
       console.error('request-session error', err);
