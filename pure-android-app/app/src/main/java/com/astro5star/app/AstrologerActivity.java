@@ -128,6 +128,35 @@ public class AstrologerActivity extends AppCompatActivity {
                 });
             });
 
+            // ✅ INCOMING SESSION LISTENER
+            mSocket.on("incoming-session", args -> {
+                runOnUiThread(() -> {
+                    try {
+                        JSONObject data = (JSONObject) args[0];
+
+                        String sessionId = data.getString("sessionId");
+                        String fromUserId = data.getString("fromUserId");
+                        String type = data.getString("type");
+                        String callerName = data.optString("callerName", "Client");
+
+                        android.util.Log.d("AstrologerActivity",
+                                "📞 Incoming session: " + type + " from " + fromUserId);
+
+                        // Open IncomingRequestActivity
+                        Intent intent = new Intent(AstrologerActivity.this, IncomingRequestActivity.class);
+                        intent.putExtra("SESSION_ID", sessionId);
+                        intent.putExtra("FROM_USER_ID", fromUserId);
+                        intent.putExtra("CALLER_NAME", callerName);
+                        intent.putExtra("TYPE", type);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                });
+            });
+
             // Connect AFTER setting up listeners
             mSocket.connect();
 
