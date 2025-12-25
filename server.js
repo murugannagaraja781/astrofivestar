@@ -790,41 +790,52 @@ io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id);
 
   // --- Register user ---
-  // --- Register user ---
-  socket.on('register', (data, cb) => {
+  socket.on('register', async (data, cb) => {
     try {
-      const { name, phone, existingUserId } = data || {};
-      const userId = data.userId || socketToUser.get(socket.id);
+      const { name, phone, userId } = data || {};
 
-      User.findOne({ phone }).then(user => {
-        if (!user) {
-          if (typeof cb === 'function') cb({ ok: false, error: 'User not found' });
-          return;
-        }
+      let user = null;
 
-        const userId = user.userId;
-        userSockets.set(userId, socket.id);
-        socketToUser.set(socket.id, userId);
+      // ✅ Support BOTH: phone (website) OR userId (app)
+      if (userId) {
+        // App sends userId directly
+        user = await User.findOne({ userId });
+        console.log(`Register by userId: ${userId} - Found: ${user ? 'yes' : 'no'}`);
+      } else if (phone) {
+        // Website sends phone
+        user = await User.findOne({ phone });
+        console.log(`Register by phone: ${phone} - Found: ${user ? 'yes' : 'no'}`);
+      }
 
-        if (typeof cb === 'function') cb({
-          ok: true,
-          userId: user.userId,
-          role: user.role,
-          name: user.name,
-          walletBalance: user.walletBalance,
-          totalEarnings: user.totalEarnings || 0
-        });
-        console.log(`User registered: ${user.name} (${user.role})`);
+      if (!user) {
+        console.log('Register failed: User not found');
+        if (typeof cb === 'function') cb({ ok: false, error: 'User not found' });
+        return;
+      }
 
-        // If astro, broadcast update
-        if (user.role === 'astrologer') {
-          broadcastAstroUpdate();
-        }
-        // If superadmin, join room
-        if (user.role === 'superadmin') {
-          socket.join('superadmin');
-        }
+      // ✅ Save socket mapping
+      userSockets.set(user.userId, socket.id);
+      socketToUser.set(socket.id, user.userId);
+
+      console.log(`✅ User registered: ${user.name} (${user.role}) - userId: ${user.userId}`);
+
+      if (typeof cb === 'function') cb({
+        ok: true,
+        userId: user.userId,
+        role: user.role,
+        name: user.name,
+        walletBalance: user.walletBalance,
+        totalEarnings: user.totalEarnings || 0
       });
+
+      // If astro, broadcast update
+      if (user.role === 'astrologer') {
+        broadcastAstroUpdate();
+      }
+      // If superadmin, join room
+      if (user.role === 'superadmin') {
+        socket.join('superadmin');
+      }
     } catch (err) {
       console.error('register error', err);
       if (typeof cb === 'function') cb({ ok: false, error: 'Internal error' });
