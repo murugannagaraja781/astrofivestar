@@ -794,21 +794,27 @@ io.on('connection', (socket) => {
     try {
       const { name, phone, userId } = data || {};
 
+      // ✅ DEBUG: Log all received data
+      console.log(`📥 Register attempt - Data received:`, JSON.stringify(data));
+      console.log(`   userId: "${userId}", phone: "${phone}", name: "${name}"`);
+
       let user = null;
 
       // ✅ Support BOTH: phone (website) OR userId (app)
-      if (userId) {
+      if (userId && userId.length > 0) {
         // App sends userId directly
         user = await User.findOne({ userId });
-        console.log(`Register by userId: ${userId} - Found: ${user ? 'yes' : 'no'}`);
-      } else if (phone) {
+        console.log(`   🔍 Lookup by userId: ${userId} - Found: ${user ? 'YES ✅' : 'NO ❌'}`);
+      } else if (phone && phone.length > 0) {
         // Website sends phone
         user = await User.findOne({ phone });
-        console.log(`Register by phone: ${phone} - Found: ${user ? 'yes' : 'no'}`);
+        console.log(`   🔍 Lookup by phone: ${phone} - Found: ${user ? 'YES ✅' : 'NO ❌'}`);
+      } else {
+        console.log(`   ❌ No valid userId or phone provided!`);
       }
 
       if (!user) {
-        console.log('Register failed: User not found');
+        console.log('   ❌ Register FAILED: User not found in database');
         if (typeof cb === 'function') cb({ ok: false, error: 'User not found' });
         return;
       }
