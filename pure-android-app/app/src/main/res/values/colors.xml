@@ -8,4 +8,14 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- Dashboard Colors -->
+    <color name="primaryGreen">#047857</color>
+    <color name="walletOrange">#F59E0B</color>
+    <color name="walletOrangeDark">#D97706</color>
+    <color name="statusPending">#D97706</color>
+    <color name="lightBg">#F0FDF4</color>
+    <color name="transactionBg">#EEF2FF</color>
+    <color name="iconOrange">#F59E0B</color>
+    <color name="iconOrangeBg">#FEF3C7</color>
 </resources>

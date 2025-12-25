@@ -49,6 +49,8 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".DashboardActivity" />
+
         <activity android:name=".WebViewActivity" />
 
         <!-- Payment Handler Activity for Deep Links -->
