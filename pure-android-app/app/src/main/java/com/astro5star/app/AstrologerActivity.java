@@ -104,6 +104,35 @@ public class AstrologerActivity extends AppCompatActivity {
         findViewById(R.id.btnProfileSection).setOnClickListener(v -> {
             Toast.makeText(this, "Profile feature coming soon", Toast.LENGTH_SHORT).show();
         });
+
+        // ✅ Logout button
+        findViewById(R.id.btnLogout).setOnClickListener(v -> {
+            logout();
+        });
+    }
+
+    private void logout() {
+        // 1. Disconnect socket
+        if (mSocket != null) {
+            mSocket.disconnect();
+            mSocket.off();
+        }
+
+        // 2. Disconnect SocketManager
+        SocketManager.getInstance().disconnect();
+
+        // 3. Clear SharedPreferences (like website's clearSession)
+        android.content.SharedPreferences prefs = getSharedPreferences("APP_PREFS", MODE_PRIVATE);
+        prefs.edit().clear().apply();
+
+        android.util.Log.d("AstrologerActivity", "✅ Logged out - Session cleared");
+        Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
+
+        // 4. Go to Login screen
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     private void initSocket() {

@@ -32,7 +32,17 @@
             android:layout_height="wrap_content"
             android:text="ID: 62add4"
             android:textSize="12sp"
-            android:textColor="#6B7280"/>
+            android:textColor="#6B7280"
+            android:layout_marginEnd="8dp"/>
+
+        <Button
+            android:id="@+id/btnLogout"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="Logout"
+            android:textSize="12sp"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#EF4444"/>
     </LinearLayout>
 
     <ScrollView

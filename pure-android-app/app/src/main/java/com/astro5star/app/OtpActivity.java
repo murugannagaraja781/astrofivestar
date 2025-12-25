@@ -71,6 +71,11 @@ public class OtpActivity extends AppCompatActivity {
                         editor.putString("USER_PHONE", phone); // ✅ SAVE PHONE
                         editor.putInt("WALLET_BALANCE", user.getWalletBalance());
                         editor.putInt("TOTAL_EARNINGS", user.getTotalEarnings());
+
+                        // ✅ 24-hour session expiry (like website)
+                        long expiresAt = System.currentTimeMillis() + (24 * 60 * 60 * 1000);
+                        editor.putLong("EXPIRES_AT", expiresAt);
+
                         editor.apply();
 
                         android.util.Log.d("OtpActivity", "✅ Saved userId: " + user.getUserId());
