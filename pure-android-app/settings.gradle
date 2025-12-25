@@ -1,0 +1,2 @@
+rootProject.name = "Astro5StarNative"
+include ':app'
