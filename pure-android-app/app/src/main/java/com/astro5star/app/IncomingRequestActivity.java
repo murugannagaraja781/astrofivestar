@@ -2,7 +2,6 @@ package com.astro5star.app;
 
 import android.content.Context;
 import android.content.Intent;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -13,15 +12,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-import io.socket.client.IO;
 import io.socket.client.Socket;
 import org.json.JSONException;
 import org.json.JSONObject;
-import java.net.URISyntaxException;
 
 public class IncomingRequestActivity extends AppCompatActivity {
-
-    private static final String SOCKET_URL = "https://astro5star.com";
 
     private TextView tvRequestType, tvCallerName;
     private ImageView ivCallerAvatar;
@@ -31,9 +26,7 @@ public class IncomingRequestActivity extends AppCompatActivity {
     private String fromUserId;
     private String callerName;
     private String requestType;
-    private String myUserId;
 
-    private Socket mSocket;
     private MediaPlayer mediaPlayer;
     private Vibrator vibrator;
 
@@ -52,10 +45,6 @@ public class IncomingRequestActivity extends AppCompatActivity {
             callerName = "Client "
                     + (fromUserId != null ? fromUserId.substring(0, Math.min(6, fromUserId.length())) : "");
         }
-
-        // Get my userId from SharedPreferences
-        android.content.SharedPreferences prefs = getSharedPreferences("APP_PREFS", MODE_PRIVATE);
-        myUserId = prefs.getString("USER_ID", "");
 
         android.util.Log.d("IncomingRequest",
                 "Session: " + sessionId + ", From: " + fromUserId + ", Type: " + requestType);
@@ -83,34 +72,11 @@ public class IncomingRequestActivity extends AppCompatActivity {
         startRingtone();
         startVibration();
 
-        // Initialize socket
-        initSocket();
+        // ✅ NO socket init here - use SocketManager from AstrologerActivity
 
         // Button listeners
         btnAccept.setOnClickListener(v -> acceptRequest());
         btnReject.setOnClickListener(v -> rejectRequest());
-    }
-
-    private void initSocket() {
-        try {
-            mSocket = IO.socket(SOCKET_URL);
-
-            mSocket.on(io.socket.client.Socket.EVENT_CONNECT, args -> {
-                android.util.Log.d("IncomingRequest", "Socket connected");
-                // Register
-                try {
-                    JSONObject data = new JSONObject();
-                    data.put("userId", myUserId);
-                    mSocket.emit("register", data);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            });
-
-            mSocket.connect();
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
     }
 
     private void startRingtone() {
@@ -130,8 +96,8 @@ public class IncomingRequestActivity extends AppCompatActivity {
         try {
             vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
             if (vibrator != null && vibrator.hasVibrator()) {
-                long[] pattern = { 0, 1000, 500, 1000, 500 }; // Wait, Vibrate, Pause, Vibrate, Pause
-                vibrator.vibrate(pattern, 0); // 0 = repeat from start
+                long[] pattern = { 0, 1000, 500, 1000, 500 };
+                vibrator.vibrate(pattern, 0);
             }
         } catch (Exception e) {
             android.util.Log.e("IncomingRequest", "Vibration error: " + e.getMessage());
@@ -158,16 +124,16 @@ public class IncomingRequestActivity extends AppCompatActivity {
 
         try {
             // Emit answer-session with accept: true
+            // ✅ USE SocketManager - don't create new socket!
             JSONObject response = new JSONObject();
             response.put("sessionId", sessionId);
             response.put("toUserId", fromUserId);
             response.put("type", requestType);
             response.put("accept", true);
 
-            if (mSocket != null && mSocket.connected()) {
-                mSocket.emit("answer-session", response);
-                android.util.Log.d("IncomingRequest", "✅ Accepted session: " + sessionId);
-            }
+            SocketManager.getInstance().emit("answer-session", response);
+            android.util.Log.d("IncomingRequest", "✅ Accepted session: " + sessionId);
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -196,15 +162,15 @@ public class IncomingRequestActivity extends AppCompatActivity {
 
         try {
             // Emit answer-session with accept: false
+            // ✅ USE SocketManager
             JSONObject response = new JSONObject();
             response.put("sessionId", sessionId);
             response.put("toUserId", fromUserId);
             response.put("accept", false);
 
-            if (mSocket != null && mSocket.connected()) {
-                mSocket.emit("answer-session", response);
-                android.util.Log.d("IncomingRequest", "❌ Rejected session: " + sessionId);
-            }
+            SocketManager.getInstance().emit("answer-session", response);
+            android.util.Log.d("IncomingRequest", "❌ Rejected session: " + sessionId);
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -217,15 +183,11 @@ public class IncomingRequestActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         stopRingtoneAndVibration();
-        if (mSocket != null) {
-            mSocket.disconnect();
-            mSocket.off();
-        }
+        // ✅ DON'T disconnect socket here - it's shared!
     }
 
     @Override
     public void onBackPressed() {
-        // Prevent back press - user must accept or reject
         Toast.makeText(this, "Please accept or reject the request", Toast.LENGTH_SHORT).show();
     }
 }

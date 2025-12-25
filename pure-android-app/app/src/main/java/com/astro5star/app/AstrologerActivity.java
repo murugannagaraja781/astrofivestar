@@ -115,6 +115,9 @@ public class AstrologerActivity extends AppCompatActivity {
                         android.util.Log.d("AstrologerActivity", "✅ Socket CONNECTED & REGISTERED: " + userId);
                         Toast.makeText(AstrologerActivity.this, "Connected to server", Toast.LENGTH_SHORT).show();
 
+                        // ✅ Initialize SocketManager with same userId for shared access
+                        SocketManager.getInstance().init(userId);
+
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
