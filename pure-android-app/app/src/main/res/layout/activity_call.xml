@@ -4,6 +4,22 @@
     android:layout_height="match_parent"
     android:background="#111827">
 
+    <!-- Remote Video (Full Screen) -->
+    <org.webrtc.SurfaceViewRenderer
+        android:id="@+id/remoteVideoView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"/>
+
+    <!-- Local Video (Small Preview) -->
+    <org.webrtc.SurfaceViewRenderer
+        android:id="@+id/localVideoView"
+        android:layout_width="120dp"
+        android:layout_height="160dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="16dp"
+        android:visibility="gone"/>
+
     <!-- Incoming Call View -->
     <LinearLayout
         android:id="@+id/layoutIncoming"
@@ -59,34 +75,76 @@
         android:id="@+id/layoutActiveCall"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:gravity="center">
+        android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tvStatus"
-            android:layout_width="wrap_content"
+        <!-- Status Bar at Top -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Calling..."
-            android:textColor="#FFFFFF"
-            android:textSize="20sp"
-            android:layout_marginTop="20dp"/>
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="20dp"
+            android:background="#80000000">
 
-        <TextView
-            android:id="@+id/tvTimer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="00:00"
-            android:textColor="#E5E7EB"
-            android:textSize="16sp"
-            android:layout_marginTop="8dp"/>
+            <TextView
+                android:id="@+id/tvStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Calling..."
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"/>
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fabEndCall"
-            android:layout_width="wrap_content"
+            <TextView
+                android:id="@+id/tvTimer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="00:00"
+                android:textColor="#E5E7EB"
+                android:textSize="16sp"
+                android:layout_marginTop="8dp"/>
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"/>
+
+        <!-- Control Buttons at Bottom -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:backgroundTint="#EF4444"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
-            android:layout_marginTop="80dp"/>
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:padding="24dp"
+            android:background="#80000000">
+
+            <!-- Mute Button -->
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fabMute"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="#6B7280"
+                android:src="@android:drawable/ic_btn_speak_now"
+                android:layout_marginRight="20dp"/>
+
+            <!-- End Call Button -->
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fabEndCall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="#EF4444"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:layout_marginRight="20dp"/>
+
+            <!-- Video Toggle Button -->
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fabVideo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="#6B7280"
+                android:src="@android:drawable/ic_menu_camera"
+                android:visibility="gone"/>
+        </LinearLayout>
     </LinearLayout>
 
 </FrameLayout>

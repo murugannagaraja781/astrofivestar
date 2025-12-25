@@ -1,5 +1,6 @@
 package com.astro5star.app;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -33,12 +34,27 @@ public class HomeActivity extends AppCompatActivity {
     private AstrologerAdapter adapter;
     private android.widget.ProgressBar progressBar;
     private Socket mSocket;
+    private String myUserId; // ✅ Real userId from SharedPreferences
     private List<Astrologer> astrologerList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+
+        // ✅ GET REAL USER ID
+        android.content.SharedPreferences prefs = getSharedPreferences("APP_PREFS", MODE_PRIVATE);
+        myUserId = prefs.getString("USER_ID", "");
+
+        if (myUserId == null || myUserId.isEmpty()) {
+            Toast.makeText(this, "Session expired. Please login again", Toast.LENGTH_LONG).show();
+            Intent intent = new Intent(this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
+
+        android.util.Log.d("HomeActivity", "✅ Retrieved userId: " + myUserId);
 
         rvAstrologers = findViewById(R.id.rvAstrologers);
         progressBar = findViewById(R.id.progressBar);
@@ -52,12 +68,39 @@ public class HomeActivity extends AppCompatActivity {
     private void initSocket() {
         try {
             mSocket = IO.socket(SOCKET_URL);
-            mSocket.connect();
 
-            // Listen for astrologer status updates
+            // ✅ WAIT FOR CONNECTION BEFORE REGISTERING
+            mSocket.on(Socket.EVENT_CONNECT, args -> {
+                runOnUiThread(() -> {
+                    try {
+                        org.json.JSONObject registerData = new org.json.JSONObject();
+                        registerData.put("userId", myUserId);
+                        mSocket.emit("register", registerData);
+
+                        android.util.Log.d("HomeActivity", "✅ Socket CONNECTED & REGISTERED: " + myUserId);
+                        Toast.makeText(HomeActivity.this, "Connected to server", Toast.LENGTH_SHORT).show();
+
+                    } catch (org.json.JSONException e) {
+                        e.printStackTrace();
+                    }
+                });
+            });
+
+            // Listen for errors
+            mSocket.on(Socket.EVENT_CONNECT_ERROR, args -> {
+                runOnUiThread(() -> {
+                    android.util.Log.e("HomeActivity", "❌ Socket connection error");
+                    Toast.makeText(HomeActivity.this, "Connection error. Check internet", Toast.LENGTH_LONG).show();
+                });
+            });
+
+            // Listen for astrologer updates
             mSocket.on("astrologer-update", onAstrologerUpdate);
 
-        } catch (URISyntaxException e) {
+            // ✅ CONNECT LAST
+            mSocket.connect();
+
+        } catch (java.net.URISyntaxException e) {
             e.printStackTrace();
         }
     }

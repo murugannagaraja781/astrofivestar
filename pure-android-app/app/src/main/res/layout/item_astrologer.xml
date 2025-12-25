@@ -48,15 +48,15 @@
                     android:textStyle="bold"
                     android:textColor="#111827"/>
 
-                <!-- Online Indicator -->
+
+                <!-- Online/Offline Status Indicator -->
                 <View
                     android:id="@+id/viewOnlineIndicator"
-                    android:layout_width="8dp"
-                    android:layout_height="8dp"
-                    android:background="@drawable/circle_shape"
-                    android:backgroundTint="#10B981"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:background="@drawable/circle_status_orange"
                     android:layout_marginStart="8dp"
-                    android:visibility="gone"/>
+                    android:visibility="visible"/>
             </LinearLayout>
 
             <TextView

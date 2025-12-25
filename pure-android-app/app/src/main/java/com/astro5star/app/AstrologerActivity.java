@@ -110,7 +110,35 @@ public class AstrologerActivity extends AppCompatActivity {
             String statusText = online ? "enabled" : "disabled";
             Toast.makeText(this, type.toUpperCase() + " " + statusText, Toast.LENGTH_SHORT).show();
 
-        } catch (JSONException e) {
+            // Toggle listeners
+            mSocket.on("toggle-status", args -> {
+                // Handle status updates if needed
+            });
+
+            // Earnings update listener
+            mSocket.on("earnings-update", args -> {
+                runOnUiThread(() -> {
+                    try {
+                        org.json.JSONObject data = (org.json.JSONObject) args[0];
+                        int newEarnings = data.getInt("totalEarnings");
+                        int sessionEarnings = data.optInt("sessionEarnings", 0);
+
+                        // Update UI
+                        totalEarnings = newEarnings;
+                        tvEarnings.setText("₹ " + totalEarnings);
+
+                        // Show notification
+                        if (sessionEarnings > 0) {
+                            android.widget.Toast.makeText(AstrologerActivity.this,
+                                    "Earned ₹" + sessionEarnings + " from session!",
+                                    android.widget.Toast.LENGTH_LONG).show();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+            });
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

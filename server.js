@@ -1045,6 +1045,82 @@ io.on('connection', (socket) => {
     }
   });
 
+  // --- WebRTC Signaling: Offer ---
+  socket.on('webrtc-offer', (data) => {
+    try {
+      const { partnerId, type, sdp } = data || {};
+      const fromUserId = socketToUser.get(socket.id);
+      if (!fromUserId || !partnerId) return;
+
+      const targetSocketId = userSockets.get(partnerId);
+      if (!targetSocketId) {
+        console.log(`WebRTC Offer: Partner ${partnerId} not found`);
+        return;
+      }
+
+      io.to(targetSocketId).emit('webrtc-offer', {
+        partnerId: fromUserId,
+        type,
+        sdp
+      });
+
+      console.log(`WebRTC Offer relayed: ${fromUserId} -> ${partnerId}`);
+    } catch (err) {
+      console.error('webrtc-offer error', err);
+    }
+  });
+
+  // --- WebRTC Signaling: Answer ---
+  socket.on('webrtc-answer', (data) => {
+    try {
+      const { partnerId, type, sdp } = data || {};
+      const fromUserId = socketToUser.get(socket.id);
+      if (!fromUserId || !partnerId) return;
+
+      const targetSocketId = userSockets.get(partnerId);
+      if (!targetSocketId) {
+        console.log(`WebRTC Answer: Partner ${partnerId} not found`);
+        return;
+      }
+
+      io.to(targetSocketId).emit('webrtc-answer', {
+        partnerId: fromUserId,
+        type,
+        sdp
+      });
+
+      console.log(`WebRTC Answer relayed: ${fromUserId} -> ${partnerId}`);
+    } catch (err) {
+      console.error('webrtc-answer error', err);
+    }
+  });
+
+  // --- WebRTC Signaling: ICE Candidate ---
+  socket.on('webrtc-ice-candidate', (data) => {
+    try {
+      const { partnerId, candidate, sdpMid, sdpMLineIndex } = data || {};
+      const fromUserId = socketToUser.get(socket.id);
+      if (!fromUserId || !partnerId) return;
+
+      const targetSocketId = userSockets.get(partnerId);
+      if (!targetSocketId) {
+        console.log(`WebRTC ICE: Partner ${partnerId} not found`);
+        return;
+      }
+
+      io.to(targetSocketId).emit('webrtc-ice-candidate', {
+        partnerId: fromUserId,
+        candidate,
+        sdpMid,
+        sdpMLineIndex
+      });
+
+      console.log(`WebRTC ICE Candidate relayed: ${fromUserId} -> ${partnerId}`);
+    } catch (err) {
+      console.error('webrtc-ice-candidate error', err);
+    }
+  });
+
   // --- WebRTC signaling relay ---
   socket.on('signal', (data) => {
     try {

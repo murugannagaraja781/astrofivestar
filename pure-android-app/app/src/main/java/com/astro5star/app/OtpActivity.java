@@ -62,6 +62,18 @@ public class OtpActivity extends AppCompatActivity {
                         LoginResponse user = response.body();
                         String role = user.getRole();
 
+                        // ✅ SAVE USER DATA TO SHAREDPREFERENCES
+                        android.content.SharedPreferences prefs = getSharedPreferences("APP_PREFS", MODE_PRIVATE);
+                        android.content.SharedPreferences.Editor editor = prefs.edit();
+                        editor.putString("USER_ID", user.getUserId());
+                        editor.putString("USER_NAME", user.getName());
+                        editor.putString("USER_ROLE", user.getRole());
+                        editor.putInt("WALLET_BALANCE", user.getWalletBalance());
+                        editor.putInt("TOTAL_EARNINGS", user.getTotalEarnings());
+                        editor.apply();
+
+                        android.util.Log.d("OtpActivity", "✅ Saved userId: " + user.getUserId());
+
                         Intent intent;
                         if ("astrologer".equals(role)) {
                             // Route to Astrologer Dashboard

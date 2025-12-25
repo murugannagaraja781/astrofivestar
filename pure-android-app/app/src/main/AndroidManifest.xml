@@ -51,8 +51,6 @@
 
         <activity android:name=".DashboardActivity" />
 
-        <activity android:name=".WebViewActivity" />
-
         <!-- Payment Handler Activity for Deep Links -->
         <activity
             android:name=".PaymentActivity"

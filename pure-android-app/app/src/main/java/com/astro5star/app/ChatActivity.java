@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.astro5star.app.model.ChatMessage;
+import com.astro5star.app.utils.BillingManager;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
@@ -34,8 +35,10 @@ public class ChatActivity extends AppCompatActivity {
     private TextView tvHeaderName;
 
     private Socket mSocket;
-    private String myUserId = "user123"; // Retrieve from SharedPrefs in real app
+    private BillingManager billingManager;
+    private String myUserId; // ✅ Get from SharedPreferences
     private String partnerId;
+    private int pricePerMinute = 100; // Get from partner data
     private List<ChatMessage> messageList = new ArrayList<>();
 
     @Override
@@ -43,8 +46,20 @@ public class ChatActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
+        // ✅ GET REAL USER ID
+        android.content.SharedPreferences prefs = getSharedPreferences("APP_PREFS", MODE_PRIVATE);
+        myUserId = prefs.getString("USER_ID", "");
+
+        if (myUserId == null || myUserId.isEmpty()) {
+            Toast.makeText(this, "Session expired. Please login again", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
         partnerId = getIntent().getStringExtra("PARTNER_ID");
         String partnerName = getIntent().getStringExtra("PARTNER_NAME");
+
+        android.util.Log.d(TAG, "✅ Retrieved userId: " + myUserId + ", Partner: " + partnerId);
         // myUserId = getSharedPreferences("APP_PREFS",
         // MODE_PRIVATE).getString("USER_ID", "anon");
 
@@ -69,24 +84,74 @@ public class ChatActivity extends AppCompatActivity {
     private void initSocket() {
         try {
             mSocket = IO.socket(SOCKET_URL);
-            mSocket.connect();
 
-            // Register User Logic (skipped for brevity, assume auto-registered or simple
-            // flow)
-            JSONObject data = new JSONObject();
-            try {
-                data.put("userId", myUserId);
-                // In real app, we need to send role/phone too
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            mSocket.emit("register", data);
+            // ✅ WAIT FOR CONNECTION
+            mSocket.on(Socket.EVENT_CONNECT, args -> {
+                runOnUiThread(() -> {
+                    try {
+                        org.json.JSONObject registerData = new org.json.JSONObject();
+                        registerData.put("userId", myUserId);
+                        mSocket.emit("register", registerData);
+
+                        android.util.Log.d(TAG, "✅ Chat Socket CONNECTED & REGISTERED: " + myUserId);
+
+                    } catch (org.json.JSONException e) {
+                        e.printStackTrace();
+                    }
+                });
+            });
 
             mSocket.on("chat-message", onNewMessage);
 
-        } catch (URISyntaxException e) {
+            // Initialize billing
+            initializeBilling();
+
+            // ✅ CONNECT LAST
+            mSocket.connect();
+
+        } catch (java.net.URISyntaxException e) {
             Log.e(TAG, "Socket Init Error", e);
         }
+    }
+
+    private void initializeBilling() {
+        billingManager = new BillingManager(pricePerMinute, new BillingManager.BillingListener() {
+            @Override
+            public void onMinuteCharge(int amount, int totalMinutes) {
+                runOnUiThread(() -> {
+                    Log.d(TAG, "Charged ₹" + amount + " for minute " + totalMinutes);
+                    Toast.makeText(ChatActivity.this,
+                            "Charged ₹" + amount + " (Minute " + totalMinutes + ")",
+                            Toast.LENGTH_SHORT).show();
+                });
+            }
+
+            @Override
+            public void onInsufficientBalance() {
+                runOnUiThread(() -> {
+                    Toast.makeText(ChatActivity.this,
+                            "Insufficient balance! Ending session...",
+                            Toast.LENGTH_LONG).show();
+                    finish();
+                });
+            }
+
+            @Override
+            public void onSessionEnd(int totalCharge, int totalMinutes) {
+                runOnUiThread(() -> {
+                    Toast.makeText(ChatActivity.this,
+                            "Session ended. Total: ₹" + totalCharge + " (" + totalMinutes + " min)",
+                            Toast.LENGTH_LONG).show();
+                });
+            }
+        });
+
+        // Start billing after 5 seconds (grace period)
+        new android.os.Handler().postDelayed(() -> {
+            billingManager.startBilling();
+            Toast.makeText(ChatActivity.this, "Billing started: ₹" + pricePerMinute + "/min",
+                    Toast.LENGTH_LONG).show();
+        }, 5000);
     }
 
     private void sendMessage() {
@@ -140,6 +205,14 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
+        // Stop billing
+        if (billingManager != null) {
+            billingManager.stopBilling();
+            billingManager.cleanup();
+        }
+
+        // Disconnect socket
         if (mSocket != null) {
             mSocket.disconnect();
             mSocket.off("chat-message", onNewMessage);

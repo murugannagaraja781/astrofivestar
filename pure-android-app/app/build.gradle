@@ -69,6 +69,9 @@ dependencies {
         exclude group: 'org.json', module: 'json'
     }
 
+    // WebRTC for real-time audio/video (Google's official library)
+    implementation 'io.github.webrtc-sdk:android:104.5112.09'
+
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
