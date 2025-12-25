@@ -68,6 +68,7 @@ public class OtpActivity extends AppCompatActivity {
                         editor.putString("USER_ID", user.getUserId());
                         editor.putString("USER_NAME", user.getName());
                         editor.putString("USER_ROLE", user.getRole());
+                        editor.putString("USER_PHONE", phone); // ✅ SAVE PHONE
                         editor.putInt("WALLET_BALANCE", user.getWalletBalance());
                         editor.putInt("TOTAL_EARNINGS", user.getTotalEarnings());
                         editor.apply();

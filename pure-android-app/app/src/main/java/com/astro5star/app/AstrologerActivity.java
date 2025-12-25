@@ -21,6 +21,7 @@ public class AstrologerActivity extends AppCompatActivity {
     private Socket mSocket;
     private String userId;
     private String userName;
+    private String userPhone;
     private int totalEarnings;
 
     private TextView tvAstroName, tvUserId, tvEarnings;
@@ -37,15 +38,20 @@ public class AstrologerActivity extends AppCompatActivity {
         userName = getIntent().getStringExtra("USER_NAME");
         totalEarnings = getIntent().getIntExtra("TOTAL_EARNINGS", 0);
 
+        // ✅ Get phone from SharedPreferences (always from prefs, not intent)
+        android.content.SharedPreferences prefs = getSharedPreferences("APP_PREFS", MODE_PRIVATE);
+        userPhone = prefs.getString("USER_PHONE", "");
+
         // ✅ FALLBACK: Get from SharedPreferences if not in Intent
         if (userId == null || userId.isEmpty()) {
-            android.content.SharedPreferences prefs = getSharedPreferences("APP_PREFS", MODE_PRIVATE);
             userId = prefs.getString("USER_ID", "");
             userName = prefs.getString("USER_NAME", "Astrologer");
             android.util.Log.d("AstrologerActivity", "✅ Got userId from SharedPreferences: " + userId);
         } else {
             android.util.Log.d("AstrologerActivity", "✅ Got userId from Intent: " + userId);
         }
+
+        android.util.Log.d("AstrologerActivity", "✅ Phone: " + userPhone);
 
         // Validate userId
         if (userId == null || userId.isEmpty()) {
@@ -108,11 +114,15 @@ public class AstrologerActivity extends AppCompatActivity {
             mSocket.on(io.socket.client.Socket.EVENT_CONNECT, args -> {
                 runOnUiThread(() -> {
                     try {
+                        // ✅ MATCH WEBSITE FORMAT: {name, phone, userId}
                         JSONObject data = new JSONObject();
+                        data.put("name", userName);
+                        data.put("phone", userPhone);
                         data.put("userId", userId);
                         mSocket.emit("register", data);
 
-                        android.util.Log.d("AstrologerActivity", "✅ Socket CONNECTED & REGISTERED: " + userId);
+                        android.util.Log.d("AstrologerActivity",
+                                "✅ Socket CONNECTED & REGISTERED: " + userId + " (phone: " + userPhone + ")");
                         Toast.makeText(AstrologerActivity.this, "Connected to server", Toast.LENGTH_SHORT).show();
 
                         // ✅ Initialize SocketManager with same userId for shared access
