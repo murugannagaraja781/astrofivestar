@@ -326,6 +326,34 @@ app.get('/api/daily-horoscope', (req, res) => {
   res.json({ ok: true, content });
 });
 
+// Get All Astrologers
+app.get('/api/astrologers', async (req, res) => {
+  try {
+    const astrologers = await User.find({ role: 'astrologer' });
+    res.json({ ok: true, astrologers });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Get Chat History
+app.post('/api/chat/history', async (req, res) => {
+  try {
+    const { userId, partnerId } = req.body;
+    // Find messages between these two users
+    const messages = await ChatMessage.find({
+      $or: [
+        { fromUserId: userId, toUserId: partnerId },
+        { fromUserId: partnerId, toUserId: userId }
+      ]
+    }).sort({ timestamp: 1 });
+
+    res.json({ ok: true, messages });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 // OTP Send (Mock)
 app.post('/api/send-otp', (req, res) => {
   const { phone } = req.body;

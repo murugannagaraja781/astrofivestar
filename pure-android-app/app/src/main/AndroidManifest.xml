@@ -3,6 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
     <!-- Queries to allow checking/opening other apps -->
     <queries>
@@ -63,6 +66,14 @@
                 <data android:scheme="astro5star" android:host="payment-status" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".LoginActivity" />
+        <activity android:name=".OtpActivity" />
+        <activity android:name=".HomeActivity" />
+        <activity android:name=".ChatActivity"
+            android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".CallActivity"
+            android:screenOrientation="portrait"/>
 
     </application>
 

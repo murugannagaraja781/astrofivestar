@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Astro 5 Star</string>
+    <string name="login_title">Login</string>
+    <string name="enter_phone">Enter Mobile Number</string>
+    <string name="get_otp">Get OTP</string>
+    <string name="otp_title">Verify OTP</string>
+    <string name="enter_otp">Enter 4-digit OTP</string>
+    <string name="verify">Verify</string>
+    <string name="error_phone">Invalid Phone</string>
+    <string name="error_otp">Invalid OTP</string>
+</resources>

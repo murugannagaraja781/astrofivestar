@@ -50,29 +50,26 @@ public class PaymentActivity extends AppCompatActivity {
                     .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            redirectToWeb();
+                            navigateToHome();
                         }
                     })
                     .setOnDismissListener(new DialogInterface.OnDismissListener() {
                         @Override
                         public void onDismiss(DialogInterface dialog) {
-                            redirectToWeb();
+                            navigateToHome();
                         }
                     })
                     .show();
         } else {
-            redirectToWeb();
+            // If opened without data, maybe just finish or go home
+            finish();
         }
     }
 
-    private void redirectToWeb() {
-        // Relaunch the CCT
-        CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
-        CustomTabsIntent customTabsIntent = builder.build();
-        customTabsIntent.launchUrl(this, Uri.parse(TARGET_URL));
-
-        // Also ensure WebViewActivity or similar is in stack?
-        // For CCT flow, we just launch the URL.
+    private void navigateToHome() {
+        Intent intent = new Intent(this, HomeActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(intent);
         finish();
     }
 }
