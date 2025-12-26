@@ -72,7 +72,15 @@ dependencies {
     // WebRTC for real-time audio/video (Google's official library)
     implementation 'io.github.webrtc-sdk:android:104.5112.09'
 
+    // Firebase Cloud Messaging for push notifications
+    implementation platform('com.google.firebase:firebase-bom:32.7.0')
+    implementation 'com.google.firebase:firebase-messaging'
+
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
+
+// Apply Google services plugin (must be at bottom)
+// Uncomment when google-services.json is added
+// apply plugin: 'com.google.gms.google-services'

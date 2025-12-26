@@ -115,13 +115,15 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void initializeBilling() {
-        billingManager = new BillingManager(pricePerMinute, new BillingManager.BillingListener() {
+        String sessionId = "chat_" + myUserId + "_" + partnerId + "_" + System.currentTimeMillis();
+
+        billingManager = new BillingManager(this, mSocket, pricePerMinute, new BillingManager.BillingListener() {
             @Override
-            public void onMinuteCharge(int amount, int totalMinutes) {
+            public void onMinuteCharge(int amount, int totalMinutes, int remainingBalance) {
                 runOnUiThread(() -> {
                     Log.d(TAG, "Charged ₹" + amount + " for minute " + totalMinutes);
                     Toast.makeText(ChatActivity.this,
-                            "Charged ₹" + amount + " (Minute " + totalMinutes + ")",
+                            "Charged ₹" + amount + " (Minute " + totalMinutes + ") | Balance: ₹" + remainingBalance,
                             Toast.LENGTH_SHORT).show();
                 });
             }
@@ -144,7 +146,15 @@ public class ChatActivity extends AppCompatActivity {
                             Toast.LENGTH_LONG).show();
                 });
             }
+
+            @Override
+            public void onBalanceUpdated(int newBalance) {
+                Log.d(TAG, "Balance updated: ₹" + newBalance);
+            }
         });
+
+        // Set session info
+        billingManager.setSession(sessionId, partnerId);
 
         // Start billing after 5 seconds (grace period)
         new android.os.Handler().postDelayed(() -> {

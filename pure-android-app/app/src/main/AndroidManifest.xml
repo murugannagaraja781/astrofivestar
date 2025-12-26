@@ -73,6 +73,8 @@
         <activity android:name=".LoginActivity" />
         <activity android:name=".OtpActivity" />
         <activity android:name=".HomeActivity" />
+        <activity android:name=".WalletActivity" />
+        <activity android:name=".ProfileActivity" />
         <activity android:name=".AstrologerActivity" />
         <activity android:name=".ChatActivity"
             android:windowSoftInputMode="adjustResize"/>
@@ -87,6 +89,15 @@
             android:name=".SocketService"
             android:enabled="true"
             android:exported="false" />
+
+        <!-- Firebase Messaging Service for push notifications -->
+        <service
+            android:name=".MyFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
     </application>
 

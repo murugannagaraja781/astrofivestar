@@ -1819,6 +1819,110 @@ io.on('connection', (socket) => {
   });
   // --- End Withdrawal Logic ---
 
+  // --- Session Billing Logic ---
+  socket.on('session-start', async (data) => {
+    try {
+      const { sessionId, userId, partnerId, pricePerMinute } = data;
+      console.log(`📱 Session started: ${sessionId}, User: ${userId}, Partner: ${partnerId}, Rate: ₹${pricePerMinute}/min`);
+
+      // Store session info (could be saved to DB for tracking)
+      activeSessions.set(sessionId, {
+        userId,
+        partnerId,
+        pricePerMinute,
+        startTime: Date.now(),
+        totalCharged: 0,
+        minutes: 0
+      });
+    } catch (e) {
+      console.error('session-start error:', e);
+    }
+  });
+
+  socket.on('deduct-wallet', async (data) => {
+    try {
+      const { sessionId, userId, amount, minute } = data;
+      console.log(`💰 Deduct request: User ${userId}, Amount ₹${amount}, Minute ${minute}`);
+
+      const user = await User.findOne({ userId });
+      if (!user) {
+        console.error('User not found for wallet deduction:', userId);
+        return;
+      }
+
+      // Check balance
+      if (user.walletBalance < amount) {
+        console.log(`⚠️ Insufficient balance for ${userId}: ₹${user.walletBalance} < ₹${amount}`);
+        const userSocket = userSockets.get(userId);
+        if (userSocket) {
+          io.to(userSocket).emit('insufficient-balance', { sessionId, balance: user.walletBalance });
+        }
+        return;
+      }
+
+      // Deduct from wallet
+      user.walletBalance -= amount;
+      await user.save();
+
+      console.log(`✅ Deducted ₹${amount} from ${user.name}. New balance: ₹${user.walletBalance}`);
+
+      // Emit confirmation back to user
+      const userSocket = userSockets.get(userId);
+      if (userSocket) {
+        io.to(userSocket).emit('wallet-deducted', {
+          sessionId,
+          amount,
+          remainingBalance: user.walletBalance,
+          minute
+        });
+      }
+
+      // Update session tracking
+      const session = activeSessions.get(sessionId);
+      if (session) {
+        session.totalCharged += amount;
+        session.minutes = minute;
+      }
+
+    } catch (e) {
+      console.error('deduct-wallet error:', e);
+    }
+  });
+
+  socket.on('session-end', async (data) => {
+    try {
+      const { sessionId, userId, partnerId, totalMinutes, totalCharge } = data;
+      console.log(`🛑 Session ended: ${sessionId}, Duration: ${totalMinutes} min, Total: ₹${totalCharge}`);
+
+      // Credit astrologer earnings (partnerId = astrologer)
+      const astrologer = await User.findOne({ userId: partnerId });
+      if (astrologer && astrologer.role === 'astrologer') {
+        const astroEarning = Math.floor(totalCharge * 0.7); // 70% to astrologer
+        astrologer.totalEarnings = (astrologer.totalEarnings || 0) + astroEarning;
+        await astrologer.save();
+
+        console.log(`💵 Credited ₹${astroEarning} to astrologer ${astrologer.name}`);
+
+        // Notify astrologer of earnings
+        const astroSocket = userSockets.get(partnerId);
+        if (astroSocket) {
+          io.to(astroSocket).emit('earnings-update', {
+            sessionId,
+            earned: astroEarning,
+            totalEarnings: astrologer.totalEarnings
+          });
+        }
+      }
+
+      // Clean up session
+      activeSessions.delete(sessionId);
+
+    } catch (e) {
+      console.error('session-end error:', e);
+    }
+  });
+  // --- End Session Billing Logic ---
+
   // --- Disconnect ---
   socket.on('disconnect', async () => {
     const userId = socketToUser.get(socket.id);

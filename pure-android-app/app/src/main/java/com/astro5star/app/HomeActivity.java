@@ -61,6 +61,23 @@ public class HomeActivity extends AppCompatActivity {
 
         rvAstrologers.setLayoutManager(new LinearLayoutManager(this));
 
+        // Display wallet balance
+        int walletBalance = prefs.getInt("WALLET_BALANCE", 0);
+        android.widget.TextView tvWalletBalance = findViewById(R.id.tvWalletBalance);
+        tvWalletBalance.setText("₹" + walletBalance);
+
+        // Wallet button click
+        findViewById(R.id.btnWallet).setOnClickListener(v -> {
+            Intent walletIntent = new Intent(this, WalletActivity.class);
+            startActivity(walletIntent);
+        });
+
+        // Profile button click
+        findViewById(R.id.btnProfile).setOnClickListener(v -> {
+            Intent profileIntent = new Intent(this, ProfileActivity.class);
+            startActivity(profileIntent);
+        });
+
         initSocket();
         loadAstrologers();
     }

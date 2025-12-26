@@ -196,13 +196,15 @@ public class CallActivity extends AppCompatActivity implements WebRTCClient.WebR
     }
 
     private void initializeBilling() {
-        billingManager = new BillingManager(pricePerMinute, new BillingManager.BillingListener() {
+        String sessionId = "call_" + myUserId + "_" + partnerId + "_" + System.currentTimeMillis();
+
+        billingManager = new BillingManager(this, mSocket, pricePerMinute, new BillingManager.BillingListener() {
             @Override
-            public void onMinuteCharge(int amount, int totalMinutes) {
+            public void onMinuteCharge(int amount, int totalMinutes, int remainingBalance) {
                 runOnUiThread(() -> {
                     android.util.Log.d(TAG, "Call charged ₹" + amount + " for minute " + totalMinutes);
                     android.widget.Toast.makeText(CallActivity.this,
-                            "Charged ₹" + amount + " (Minute " + totalMinutes + ")",
+                            "Charged ₹" + amount + " (Minute " + totalMinutes + ") | Balance: ₹" + remainingBalance,
                             android.widget.Toast.LENGTH_SHORT).show();
                 });
             }
@@ -225,7 +227,15 @@ public class CallActivity extends AppCompatActivity implements WebRTCClient.WebR
                             android.widget.Toast.LENGTH_LONG).show();
                 });
             }
+
+            @Override
+            public void onBalanceUpdated(int newBalance) {
+                android.util.Log.d(TAG, "Balance updated: ₹" + newBalance);
+            }
         });
+
+        // Set session info
+        billingManager.setSession(sessionId, partnerId);
 
         // Start billing after 5 seconds
         new android.os.Handler().postDelayed(() -> {
