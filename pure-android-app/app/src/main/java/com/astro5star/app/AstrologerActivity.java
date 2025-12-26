@@ -8,17 +8,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
-import io.socket.client.IO;
-import io.socket.client.Socket;
 import org.json.JSONException;
 import org.json.JSONObject;
-import java.net.URISyntaxException;
 
-public class AstrologerActivity extends AppCompatActivity {
+public class AstrologerActivity extends AppCompatActivity implements SocketManager.IncomingSessionListener {
 
-    private static final String SOCKET_URL = "https://astro5star.com";
+    private static final String TAG = "AstrologerActivity";
 
-    private Socket mSocket;
     private String userId;
     private String userName;
     private String userPhone;
@@ -46,17 +42,17 @@ public class AstrologerActivity extends AppCompatActivity {
         if (userId == null || userId.isEmpty()) {
             userId = prefs.getString("USER_ID", "");
             userName = prefs.getString("USER_NAME", "Astrologer");
-            android.util.Log.d("AstrologerActivity", "✅ Got userId from SharedPreferences: " + userId);
+            android.util.Log.d(TAG, "✅ Got userId from SharedPreferences: " + userId);
         } else {
-            android.util.Log.d("AstrologerActivity", "✅ Got userId from Intent: " + userId);
+            android.util.Log.d(TAG, "✅ Got userId from Intent: " + userId);
         }
 
-        android.util.Log.d("AstrologerActivity", "✅ Phone: " + userPhone);
+        android.util.Log.d(TAG, "✅ Phone: " + userPhone);
 
         // Validate userId
         if (userId == null || userId.isEmpty()) {
             Toast.makeText(this, "Session expired. Please login again", Toast.LENGTH_LONG).show();
-            android.util.Log.e("AstrologerActivity", "❌ userId is NULL or EMPTY!");
+            android.util.Log.e(TAG, "❌ userId is NULL or EMPTY!");
             finish();
             return;
         }
@@ -71,15 +67,12 @@ public class AstrologerActivity extends AppCompatActivity {
         btnWithdraw = findViewById(R.id.btnWithdraw);
 
         // Set data
-        tvAstroName.setText(userName);
-        tvUserId.setText("ID: " + (userId != null ? userId.substring(0, 6) : ""));
+        tvAstroName.setText("Welcome, " + userName);
+        tvUserId.setText("ID: " + (userId != null ? userId.substring(0, Math.min(6, userId.length())) : ""));
         tvEarnings.setText("₹ " + totalEarnings);
 
-        // Initialize Socket
+        // ✅ Initialize Socket via SocketManager (SINGLE SOCKET!)
         initSocket();
-
-        // ✅ Disabled for now - causes crash on some devices
-        // startSocketService();
 
         // Toggle listeners
         switchChat.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -114,120 +107,48 @@ public class AstrologerActivity extends AppCompatActivity {
         });
     }
 
-    private void logout() {
-        // 1. Disconnect socket
-        if (mSocket != null) {
-            mSocket.disconnect();
-            mSocket.off();
-        }
+    private void initSocket() {
+        // ✅ Use SocketManager for SINGLE shared socket
+        SocketManager socketManager = SocketManager.getInstance();
+        socketManager.init(this, userId, userName, userPhone);
+        socketManager.setIncomingSessionListener(this);
 
-        // 2. Disconnect SocketManager
+        android.util.Log.d(TAG, "✅ Socket initialized via SocketManager");
+        Toast.makeText(this, "Connecting to server...", Toast.LENGTH_SHORT).show();
+    }
+
+    // ✅ Incoming session callback from SocketManager
+    @Override
+    public void onIncomingSession(String sessionId, String fromUserId, String type, String callerName) {
+        runOnUiThread(() -> {
+            android.util.Log.d(TAG, "📞 Incoming session: " + type + " from " + callerName);
+
+            // Open IncomingRequestActivity
+            Intent intent = new Intent(AstrologerActivity.this, IncomingRequestActivity.class);
+            intent.putExtra("SESSION_ID", sessionId);
+            intent.putExtra("FROM_USER_ID", fromUserId);
+            intent.putExtra("CALLER_NAME", callerName);
+            intent.putExtra("TYPE", type);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        });
+    }
+
+    private void logout() {
+        // 1. Disconnect SocketManager
         SocketManager.getInstance().disconnect();
 
-        // 3. Clear SharedPreferences (like website's clearSession)
+        // 2. Clear SharedPreferences (like website's clearSession)
         android.content.SharedPreferences prefs = getSharedPreferences("APP_PREFS", MODE_PRIVATE);
         prefs.edit().clear().apply();
 
-        android.util.Log.d("AstrologerActivity", "✅ Logged out - Session cleared");
-        Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
-
-        // 4. Go to Login screen
+        // 3. Go to LoginActivity
         Intent intent = new Intent(this, LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
-    }
 
-    private void startSocketService() {
-        try {
-            Intent serviceIntent = new Intent(this, SocketService.class);
-            serviceIntent.putExtra("USER_ID", userId);
-            serviceIntent.putExtra("USER_NAME", userName);
-            serviceIntent.putExtra("USER_PHONE", userPhone);
-
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                startForegroundService(serviceIntent);
-            } else {
-                startService(serviceIntent);
-            }
-            android.util.Log.d("AstrologerActivity", "✅ Started SocketService (foreground)");
-        } catch (Exception e) {
-            android.util.Log.e("AstrologerActivity", "❌ Failed to start SocketService: " + e.getMessage());
-            // Don't crash - socket in activity will still work
-        }
-    }
-
-    private void initSocket() {
-        try {
-            mSocket = IO.socket(SOCKET_URL);
-
-            // ✅ WAIT FOR CONNECTION BEFORE REGISTERING
-            mSocket.on(io.socket.client.Socket.EVENT_CONNECT, args -> {
-                runOnUiThread(() -> {
-                    try {
-                        // ✅ MATCH WEBSITE FORMAT: {name, phone, userId}
-                        JSONObject data = new JSONObject();
-                        data.put("name", userName);
-                        data.put("phone", userPhone);
-                        data.put("userId", userId);
-                        mSocket.emit("register", data);
-
-                        android.util.Log.d("AstrologerActivity",
-                                "✅ Socket CONNECTED & REGISTERED: " + userId + " (phone: " + userPhone + ")");
-                        Toast.makeText(AstrologerActivity.this, "Connected to server", Toast.LENGTH_SHORT).show();
-
-                        // ✅ Initialize SocketManager with same userId for shared access
-                        SocketManager.getInstance().init(userId);
-
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                });
-            });
-
-            mSocket.on(io.socket.client.Socket.EVENT_CONNECT_ERROR, args -> {
-                runOnUiThread(() -> {
-                    android.util.Log.e("AstrologerActivity", "❌ Socket connection error");
-                    Toast.makeText(AstrologerActivity.this, "Connection error", Toast.LENGTH_SHORT).show();
-                });
-            });
-
-            // ✅ INCOMING SESSION LISTENER
-            mSocket.on("incoming-session", args -> {
-                runOnUiThread(() -> {
-                    try {
-                        JSONObject data = (JSONObject) args[0];
-
-                        String sessionId = data.getString("sessionId");
-                        String fromUserId = data.getString("fromUserId");
-                        String type = data.getString("type");
-                        String callerName = data.optString("callerName", "Client");
-
-                        android.util.Log.d("AstrologerActivity",
-                                "📞 Incoming session: " + type + " from " + fromUserId);
-
-                        // Open IncomingRequestActivity
-                        Intent intent = new Intent(AstrologerActivity.this, IncomingRequestActivity.class);
-                        intent.putExtra("SESSION_ID", sessionId);
-                        intent.putExtra("FROM_USER_ID", fromUserId);
-                        intent.putExtra("CALLER_NAME", callerName);
-                        intent.putExtra("TYPE", type);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        startActivity(intent);
-
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                });
-            });
-
-            // Connect AFTER setting up listeners
-            mSocket.connect();
-
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Connection error", Toast.LENGTH_SHORT).show();
-        }
+        android.util.Log.d(TAG, "✅ Logged out and cleared session");
     }
 
     private void toggleStatus(String type, boolean online) {
@@ -239,51 +160,31 @@ public class AstrologerActivity extends AppCompatActivity {
             payload.put("audioOnline", switchCall.isChecked());
             payload.put("videoOnline", switchVideo.isChecked());
 
-            mSocket.emit("toggle-status", payload);
+            SocketManager.getInstance().emit("toggle-status", payload);
 
             String statusText = online ? "enabled" : "disabled";
             Toast.makeText(this, type.toUpperCase() + " " + statusText, Toast.LENGTH_SHORT).show();
 
-            android.util.Log.d("AstrologerActivity", "✅ Toggled " + type + ": " + online);
+            android.util.Log.d(TAG, "✅ Toggled " + type + ": " + online);
 
-            // Toggle listeners
-            mSocket.on("toggle-status", args -> {
-                // Handle status updates if needed
-            });
+        } catch (JSONException e) {
+            android.util.Log.e(TAG, "Toggle error: " + e.getMessage());
+        }
+    }
 
-            // Earnings update listener
-            mSocket.on("earnings-update", args -> {
-                runOnUiThread(() -> {
-                    try {
-                        org.json.JSONObject data = (org.json.JSONObject) args[0];
-                        int newEarnings = data.getInt("totalEarnings");
-                        int sessionEarnings = data.optInt("sessionEarnings", 0);
-
-                        // Update UI
-                        totalEarnings = newEarnings;
-                        tvEarnings.setText("₹ " + totalEarnings);
-
-                        // Show notification
-                        if (sessionEarnings > 0) {
-                            android.widget.Toast.makeText(AstrologerActivity.this,
-                                    "Earned ₹" + sessionEarnings + " from session!",
-                                    android.widget.Toast.LENGTH_LONG).show();
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                });
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Reconnect if needed
+        if (!SocketManager.getInstance().isConnected()) {
+            initSocket();
         }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (mSocket != null) {
-            mSocket.disconnect();
-        }
+        // Don't disconnect on destroy - keep socket alive for background notifications
+        // SocketManager will persist
     }
 }

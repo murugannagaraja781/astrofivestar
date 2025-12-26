@@ -43,7 +43,7 @@ public class CallActivity extends AppCompatActivity implements WebRTCClient.WebR
     private WebRTCClient webRTCClient;
     private BillingManager billingManager;
 
-    private String myUserId = "user123";
+    private String myUserId;
     private String partnerId;
     private String callType = "audio"; // or video
     private String activeSessionId;
@@ -72,9 +72,22 @@ public class CallActivity extends AppCompatActivity implements WebRTCClient.WebR
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_call);
 
+        // ✅ Get real userId from SharedPreferences
+        android.content.SharedPreferences prefs = getSharedPreferences("APP_PREFS", MODE_PRIVATE);
+        myUserId = prefs.getString("USER_ID", "");
+
+        if (myUserId == null || myUserId.isEmpty()) {
+            Toast.makeText(this, "Session expired. Please login again", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
+        android.util.Log.d(TAG, "✅ CallActivity userId: " + myUserId);
+
         partnerId = getIntent().getStringExtra("PARTNER_ID");
         isIncoming = getIntent().getBooleanExtra("IS_INCOMING", false);
         callType = getIntent().getStringExtra("CALL_TYPE") != null ? getIntent().getStringExtra("CALL_TYPE") : "audio";
+        activeSessionId = getIntent().getStringExtra("SESSION_ID"); // For incoming calls
 
         initViews();
         checkPermissions();
@@ -151,25 +164,32 @@ public class CallActivity extends AppCompatActivity implements WebRTCClient.WebR
     }
 
     private void initSocket() {
-        try {
-            mSocket = IO.socket(SOCKET_URL);
-            mSocket.connect();
+        // ✅ Use SocketManager for shared socket
+        SocketManager socketManager = SocketManager.getInstance();
 
-            JSONObject data = new JSONObject();
-            data.put("userId", myUserId);
-            mSocket.emit("register", data);
-
-            // Socket listeners
-            mSocket.on("incoming-session", onIncomingSession);
-            mSocket.on("session-answered", onSessionAnswered);
-            mSocket.on("session-ended", onSessionEnded);
-            mSocket.on("webrtc-offer", onWebRTCOffer);
-            mSocket.on("webrtc-answer", onWebRTCAnswer);
-            mSocket.on("webrtc-ice-candidate", onIceCandidate);
-
-        } catch (URISyntaxException | JSONException e) {
-            e.printStackTrace();
+        if (!socketManager.isConnected()) {
+            // Initialize if not already connected (client calling astrologer)
+            String userName = getSharedPreferences("APP_PREFS", MODE_PRIVATE).getString("USER_NAME", "");
+            String userPhone = getSharedPreferences("APP_PREFS", MODE_PRIVATE).getString("USER_PHONE", "");
+            socketManager.init(this, myUserId, userName, userPhone);
         }
+
+        mSocket = socketManager.getSocket();
+
+        if (mSocket == null) {
+            Toast.makeText(this, "Connection error. Please try again.", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
+        // Socket listeners for WebRTC signaling
+        mSocket.on("session-answered", onSessionAnswered);
+        mSocket.on("session-ended", onSessionEnded);
+        mSocket.on("webrtc-offer", onWebRTCOffer);
+        mSocket.on("webrtc-answer", onWebRTCAnswer);
+        mSocket.on("webrtc-ice-candidate", onIceCandidate);
+
+        android.util.Log.d(TAG, "✅ Socket ready via SocketManager");
     }
 
     private void showIncomingUI() {
@@ -334,9 +354,13 @@ public class CallActivity extends AppCompatActivity implements WebRTCClient.WebR
             webRTCClient.close();
         }
 
-        // Disconnect socket
+        // ✅ Don't disconnect shared socket - just remove listeners
         if (mSocket != null) {
-            mSocket.disconnect();
+            mSocket.off("session-answered");
+            mSocket.off("session-ended");
+            mSocket.off("webrtc-offer");
+            mSocket.off("webrtc-answer");
+            mSocket.off("webrtc-ice-candidate");
         }
         timerHandler.removeCallbacks(timerRunnable);
     }
