@@ -290,8 +290,10 @@ public class CallActivity extends AppCompatActivity implements WebRTCClient.WebR
                 try {
                     if (response.getBoolean("ok")) {
                         activeSessionId = response.getString("sessionId");
-                        // Create WebRTC offer
-                        webRTCClient.createOffer();
+                        android.util.Log.d(TAG,
+                                "✅ Session created: " + activeSessionId + ", waiting for astrologer to accept...");
+                        runOnUiThread(() -> tvStatus.setText("Ringing..."));
+                        // ✅ DON'T create offer here! Wait for session-answered event
                     } else {
                         runOnUiThread(() -> {
                             Toast.makeText(CallActivity.this, "Call Failed: " + response.optString("error"),
@@ -449,6 +451,14 @@ public class CallActivity extends AppCompatActivity implements WebRTCClient.WebR
     });
 
     private Emitter.Listener onSessionAnswered = args -> runOnUiThread(() -> {
+        android.util.Log.d(TAG, "✅ Astrologer accepted! Creating WebRTC offer...");
+        tvStatus.setText("Connecting...");
+
+        // ✅ Create WebRTC offer NOW (after astrologer accepted)
+        if (!isIncoming && webRTCClient != null) {
+            webRTCClient.createOffer();
+        }
+
         showActiveUI();
     });
 
