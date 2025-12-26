@@ -56,6 +56,17 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {
         notifyItemInserted(messages.size() - 1);
     }
 
+    // ✅ Mark message as delivered (for double tick)
+    public void markMessageDelivered(long messageId) {
+        for (int i = 0; i < messages.size(); i++) {
+            if (messages.get(i).getTimestamp() == messageId) {
+                messages.get(i).setDelivered(true);
+                notifyItemChanged(i);
+                break;
+            }
+        }
+    }
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvMessage;
 

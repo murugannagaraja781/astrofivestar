@@ -31,4 +31,19 @@ public class ChatMessage {
     public boolean isSentByMe() {
         return isSentByMe;
     }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    // ✅ For message delivery status (double tick)
+    private boolean isDelivered = false;
+
+    public boolean isDelivered() {
+        return isDelivered;
+    }
+
+    public void setDelivered(boolean delivered) {
+        isDelivered = delivered;
+    }
 }

@@ -59,8 +59,9 @@ public class SocketManager {
             IO.Options options = new IO.Options();
             options.transports = new String[] { "websocket" };
             options.reconnection = true;
-            options.reconnectionAttempts = 10;
+            options.reconnectionAttempts = 9999; // ✅ Infinite retries (practically)
             options.reconnectionDelay = 1000;
+            options.reconnectionDelayMax = 5000; // ✅ Max 5 seconds between retries
 
             mSocket = IO.socket(SOCKET_URL, options);
 
@@ -70,12 +71,23 @@ public class SocketManager {
             });
 
             mSocket.on(Socket.EVENT_DISCONNECT, args -> {
-                android.util.Log.d(TAG, "❌ Socket disconnected");
+                android.util.Log.d(TAG, "⚠️ Socket disconnected - will auto-reconnect");
                 isRegistered = false;
             });
 
             mSocket.on(Socket.EVENT_CONNECT_ERROR, args -> {
-                android.util.Log.e(TAG, "❌ Socket connection error: " + (args.length > 0 ? args[0] : "unknown"));
+                android.util.Log.e(TAG,
+                        "⚠️ Socket connection error - retrying: " + (args.length > 0 ? args[0] : "unknown"));
+            });
+
+            // ✅ Listen for reconnection events
+            mSocket.on("reconnect", args -> {
+                android.util.Log.d(TAG, "🔄 Socket reconnected automatically!");
+                registerUser(); // Re-register after reconnect
+            });
+
+            mSocket.on("reconnect_attempt", args -> {
+                android.util.Log.d(TAG, "🔄 Reconnecting... attempt " + (args.length > 0 ? args[0] : ""));
             });
 
             // ✅ Listen for incoming sessions

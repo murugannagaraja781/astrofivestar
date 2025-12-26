@@ -95,12 +95,23 @@ public class CallActivity extends AppCompatActivity implements WebRTCClient.WebR
         initWebRTC();
 
         if (isIncoming) {
-            showIncomingUI();
+            // ✅ Astrologer already accepted in IncomingRequestActivity
+            // Show "Connecting..." and wait for WebRTC offer from client
+            showConnectingUI();
         } else {
             showOutgoingUI();
         }
 
         setupClickListeners();
+    }
+
+    private void showConnectingUI() {
+        // ✅ For incoming (astrologer side) - already accepted, waiting for WebRTC
+        layoutIncoming.setVisibility(View.GONE);
+        layoutActiveCall.setVisibility(View.VISIBLE);
+        tvStatus.setText("Connecting...");
+        tvCallerName.setText(getIntent().getStringExtra("PARTNER_NAME"));
+        android.util.Log.d(TAG, "📞 Waiting for WebRTC offer from client");
     }
 
     private void initViews() {

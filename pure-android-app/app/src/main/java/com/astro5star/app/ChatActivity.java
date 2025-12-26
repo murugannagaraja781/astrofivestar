@@ -74,44 +74,67 @@ public class ChatActivity extends AppCompatActivity {
         rvChat.setLayoutManager(new LinearLayoutManager(this));
         rvChat.setAdapter(adapter);
 
+        // ✅ Show session info as first message
+        String sessionId = getIntent().getStringExtra("SESSION_ID");
+        if (sessionId != null) {
+            ChatMessage infoMsg = new ChatMessage("system", myUserId,
+                    "📋 Chat session started\nAstrologer: " + partnerName +
+                            "\nRate: ₹" + pricePerMinute + "/min",
+                    System.currentTimeMillis());
+            infoMsg.setSentByMe(false);
+            adapter.addMessage(infoMsg);
+        }
+
         initSocket();
 
         btnSend.setOnClickListener(v -> sendMessage());
 
-        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        findViewById(R.id.btnBack).setOnClickListener(v -> {
+            if (billingManager != null) {
+                billingManager.stopBilling();
+            }
+            finish();
+        });
     }
 
     private void initSocket() {
-        try {
-            mSocket = IO.socket(SOCKET_URL);
+        // ✅ Use SocketManager for shared socket
+        SocketManager socketManager = SocketManager.getInstance();
 
-            // ✅ WAIT FOR CONNECTION
-            mSocket.on(Socket.EVENT_CONNECT, args -> {
-                runOnUiThread(() -> {
-                    try {
-                        org.json.JSONObject registerData = new org.json.JSONObject();
-                        registerData.put("userId", myUserId);
-                        mSocket.emit("register", registerData);
-
-                        android.util.Log.d(TAG, "✅ Chat Socket CONNECTED & REGISTERED: " + myUserId);
-
-                    } catch (org.json.JSONException e) {
-                        e.printStackTrace();
-                    }
-                });
-            });
-
-            mSocket.on("chat-message", onNewMessage);
-
-            // Initialize billing
-            initializeBilling();
-
-            // ✅ CONNECT LAST
-            mSocket.connect();
-
-        } catch (java.net.URISyntaxException e) {
-            Log.e(TAG, "Socket Init Error", e);
+        if (!socketManager.isConnected()) {
+            String userName = getSharedPreferences("APP_PREFS", MODE_PRIVATE).getString("USER_NAME", "");
+            String userPhone = getSharedPreferences("APP_PREFS", MODE_PRIVATE).getString("USER_PHONE", "");
+            socketManager.init(this, myUserId, userName, userPhone);
         }
+
+        mSocket = socketManager.getSocket();
+
+        if (mSocket == null) {
+            Toast.makeText(this, "Connection error. Retrying...", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        mSocket.on("chat-message", onNewMessage);
+
+        // ✅ Listen for message delivered confirmation (double tick)
+        mSocket.on("message-delivered", args -> {
+            runOnUiThread(() -> {
+                try {
+                    JSONObject data = (JSONObject) args[0];
+                    long messageId = data.getLong("messageId");
+                    Log.d(TAG, "✅ Message delivered: " + messageId);
+                    // Update adapter to show double tick
+                    adapter.markMessageDelivered(messageId);
+                } catch (JSONException e) {
+                    Log.e(TAG, "Delivery parse error", e);
+                }
+            });
+        });
+
+        // Initialize billing
+        initializeBilling();
+
+        android.util.Log.d(TAG, "✅ Chat Socket ready via SocketManager");
     }
 
     private void initializeBilling() {
@@ -222,10 +245,10 @@ public class ChatActivity extends AppCompatActivity {
             billingManager.cleanup();
         }
 
-        // Disconnect socket
+        // ✅ Don't disconnect shared socket - just remove listeners
         if (mSocket != null) {
-            mSocket.disconnect();
             mSocket.off("chat-message", onNewMessage);
+            mSocket.off("message-delivered");
         }
     }
 }
